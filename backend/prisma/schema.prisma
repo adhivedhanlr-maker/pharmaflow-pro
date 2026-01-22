@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  ADMIN
+  BILLING_OPERATOR
+  WAREHOUSE_MANAGER
+  SALES_REP
+  ACCOUNTANT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      Role     @default(BILLING_OPERATOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Sales     Sale[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  hsnCode     String?
+  gstRate     Float    @default(0)
+  mrp         Float
+  company     String?
+  reorderLevel Int     @default(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  batches     Batch[]
+  saleItems   SaleItem[]
+  purchaseItems PurchaseItem[]
+}
+
+model Batch {
+  id          String   @id @default(cuid())
+  batchNumber String
+  expiryDate  DateTime
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  currentStock Int     @default(0)
+  mrp         Float?
+  purchasePrice Float
+  salePrice   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  saleItems   SaleItem[]
+  purchaseItems PurchaseItem[]
+
+  @@unique([productId, batchNumber])
+}
+
+model Customer {
+  id           String   @id @default(cuid())
+  name         String
+  gstin        String?
+  address      String?
+  phone        String?
+  creditLimit  Float    @default(0)
+  currentBalance Float  @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sales        Sale[]
+}
+
+model Supplier {
+  id           String   @id @default(cuid())
+  name         String
+  gstin        String?
+  address      String?
+  phone        String?
+  currentBalance Float  @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  purchases    Purchase[]
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  date          DateTime @default(now())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  totalAmount   Float
+  gstAmount     Float
+  netAmount     Float
+  discountAmount Float   @default(0)
+  isCash        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         SaleItem[]
+  returns       SaleReturn[]
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  batchId     String
+  batch       Batch    @relation(fields: [batchId], references: [id])
+  quantity    Int
+  unitPrice   Float
+  gstRate     Float
+  gstAmount   Float
+  totalAmount Float
+  returns     SaleReturnItem[]
+}
+
+model Purchase {
+  id            String   @id @default(cuid())
+  billNumber    String
+  date          DateTime @default(now())
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  totalAmount   Float
+  gstAmount     Float
+  netAmount     Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         PurchaseItem[]
+  returns       PurchaseReturn[]
+}
+
+model PurchaseItem {
+  id          String   @id @default(cuid())
+  purchaseId  String
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  batchId     String
+  batch       Batch    @relation(fields: [batchId], references: [id])
+  quantity    Int
+  purchasePrice Float
+  gstRate     Float
+  gstAmount   Float
+  totalAmount Float
+  returns     PurchaseReturnItem[]
+}
+
+model SaleReturn {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  date        DateTime @default(now())
+  totalAmount Float
+  items       SaleReturnItem[]
+}
+
+model SaleReturnItem {
+  id          String     @id @default(cuid())
+  saleReturnId String
+  saleReturn  SaleReturn @relation(fields: [saleReturnId], references: [id])
+  saleItemId  String
+  saleItem    SaleItem   @relation(fields: [saleItemId], references: [id])
+  quantity    Int
+  reason      String?
+}
+
+model PurchaseReturn {
+  id          String   @id @default(cuid())
+  purchaseId  String
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  date        DateTime @default(now())
+  totalAmount Float
+  items       PurchaseReturnItem[]
+}
+
+model PurchaseReturnItem {
+  id                String         @id @default(cuid())
+  purchaseReturnId  String
+  purchaseReturn    PurchaseReturn @relation(fields: [purchaseReturnId], references: [id])
+  purchaseItemId    String
+  purchaseItem      PurchaseItem   @relation(fields: [purchaseItemId], references: [id])
+  quantity          Int
+  reason            String?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // LOW_STOCK, EXPIRY, SYSTEM
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+
+
