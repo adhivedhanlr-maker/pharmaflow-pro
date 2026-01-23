@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,25 +8,55 @@ import {
   FlatList,
   SafeAreaView,
   StatusBar,
-  ScrollView
+  ScrollView,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
-
-// --- MOCK DATA ---
-const PRODUCTS = [
-  { id: '1', name: 'Amoxicillin 500mg', stock: 120, price: 450.00 },
-  { id: '2', name: 'Paracetamol 650mg', stock: 8, price: 12.50 },
-  { id: '3', name: 'Ciprofloxacin 250mg', stock: 45, price: 85.00 },
-  { id: '4', name: 'Vicks Action 500', stock: 450, price: 15.00 },
-];
+import { login, getProducts } from './src/utils/api';
 
 export default function App() {
   const [screen, setScreen] = useState('login'); // login, catalog, order
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleLogin = () => {
-    if (user && password) {
+  useEffect(() => {
+    if (screen === 'catalog') {
+      fetchProducts();
+    }
+  }, [screen]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const data = await getProducts();
+      setProducts(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      Alert.alert('Error', 'Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!user || !password) {
+      Alert.alert('Error', 'Please enter both username and password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await login(user, password);
+      // In a real app, we'd store the token from data.access_token
       setScreen('catalog');
+    } catch (err: any) {
+      Alert.alert('Login Failed', err.message || 'Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,9 +68,10 @@ export default function App() {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Sales Rep Code / Email"
+          placeholder="Username"
           value={user}
           onChangeText={setUser}
+          autoCapitalize="none"
         />
         <TextInput
           style={styles.input}
@@ -51,8 +82,16 @@ export default function App() {
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Login</Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.footer}>© 2026 Antigravity Medical Systems</Text>
@@ -68,25 +107,37 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={PRODUCTS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View>
-              <Text style={styles.cardName}>{item.name}</Text>
-              <Text style={styles.cardDetail}>Stock: {item.stock} Units</Text>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#2563eb" />
+        </View>
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item: any) => item.id.toString()}
+          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                <Text style={styles.cardDetail}>Stock: {item.stock || 0} {item.unit || 'Units'}</Text>
+                {item.category && <Text style={styles.cardDetail}>{item.category}</Text>}
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.cardPrice}>₹{(item.sellingPrice || item.price || 0).toFixed(2)}</Text>
+                <TouchableOpacity style={styles.orderBadge} onPress={() => setScreen('order')}>
+                  <Text style={styles.orderBadgeText}>Order +</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.cardPrice}>₹{item.price.toFixed(2)}</Text>
-              <TouchableOpacity style={styles.orderBadge} onPress={() => setScreen('order')}>
-                <Text style={styles.orderBadgeText}>Order +</Text>
-              </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#64748b' }}>No products found</Text>
             </View>
-          </View>
-        )}
-      />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 
