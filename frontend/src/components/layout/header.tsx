@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, User, Info, AlertTriangle, XCircle } from "lucide-react";
+import { Bell, User, Info, AlertTriangle, XCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
 import {
     Popover,
@@ -23,6 +24,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export function Header() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const { logout, user: authUser } = useAuth();
 
     useEffect(() => {
         fetchNotifications();
@@ -122,15 +124,28 @@ export function Header() {
                     </PopoverContent>
                 </Popover>
 
-                <div className="flex items-center gap-3 pl-4 border-l h-8">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-xs font-semibold text-slate-900">Administrator</p>
-                        <p className="text-[10px] text-muted-foreground">PharmaFlow Pro</p>
-                    </div>
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
-                        <User className="h-5 w-5 text-white" />
-                    </div>
-                </div>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <div className="flex items-center gap-3 pl-4 border-l h-8 cursor-pointer hover:opacity-80 transition-opacity">
+                            <div className="text-right hidden sm:block">
+                                <p className="text-xs font-semibold text-slate-900">{authUser?.name || "Administrator"}</p>
+                                <p className="text-[10px] text-muted-foreground">{authUser?.role || "Staff"}</p>
+                            </div>
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
+                                <User className="h-5 w-5 text-white" />
+                            </div>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2 shadow-xl border-slate-200" align="end">
+                        <button
+                            onClick={logout}
+                            className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Sign Out
+                        </button>
+                    </PopoverContent>
+                </Popover>
             </div>
         </header>
     );

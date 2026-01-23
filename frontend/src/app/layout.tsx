@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   }
 };
 
+import { AuthProvider } from "@/context/auth-context";
+import { MainLayout } from "@/components/layout/main-layout";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,18 +37,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <Header />
-            <main className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
-              {children}
-            </main>
-          </div>
-        </div>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          <MainLayout>{children}</MainLayout>
+        </AuthProvider>
       </body>
     </html>
   );
