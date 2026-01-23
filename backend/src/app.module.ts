@@ -11,6 +11,7 @@ import { StockModule } from './stock/stock.module';
 import { ReportsModule } from './reports/reports.module';
 import { ReturnsModule } from './returns/returns.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 
@@ -26,6 +27,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     ReportsModule,
     ReturnsModule,
     AlertsModule,
+    UsersModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

@@ -14,7 +14,8 @@ import {
   Settings,
   RefreshCcw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const menuItems = [
   { icon: Users, label: "Parties", href: "/parties" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: RefreshCcw, label: "Returns", href: "/returns" },
+  { icon: UserCog, label: "User Management", href: "/users" },
 ];
 
 export function Sidebar() {

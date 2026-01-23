@@ -1,40 +1,52 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Seeding data...');
+    console.log('Seeding data to Neon PostgreSQL...');
 
-    // 1. Create User
+    // 1. Create Admin User with proper hashed password
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+
     const admin = await prisma.user.upsert({
         where: { username: 'admin' },
-        update: {},
+        update: {
+            password: hashedPassword,
+        },
         create: {
             username: 'admin',
-            password: 'hashed_password_here', // In real app, hash this with bcrypt
+            password: hashedPassword,
             name: 'Administrator',
             role: 'ADMIN',
         },
     });
 
-    // 2. Create Customers
+    console.log('Admin user created/updated.');
+
+    // 2. Create Sample Customers
     await prisma.customer.createMany({
+        skipDuplicates: true,
         data: [
-            { name: 'Vikas Pharmacy', gstin: '27AAACN1234F1Z1', address: 'Sector 5, Pune', creditLimit: 50000 },
-            { name: 'Apollo Meds Ltd', gstin: '27BBBDM5678G2Z2', address: 'Industrial Area, Pune', creditLimit: 200000 },
+            { id: 'cust_1', name: 'Vikas Pharmacy', gstin: '27AAACN1234F1Z1', address: 'Sector 5, Pune', creditLimit: 50000 },
+            { id: 'cust_2', name: 'Apollo Meds Ltd', gstin: '27BBBDM5678G2Z2', address: 'Industrial Area, Pune', creditLimit: 200000 },
         ],
     });
 
-    // 3. Create Suppliers
+    // 3. Create Sample Suppliers
     await prisma.supplier.createMany({
+        skipDuplicates: true,
         data: [
-            { name: 'Cipla Pharmaceuticals', gstin: '27CIPLA1234X1Z0', address: 'Mumbai HQ' },
-            { name: 'Sun Pharma', gstin: '27SUNP1234Y1Z1', address: 'Mumbai' },
+            { id: 'sup_1', name: 'Cipla Pharmaceuticals', gstin: '27CIPLA1234X1Z0', address: 'Mumbai HQ' },
+            { id: 'sup_2', name: 'Sun Pharma', gstin: '27SUNP1234Y1Z1', address: 'Mumbai' },
         ],
     });
 
-    // 4. Create Products and Batches
-    const p1 = await prisma.product.create({
-        data: {
+    // 4. Create Sample Products
+    const p1 = await prisma.product.upsert({
+        where: { id: 'prod_1' },
+        update: {},
+        create: {
+            id: 'prod_1',
             name: 'Paracetamol 500mg',
             hsnCode: '3004',
             gstRate: 12,
@@ -44,29 +56,11 @@ async function main() {
         },
     });
 
-    await prisma.batch.createMany({
-        data: [
-            {
-                batchNumber: 'BT123',
-                expiryDate: new Date('2026-12-31'),
-                productId: p1.id,
-                currentStock: 500,
-                purchasePrice: 10,
-                salePrice: 15,
-            },
-            {
-                batchNumber: 'BT124',
-                expiryDate: new Date('2025-06-30'),
-                productId: p1.id,
-                currentStock: 200,
-                purchasePrice: 9,
-                salePrice: 14,
-            },
-        ],
-    });
-
-    const p2 = await prisma.product.create({
-        data: {
+    const p2 = await prisma.product.upsert({
+        where: { id: 'prod_2' },
+        update: {},
+        create: {
+            id: 'prod_2',
             name: 'Amoxicillin 250mg',
             hsnCode: '3004',
             gstRate: 12,
@@ -76,8 +70,24 @@ async function main() {
         },
     });
 
-    await prisma.batch.create({
-        data: {
+    // 5. Create Sample Batches
+    await prisma.batch.upsert({
+        where: { productId_batchNumber: { productId: p1.id, batchNumber: 'BT123' } },
+        update: {},
+        create: {
+            batchNumber: 'BT123',
+            expiryDate: new Date('2026-12-31'),
+            productId: p1.id,
+            currentStock: 500,
+            purchasePrice: 10,
+            salePrice: 15,
+        },
+    });
+
+    await prisma.batch.upsert({
+        where: { productId_batchNumber: { productId: p2.id, batchNumber: 'AX990' } },
+        update: {},
+        create: {
             batchNumber: 'AX990',
             expiryDate: new Date('2025-03-15'),
             productId: p2.id,
@@ -87,12 +97,12 @@ async function main() {
         },
     });
 
-    console.log('Seeding complete.');
+    console.log('Seeding complete. Use username: admin, password: admin123');
 }
 
 main()
     .catch((e) => {
-        console.error(e);
+        console.error('Seed error:', e);
         process.exit(1);
     })
     .finally(async () => {
