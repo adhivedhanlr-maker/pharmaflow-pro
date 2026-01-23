@@ -41,9 +41,9 @@ export const login = async (username: string, password: string) => {
 };
 
 export const getProducts = async () => {
-    return apiCall('/products');
+    return apiCall('/inventory/products');
 };
 
 export const getStock = async () => {
-    return apiCall('/stock');
+    return apiCall('/stock/batches');
 };

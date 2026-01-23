@@ -11,13 +11,13 @@ export class InventoryController {
     constructor(private readonly inventoryService: InventoryService) { }
 
     @Get('products')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
     findAllProducts() {
         return this.inventoryService.findAllProducts();
     }
 
     @Get('products/:id')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
     findProductById(@Param('id') id: string) {
         return this.inventoryService.findProductById(id);
     }
