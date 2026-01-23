@@ -49,7 +49,7 @@ interface Supplier {
     name: string;
 }
 
-const API_BASE = "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);

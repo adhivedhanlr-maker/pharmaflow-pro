@@ -18,6 +18,8 @@ interface Notification {
     createdAt: string;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 export function Header() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -30,7 +32,7 @@ export function Header() {
 
     const fetchNotifications = async () => {
         try {
-            const response = await fetch("http://localhost:3001/alerts");
+            const response = await fetch(`${API_BASE}/alerts`);
             if (response.ok) {
                 const data = await response.json();
                 setNotifications(data);
@@ -43,7 +45,7 @@ export function Header() {
 
     const markAsRead = async (id: string) => {
         try {
-            await fetch(`http://localhost:3001/alerts/${id}/read`, { method: "PATCH" });
+            await fetch(`${API_BASE}/alerts/${id}/read`, { method: "PATCH" });
             fetchNotifications();
         } catch (error) {
             console.error("Failed to mark notification as read:", error);
