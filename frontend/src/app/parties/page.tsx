@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -23,10 +23,10 @@ import {
     Plus,
     Filter,
     MoreVertical,
-    UserPlus,
     Building2,
     Phone,
-    FileText
+    Loader2,
+    Trash2
 } from "lucide-react";
 import {
     Tabs,
@@ -36,9 +36,49 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+interface Party {
+    id: string;
+    name: string;
+    gstin: string;
+    phone: string;
+    address: string;
+    creditLimit?: number;
+    currentBalance: number;
+}
+
+const API_BASE = "http://localhost:3001";
+
+import { cn } from "@/lib/utils";
+
 export default function PartiesPage() {
     const [activeTab, setActiveTab] = useState("customers");
+    const [parties, setParties] = useState<Party[]>([]);
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        fetchParties();
+    }, [activeTab]);
+
+    const fetchParties = async () => {
+        setLoading(true);
+        try {
+            const type = activeTab === "customers" ? "customer" : "supplier";
+            const response = await fetch(`${API_BASE}/parties?type=${type}`);
+            if (response.ok) {
+                setParties(await response.json());
+            }
+        } catch (error) {
+            console.error("Failed to fetch parties:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredParties = parties.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.gstin.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
@@ -56,12 +96,8 @@ export default function PartiesPage() {
             <Tabs defaultValue="customers" onValueChange={setActiveTab} className="space-y-6">
                 <div className="flex items-center justify-between">
                     <TabsList>
-                        <TabsTrigger value="customers" className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none">
-                            Customers
-                        </TabsTrigger>
-                        <TabsTrigger value="suppliers" className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none">
-                            Suppliers
-                        </TabsTrigger>
+                        <TabsTrigger value="customers">Customers</TabsTrigger>
+                        <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
                     </TabsList>
 
                     <div className="flex items-center gap-2">
@@ -75,13 +111,13 @@ export default function PartiesPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" size="icon">
-                            <Filter className="h-4 w-4" />
+                        <Button variant="outline" size="icon" onClick={fetchParties}>
+                            <Loader2 className={cn("h-4 w-4", loading && "animate-spin")} />
                         </Button>
                     </div>
                 </div>
 
-                <TabsContent value="customers" className="border-none p-0 outline-none">
+                <TabsContent value="customers" className="m-0">
                     <Card>
                         <CardContent className="p-0">
                             <Table>
@@ -96,48 +132,42 @@ export default function PartiesPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {/* Mock Data for Display */}
-                                    <TableRow>
-                                        <TableCell>
-                                            <div className="font-medium text-primary">Vikas Pharmacy</div>
-                                            <div className="text-xs text-muted-foreground">Pallet No. 23, Sector 5</div>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs uppercase">27AAACN1234F1Z1</TableCell>
-                                        <TableCell>+91 98765 43210</TableCell>
-                                        <TableCell className="text-right font-mono">₹50,000</TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="destructive" className="font-mono">₹12,450</Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>
-                                            <div className="font-medium text-primary">Apollo Meds Ltd</div>
-                                            <div className="text-xs text-muted-foreground">Industrial Area, Pune</div>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs uppercase">27BBBDM5678G2Z2</TableCell>
-                                        <TableCell>+91 91234 56789</TableCell>
-                                        <TableCell className="text-right font-mono">₹2,00,000</TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="outline" className="font-mono">₹0.00</Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell>
+                                        </TableRow>
+                                    ) : filteredParties.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No customers found.</TableCell>
+                                        </TableRow>
+                                    ) : filteredParties.map((p) => (
+                                        <TableRow key={p.id}>
+                                            <TableCell>
+                                                <div className="font-medium text-primary">{p.name}</div>
+                                                <div className="text-xs text-muted-foreground">{p.address}</div>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
+                                            <TableCell>{p.phone || "N/A"}</TableCell>
+                                            <TableCell className="text-right font-mono">₹{p.creditLimit?.toLocaleString() || "0"}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant={p.currentBalance > 0 ? "destructive" : "outline"} className="font-mono">
+                                                    ₹{p.currentBalance.toLocaleString()}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="suppliers" className="border-none p-0 outline-none">
+                <TabsContent value="suppliers" className="m-0">
                     <Card>
                         <CardContent className="p-0">
                             <Table>
@@ -145,28 +175,41 @@ export default function PartiesPage() {
                                     <TableRow>
                                         <TableHead>Supplier Name</TableHead>
                                         <TableHead>GSTIN</TableHead>
-                                        <TableHead>Contact Person</TableHead>
                                         <TableHead>Phone</TableHead>
+                                        <TableHead>Address</TableHead>
                                         <TableHead className="text-right">Balance</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow>
-                                        <TableCell>
-                                            <div className="font-medium text-primary">Cipla Pharmaceuticals</div>
-                                            <div className="text-xs text-muted-foreground">Mumbai HQ, Maharashtra</div>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs uppercase">27CIPLA1234X1Z0</TableCell>
-                                        <TableCell>Rajesh Kumar</TableCell>
-                                        <TableCell>+91 22 4567 8900</TableCell>
-                                        <TableCell className="text-right font-mono text-red-600">₹4,50,000</TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell>
+                                        </TableRow>
+                                    ) : filteredParties.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No suppliers found.</TableCell>
+                                        </TableRow>
+                                    ) : filteredParties.map((p) => (
+                                        <TableRow key={p.id}>
+                                            <TableCell>
+                                                <div className="font-medium text-primary">{p.name}</div>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
+                                            <TableCell>{p.phone || "N/A"}</TableCell>
+                                            <TableCell className="text-xs">{p.address}</TableCell>
+                                            <TableCell className="text-right font-mono">
+                                                <span className={p.currentBalance > 0 ? "text-red-600 font-bold" : ""}>
+                                                    ₹{p.currentBalance.toLocaleString()}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -176,3 +219,5 @@ export default function PartiesPage() {
         </div>
     );
 }
+
+

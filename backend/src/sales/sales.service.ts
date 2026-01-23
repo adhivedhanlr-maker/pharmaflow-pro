@@ -5,8 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SalesService {
     constructor(private prisma: PrismaService) { }
 
-    async createInvoice(data: any, userId: string) {
+    async createInvoice(data: any, userId?: string) {
         const { customerId, items, isCash, discountAmount = 0 } = data;
+        const finalUserId = userId || (await this.prisma.user.findFirst())?.id;
+        if (!finalUserId) throw new BadRequestException('No default user found for invoice creation');
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Customer

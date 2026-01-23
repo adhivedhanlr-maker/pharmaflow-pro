@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -21,13 +21,72 @@ import {
     Search,
     Filter,
     AlertTriangle,
-    ArrowUpDown,
+    Loader2,
     Edit2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+interface Product {
+    id: string;
+    name: string;
+    batches: {
+        id: string;
+        batchNumber: string;
+        expiryDate: string;
+        currentStock: number;
+        salePrice: number;
+    }[];
+}
+
+const API_BASE = "http://localhost:3001";
+
+import { cn } from "@/lib/utils";
+
 export default function StockPage() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        fetchStock();
+    }, []);
+
+    const fetchStock = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/inventory/products`);
+            if (response.ok) {
+                setProducts(await response.json());
+            }
+        } catch (error) {
+            console.error("Failed to fetch stock:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const allBatches = products.flatMap(p =>
+        p.batches.map(b => ({
+            ...b,
+            productName: p.name,
+            id: b.id // ensure we have unique id
+        }))
+    ).filter(b =>
+        b.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const getStatusBadge = (stock: number, expiry: string) => {
+        const expDate = new Date(expiry);
+        const today = new Date();
+        const threeMonths = new Date();
+        threeMonths.setMonth(today.getMonth() + 3);
+
+        if (expDate < today) return <Badge variant="destructive">Expired</Badge>;
+        if (stock <= 10) return <Badge variant="destructive">Low Stock</Badge>;
+        if (expDate < threeMonths) return <Badge variant="outline" className="text-orange-600 border-orange-200">Expiring Soon</Badge>;
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Healthy</Badge>;
+    };
 
     return (
         <div className="space-y-6">
@@ -38,7 +97,10 @@ export default function StockPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Export Report</Button>
-                    <Button><AlertTriangle className="mr-2 h-4 w-4" /> Low Stock Alerts</Button>
+                    <Button variant="outline" onClick={fetchStock}>
+                        <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                        Refresh
+                    </Button>
                 </div>
             </div>
 
@@ -71,36 +133,30 @@ export default function StockPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {/* Mock Data */}
-                            <TableRow>
-                                <TableCell className="font-medium text-primary">Amoxicillin 500mg</TableCell>
-                                <TableCell className="font-mono">B-2401</TableCell>
-                                <TableCell className="text-muted-foreground">Oct 2026</TableCell>
-                                <TableCell className="text-right font-bold">120 Units</TableCell>
-                                <TableCell className="text-right font-mono">₹450.00</TableCell>
-                                <TableCell className="text-right font-mono">₹54,000</TableCell>
-                                <TableCell className="text-center">
-                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Healthy</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="h-4 w-4" /></Button>
-                                </TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell className="font-medium text-primary">Paracetamol 650mg</TableCell>
-                                <TableCell className="font-mono">B-2395</TableCell>
-                                <TableCell className="text-red-500 font-medium">Feb 2026</TableCell>
-                                <TableCell className="text-right font-bold">8 Units</TableCell>
-                                <TableCell className="text-right font-mono">₹12.50</TableCell>
-                                <TableCell className="text-right font-mono">₹100</TableCell>
-                                <TableCell className="text-center space-y-1">
-                                    <Badge variant="destructive">Low Stock</Badge>
-                                    <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Expliring Soon</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="h-4 w-4" /></Button>
-                                </TableCell>
-                            </TableRow>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
+                                </TableRow>
+                            ) : allBatches.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center py-20 text-muted-foreground">No stock matching your search.</TableCell>
+                                </TableRow>
+                            ) : allBatches.map((b, idx) => (
+                                <TableRow key={`${b.id}-${idx}`}>
+                                    <TableCell className="font-medium text-primary">{b.productName}</TableCell>
+                                    <TableCell className="font-mono">{b.batchNumber}</TableCell>
+                                    <TableCell className="text-muted-foreground">{new Date(b.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</TableCell>
+                                    <TableCell className="text-right font-bold">{b.currentStock} Units</TableCell>
+                                    <TableCell className="text-right font-mono">₹{b.salePrice.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{(b.currentStock * b.salePrice).toLocaleString()}</TableCell>
+                                    <TableCell className="text-center">
+                                        {getStatusBadge(b.currentStock, b.expiryDate)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="h-4 w-4" /></Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -108,3 +164,5 @@ export default function StockPage() {
         </div>
     );
 }
+
+

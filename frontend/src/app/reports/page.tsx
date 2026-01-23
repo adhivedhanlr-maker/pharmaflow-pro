@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -23,15 +24,64 @@ import {
 import {
     TrendingUp,
     AlertOctagon,
-    PieChart,
-    FileText,
     Calendar,
-    ArrowRight
+    ArrowRight,
+    Loader2,
+    FileDown
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+interface Sale {
+    id: string;
+    netAmount: number;
+    gstAmount: number;
+    createdAt: string;
+}
+
+interface ExpiringBatch {
+    id: string;
+    batchNumber: string;
+    expiryDate: string;
+    currentStock: number;
+    salePrice: number;
+    product: { name: string };
+}
+
+const API_BASE = "http://localhost:3001";
+
+import { cn } from "@/lib/utils";
+
 export default function ReportsPage() {
+    const [sales, setSales] = useState<Sale[]>([]);
+    const [expiring, setExpiring] = useState<ExpiringBatch[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchReports();
+    }, []);
+
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const saleRes = await fetch(`${API_BASE}/sales/invoices`);
+            const expRes = await fetch(`${API_BASE}/inventory/alerts/expiring`);
+            if (saleRes.ok) setSales(await saleRes.json());
+            if (expRes.ok) setExpiring(await expRes.json());
+        } catch (error) {
+            console.error("Failed to fetch reports:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const stats = {
+        totalSales: sales.reduce((acc, s) => acc + s.netAmount, 0),
+        totalGst: sales.reduce((acc, s) => acc + s.gstAmount, 0),
+        expiryRisk: expiring.reduce((acc, b) => acc + (b.currentStock * b.salePrice), 0),
+        avgMargin: 20 // Placeholder
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -40,110 +90,69 @@ export default function ReportsPage() {
                     <p className="text-muted-foreground">Financial analytics and inventory forecasting.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline"><Calendar className="mr-2 h-4 w-4" /> Last 30 Days</Button>
-                    <Button><FileDown className="mr-2 h-4 w-4" /> Export PDF</Button>
+                    <Button variant="outline"><Calendar className="mr-2 h-4 w-4" /> Lifetime</Button>
+                    <Button onClick={() => window.print()}><FileDown className="mr-2 h-4 w-4" /> Export Report</Button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">GSTR-1 Sales</CardTitle>
+                    <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                        Total Sales
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">₹12.45L</div>
+                        <div className="text-2xl font-bold text-slate-900">₹{stats.totalSales.toLocaleString()}</div>
                         <div className="text-xs text-green-600 flex items-center mt-1">
-                            <TrendingUp className="h-3 w-3 mr-1" /> +12% from last month
+                            <TrendingUp className="h-3 w-3 mr-1" /> Real-time tracking
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">GST Collected</CardTitle>
+                    <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                        GST Collected
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">₹1.50L</div>
+                        <div className="text-2xl font-bold text-slate-900">₹{stats.totalGst.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">Total CGST + SGST</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">Expiry Risk</CardTitle>
+                <Card className="border-red-100 bg-red-50/20">
+                    <CardHeader className="pb-2 text-red-500 font-bold uppercase tracking-wider text-[10px]">
+                        Expiry Stock Value
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">₹45k</div>
+                        <div className="text-2xl font-bold text-red-600">₹{stats.expiryRisk.toLocaleString()}</div>
                         <div className="text-xs text-red-500 flex items-center mt-1">
-                            <AlertOctagon className="h-3 w-3 mr-1" /> 12 Batches in next 90 days
+                            <AlertOctagon className="h-3 w-3 mr-1" /> {expiring.length} Batches near expiry
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">Net Profit</CardTitle>
+                    <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                        Net Orders
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">₹2.80L</div>
-                        <div className="text-xs text-blue-600 mt-1">22.5% Average Margin</div>
+                        <div className="text-2xl font-bold text-slate-900">{sales.length}</div>
+                        <div className="text-xs text-blue-600 mt-1">Total invoices generated</div>
                     </CardContent>
                 </Card>
             </div>
 
-            <Tabs defaultValue="gst" className="space-y-4">
+            <Tabs defaultValue="expiry" className="space-y-4">
                 <TabsList className="bg-muted/50 p-1">
-                    <TabsTrigger value="gst" className="data-[state=active]:bg-background">GST Returns</TabsTrigger>
-                    <TabsTrigger value="expiry" className="data-[state=active]:bg-background">Expiry Forecast</TabsTrigger>
-                    <TabsTrigger value="sales" className="data-[state=active]:bg-background">Sales Analytics</TabsTrigger>
+                    <TabsTrigger value="expiry">Expiry Risk Analysis</TabsTrigger>
+                    <TabsTrigger value="sales">Recent Activity</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="gst">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Monthly GST Summary (GSTR-1)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>GST Rate</TableHead>
-                                        <TableHead className="text-right">Taxable Amount</TableHead>
-                                        <TableHead className="text-right">CGST</TableHead>
-                                        <TableHead className="text-right">SGST</TableHead>
-                                        <TableHead className="text-right">IGST</TableHead>
-                                        <TableHead className="text-right font-bold text-primary">Total Tax</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>GST 12%</TableCell>
-                                        <TableCell className="text-right font-mono">₹5,00,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹30,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹30,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹0</TableCell>
-                                        <TableCell className="text-right font-mono font-bold text-primary">₹60,000</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>GST 18%</TableCell>
-                                        <TableCell className="text-right font-mono">₹4,00,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹36,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹36,000</TableCell>
-                                        <TableCell className="text-right font-mono">₹0</TableCell>
-                                        <TableCell className="text-right font-mono font-bold text-primary">₹72,000</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
 
                 <TabsContent value="expiry">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium font-bold text-red-600">Critical Expiry Alerts (Next 90 Days)</CardTitle>
+                            <CardTitle className="text-sm font-bold text-red-600">Critical Expiry Alerts (Next 30 Days)</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
+                                    <TableRow className="bg-slate-50">
                                         <TableHead>Product</TableHead>
                                         <TableHead>Batch</TableHead>
                                         <TableHead>Expiry Date</TableHead>
@@ -153,18 +162,56 @@ export default function ReportsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow>
-                                        <TableCell className="font-medium">Vicks Action 500</TableCell>
-                                        <TableCell className="font-mono text-xs uppercase">BT-00923</TableCell>
-                                        <TableCell className="text-red-500 font-semibold">Feb 15, 2026</TableCell>
-                                        <TableCell className="text-right font-bold text-red-600">450 Strips</TableCell>
-                                        <TableCell className="text-right font-mono">₹12,600</TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="sm" className="text-primary">
-                                                Return to Supplier <ArrowRight className="ml-1 h-3 w-3" />
-                                            </Button>
-                                        </TableCell>
+                                    {loading ? (
+                                        <TableRow><TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></TableCell></TableRow>
+                                    ) : expiring.length === 0 ? (
+                                        <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No critical expiries found.</TableCell></TableRow>
+                                    ) : expiring.map((b) => (
+                                        <TableRow key={b.id}>
+                                            <TableCell className="font-medium text-slate-900">{b.product.name}</TableCell>
+                                            <TableCell className="font-mono text-xs uppercase">{b.batchNumber}</TableCell>
+                                            <TableCell className="text-red-500 font-semibold">{new Date(b.expiryDate).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right font-bold text-red-600">{b.currentStock} Units</TableCell>
+                                            <TableCell className="text-right font-mono text-slate-600">₹{(b.currentStock * b.salePrice).toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="sm" className="text-primary hover:bg-blue-50">
+                                                    Action <ArrowRight className="ml-1 h-3 w-3" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="sales">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium">Recent Transactions</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Invoice ID</TableHead>
+                                        <TableHead className="text-right">Total Amount</TableHead>
+                                        <TableHead className="text-right">Status</TableHead>
                                     </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sales.slice(0, 10).map((s) => (
+                                        <TableRow key={s.id}>
+                                            <TableCell className="text-slate-500 text-xs">{new Date(s.createdAt).toLocaleString()}</TableCell>
+                                            <TableCell className="font-mono font-bold text-slate-700">{s.id.slice(-8).toUpperCase()}</TableCell>
+                                            <TableCell className="text-right font-mono font-bold">₹{s.netAmount.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Paid</Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -175,23 +222,4 @@ export default function ReportsPage() {
     );
 }
 
-function FileDown(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" x2="12" y1="15" y2="3" />
-        </svg>
-    )
-}
+

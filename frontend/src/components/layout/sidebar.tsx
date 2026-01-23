@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Receipt,
@@ -6,7 +11,10 @@ import {
   Package,
   Users,
   BarChart3,
-  Settings
+  Settings,
+  RefreshCcw,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,38 +25,89 @@ const menuItems = [
   { icon: Package, label: "Stock", href: "/stock" },
   { icon: Users, label: "Parties", href: "/parties" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
-  { icon: Receipt, label: "Returns", href: "/returns" },
+  { icon: RefreshCcw, label: "Returns", href: "/returns" },
 ];
 
 export function Sidebar() {
+  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <div className="flex flex-col h-screen w-64 border-r bg-muted/30">
-      <div className="p-6">
-        <h1 className="text-xl font-bold text-primary">PharmaFlow Pro</h1>
+    <div className={cn(
+      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300",
+      isCollapsed ? "w-20" : "w-64"
+    )}>
+      <div className="p-6 flex items-center gap-3 border-b relative">
+        {!isCollapsed && (
+          <>
+            <Image
+              src="/pharmaflow-logo.png"
+              alt="PharmaFlow Pro"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
+            <div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                PharmaFlow
+              </h1>
+              <p className="text-[10px] text-muted-foreground font-medium">Pro Edition</p>
+            </div>
+          </>
+        )}
+        {isCollapsed && (
+          <Image
+            src="/pharmaflow-logo.png"
+            alt="PharmaFlow Pro"
+            width={32}
+            height={32}
+            className="rounded-lg mx-auto"
+          />
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all border-2 border-white z-50"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
       </div>
-      <nav className="flex-1 px-4 space-y-1">
-        {menuItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-              "hover:bg-accent hover:text-accent-foreground",
-              "text-muted-foreground"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        ))}
+      <nav className="flex-1 px-4 space-y-1 py-4">
+        {menuItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                isActive
+                  ? "bg-primary/10 text-primary shadow-sm"
+                  : "text-muted-foreground hover:bg-muted",
+                isCollapsed && "justify-center px-2"
+              )}
+              title={isCollapsed ? item.label : undefined}
+            >
+              <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary", isCollapsed && "h-5 w-5")} />
+              {!isCollapsed && <span>{item.label}</span>}
+            </Link>
+          );
+        })}
       </nav>
       <div className="p-4 border-t">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+            pathname === "/settings"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? "Settings" : undefined}
         >
-          <Settings className="h-4 w-4" />
-          Settings
+          <Settings className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
+          {!isCollapsed && <span>Settings</span>}
         </Link>
       </div>
     </div>
