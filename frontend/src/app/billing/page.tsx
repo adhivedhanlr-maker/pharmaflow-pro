@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { InvoicePrint } from "@/components/billing/invoice-print";
+import { CustomerDialog } from "@/components/billing/customer-dialog";
 
 interface BillingItem {
     id: string;
@@ -101,6 +102,70 @@ export default function BillingPage() {
         }
     };
 
+    const handleSave = async () => {
+        if (!selectedCustomerId) {
+            alert("Please select a customer");
+            return;
+        }
+        if (items.length === 0) {
+            alert("Please add items to the invoice");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const response = await fetch(`${API_BASE}/sales/invoices`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    customerId: selectedCustomerId,
+                    items: items.map(item => ({
+                        productId: item.productId,
+                        batchId: item.batchId,
+                        quantity: item.quantity
+                    })),
+                    isCash: true,
+                    discountAmount: 0
+                }),
+            });
+
+            if (response.ok) {
+                const sale = await response.json();
+                alert("Invoice saved successfully!");
+                setItems([]);
+                setSelectedCustomerId("");
+                // Trigger print here if needed
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        } catch (error) {
+            alert("Failed to save invoice");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "F2") {
+                e.preventDefault();
+                document.getElementById("add-item-trigger")?.click();
+            }
+            if (e.key === "F10") {
+                e.preventDefault();
+                handlePrint();
+            }
+            if (e.key === "F12") {
+                e.preventDefault();
+                handleSave();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleSave]); // Re-bind if save logic changes (usually stable)
+
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
         const gst = items.reduce((acc, item) => acc + item.gstAmount, 0);
@@ -157,49 +222,7 @@ export default function BillingPage() {
         }));
     };
 
-    const handleSave = async () => {
-        if (!selectedCustomerId) {
-            alert("Please select a customer");
-            return;
-        }
-        if (items.length === 0) {
-            alert("Please add items to the invoice");
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            const response = await fetch(`${API_BASE}/sales/invoices`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    customerId: selectedCustomerId,
-                    items: items.map(item => ({
-                        productId: item.productId,
-                        batchId: item.batchId,
-                        quantity: item.quantity
-                    })),
-                    isCash: true,
-                    discountAmount: 0
-                }),
-            });
-
-            if (response.ok) {
-                const sale = await response.json();
-                alert("Invoice saved successfully!");
-                setItems([]);
-                setSelectedCustomerId("");
-                // Trigger print here if needed
-            } else {
-                const error = await response.json();
-                alert(`Error: ${error.message}`);
-            }
-        } catch (error) {
-            alert("Failed to save invoice");
-        } finally {
-            setIsSaving(false);
-        }
-    };
+    // handleSave was here, moved up.
 
     const handlePrint = () => {
         if (!selectedCustomerId || items.length === 0) {
@@ -264,7 +287,14 @@ export default function BillingPage() {
                                             ))}
                                         </select>
                                     </div>
-                                    <Button variant="outline">New Customer</Button>
+                                    <CustomerDialog
+                                        type="customer"
+                                        trigger={<Button variant="outline">New Customer</Button>}
+                                        onSuccess={(newCustomer) => {
+                                            setCustomers([...customers, newCustomer]);
+                                            setSelectedCustomerId(newCustomer.id);
+                                        }}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -274,7 +304,7 @@ export default function BillingPage() {
                                 <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Invoice Items</CardTitle>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Add Item (F2)</Button>
+                                        <Button size="sm" id="add-item-trigger"><Plus className="mr-2 h-4 w-4" /> Add Item (F2)</Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="p-0" side="bottom" align="end">
                                         <Command>

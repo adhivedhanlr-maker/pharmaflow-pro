@@ -50,6 +50,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 import { cn } from "@/lib/utils";
 
+import { CustomerDialog } from "@/components/billing/customer-dialog";
+
 export default function PartiesPage() {
     const [activeTab, setActiveTab] = useState("customers");
     const [parties, setParties] = useState<Party[]>([]);
@@ -87,10 +89,10 @@ export default function PartiesPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Parties Management</h1>
                     <p className="text-muted-foreground">Manage your customers and suppliers database.</p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {activeTab === "customers" ? "New Customer" : "New Supplier"}
-                </Button>
+                <CustomerDialog
+                    type={activeTab === "customers" ? "customer" : "supplier"}
+                    onSuccess={fetchParties}
+                />
             </div>
 
             <Tabs defaultValue="customers" onValueChange={setActiveTab} className="space-y-6">
