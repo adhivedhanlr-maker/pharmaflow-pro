@@ -31,14 +31,15 @@ interface InvoicePrintProps {
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
     ({ invoiceNumber, date, customer, items, totals }, ref) => {
         return (
-            <div ref={ref} className="hidden print:block p-8 bg-white text-black font-sans max-w-[210mm] mx-auto min-h-[297mm]">
+            <div ref={ref} className="hidden print:block p-8 bg-white text-black font-sans max-w-[210mm] mx-auto min-h-[290mm]">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8 border-b-2 border-slate-800 pb-4">
                     <div className="flex items-center gap-4">
-                        {/* Placeholder for Logo - In a real app, use <img src="..." /> */}
-                        <div className="h-16 w-16 bg-slate-900 text-white flex items-center justify-center rounded-lg font-bold text-2xl">
-                            P
-                        </div>
+                        <img
+                            src="/pharmaflow-logo.png"
+                            alt="PharmaFlow Logo"
+                            className="h-16 w-16 object-contain rounded-lg"
+                        />
                         <div>
                             <h1 className="text-3xl font-bold uppercase tracking-wide text-slate-900">PharmaFlow</h1>
                             <p className="text-sm font-medium text-slate-500">Pro Edition</p>
