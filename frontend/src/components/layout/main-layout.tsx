@@ -36,13 +36,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 no-print">
+        <div className="flex h-screen overflow-hidden bg-slate-50 print:overflow-visible print:h-auto">
             {/* Desktop Sidebar */}
-            <Sidebar className="hidden md:flex" />
+            <Sidebar className="hidden md:flex no-print" />
 
-            <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex flex-col flex-1 overflow-hidden print:overflow-visible print:h-auto">
                 {/* Mobile Header with Hamburger */}
-                <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40">
+                <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40 no-print">
                     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="mr-2">
@@ -59,18 +59,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* Desktop Header / Content Container */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="hidden md:block">
+                <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible print:h-auto">
+                    <div className="hidden md:block no-print">
                         <Header />
                     </div>
 
-                    <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+                    <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 print:overflow-visible print:h-auto print:p-0">
                         {children}
                     </main>
                 </div>
 
                 {/* Mobile Bottom Navigation */}
-                <MobileNav />
+                <div className="no-print">
+                    <MobileNav />
+                </div>
             </div>
         </div>
     );
