@@ -224,7 +224,7 @@ export default function BillingPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pb-20 md:pb-0">
                 <div className="lg:col-span-3 space-y-6">
                     <Card>
                         <CardHeader className="pb-3">
@@ -279,79 +279,135 @@ export default function BillingPage() {
                             </Popover>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-slate-50/50">
-                                        <TableHead className="w-[300px]">Product Name</TableHead>
-                                        <TableHead>Batch</TableHead>
-                                        <TableHead className="text-right">Qty</TableHead>
-                                        <TableHead className="text-right">Price</TableHead>
-                                        <TableHead className="text-right">GST %</TableHead>
-                                        <TableHead className="text-right">Total</TableHead>
-                                        <TableHead className="w-[50px]"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <ShoppingCart className="h-8 w-8 opacity-20" />
-                                                    <p>No items added yet. Search products to add.</p>
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50/50">
+                                            <TableHead className="w-[300px]">Product Name</TableHead>
+                                            <TableHead>Batch</TableHead>
+                                            <TableHead className="text-right">Qty</TableHead>
+                                            <TableHead className="text-right">Price</TableHead>
+                                            <TableHead className="text-right">GST %</TableHead>
+                                            <TableHead className="text-right">Total</TableHead>
+                                            <TableHead className="w-[50px]"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {items.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <ShoppingCart className="h-8 w-8 opacity-20" />
+                                                        <p>No items added yet. Search products to add.</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : items.map((item) => (
+                                            <TableRow key={item.id} className="hover:bg-slate-50/30">
+                                                <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
+                                                <TableCell>
+                                                    <select
+                                                        className="text-xs font-semibold bg-slate-100 rounded px-2 py-1 border-none focus:ring-1 focus:ring-primary"
+                                                        value={item.batchId}
+                                                        onChange={(e) => updateItem(item.id, 'batchId', e.target.value)}
+                                                    >
+                                                        {products.find(p => p.id === item.productId)?.batches.map(b => (
+                                                            <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>
+                                                        ))}
+                                                    </select>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Input
+                                                        type="number"
+                                                        className="h-8 w-20 ml-auto text-right font-semibold"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-slate-600">
+                                                    ₹{item.unitPrice.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell className="text-right p-4 font-mono text-sm text-slate-400">
+                                                    {item.gstRate}%
+                                                </TableCell>
+                                                <TableCell className="text-right font-black font-mono text-slate-900">
+                                                    ₹{(item.total + item.gstAmount).toFixed(2)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => removeItem(item.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-4 p-4 bg-slate-50">
+                                {items.length === 0 ? (
+                                    <div className="text-center py-10 text-muted-foreground bg-white rounded-lg border border-dashed">
+                                        <ShoppingCart className="h-8 w-8 opacity-20 mx-auto mb-2" />
+                                        <p>No items added yet</p>
+                                    </div>
+                                ) : items.map((item) => (
+                                    <div key={item.id} className="bg-white p-4 rounded-lg border shadow-sm space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-slate-900">{item.name}</h4>
+                                                <div className="ttext-xs text-slate-500 mt-1 flex gap-2">
+                                                    <Badge variant="outline" className="text-[10px] h-5">Batch: {item.batchNumber}</Badge>
+                                                    <Badge variant="secondary" className="text-[10px] h-5">GST: {item.gstRate}%</Badge>
                                                 </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : items.map((item) => (
-                                        <TableRow key={item.id} className="hover:bg-slate-50/30">
-                                            <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
-                                            <TableCell>
-                                                <select
-                                                    className="text-xs font-semibold bg-slate-100 rounded px-2 py-1 border-none focus:ring-1 focus:ring-primary"
-                                                    value={item.batchId}
-                                                    onChange={(e) => updateItem(item.id, 'batchId', e.target.value)}
-                                                >
-                                                    {products.find(p => p.id === item.productId)?.batches.map(b => (
-                                                        <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>
-                                                    ))}
-                                                </select>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Input
-                                                    type="number"
-                                                    className="h-8 w-20 ml-auto text-right font-semibold"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="text-right font-mono text-slate-600">
-                                                ₹{item.unitPrice.toFixed(2)}
-                                            </TableCell>
-                                            <TableCell className="text-right p-4 font-mono text-sm text-slate-400">
-                                                {item.gstRate}%
-                                            </TableCell>
-                                            <TableCell className="text-right font-black font-mono text-slate-900">
-                                                ₹{(item.total + item.gstAmount).toFixed(2)}
-                                            </TableCell>
-                                            <TableCell>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive -mt-2 -mr-2"
+                                                onClick={() => removeItem(item.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-md">
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <span className="text-xs font-semibold text-slate-500">Qty:</span>
                                                 <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeItem(item.id)}
+                                                    variant="outline" size="icon" className="h-7 w-7 bg-white"
+                                                    onClick={() => updateItem(item.id, 'quantity', Math.max(1, item.quantity - 1))}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    -
                                                 </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                <span className="w-8 text-center font-bold">{item.quantity}</span>
+                                                <Button
+                                                    variant="outline" size="icon" className="h-7 w-7 bg-white"
+                                                    onClick={() => updateItem(item.id, 'quantity', item.quantity + 1)}
+                                                >
+                                                    +
+                                                </Button>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-xs text-slate-400">Total</div>
+                                                <div className="font-bold font-mono">₹{(item.total + item.gstAmount).toFixed(2)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 <div className="space-y-6">
-                    <Card className="bg-slate-900 text-white border-none shadow-xl">
+                    <Card className="bg-slate-900 text-white border-none shadow-xl hidden md:block">
                         <CardHeader>
                             <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bill Summary</CardTitle>
                         </CardHeader>
@@ -374,6 +430,18 @@ export default function BillingPage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Mobile Sticky Footer for Summary */}
+                    <div className="md:hidden fixed bottom-[60px] left-0 right-0 bg-slate-900 text-white p-4 border-t border-slate-800 flex justify-between items-center z-30 shadow-[0_-5px_10px_rgba(0,0,0,0.1)]">
+                        <div>
+                            <div className="text-xs text-slate-400 uppercase">Net Payable</div>
+                            <div className="text-xl font-black text-blue-400 font-mono">₹{totals.net.toFixed(2)}</div>
+                        </div>
+                        <Button onClick={handleSave} disabled={isSaving} size="sm" className="bg-blue-600 hover:bg-blue-500">
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save
+                        </Button>
+                    </div>
 
                     <Card className="border-slate-200">
                         <CardHeader className="pb-3">

@@ -30,14 +30,20 @@ const menuItems = [
   { icon: UserCog, label: "User Management", href: "/users" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className={cn(
       "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300",
-      isCollapsed ? "w-20" : "w-64"
+      isCollapsed ? "w-20" : "w-64",
+      className
     )}>
       <div className="p-6 flex items-center gap-3 border-b relative">
         {!isCollapsed && (
@@ -66,21 +72,24 @@ export function Sidebar() {
             className="rounded-lg mx-auto"
           />
         )}
+
+        {/* Only show collapse button on desktop */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all border-2 border-white z-50"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-blue-600 text-white md:flex hidden items-center justify-center shadow-lg hover:bg-blue-700 transition-all border-2 border-white z-50"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
-      <nav className="flex-1 px-4 space-y-1 py-4">
+      <nav className="flex-1 px-4 space-y-1 py-4 overflow-y-auto">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
                 isActive
@@ -99,6 +108,7 @@ export function Sidebar() {
       <div className="p-4 border-t">
         <Link
           href="/settings"
+          onClick={onNavigate}
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
             pathname === "/settings"
