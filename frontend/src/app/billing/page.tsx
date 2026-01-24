@@ -48,6 +48,7 @@ interface BillingItem {
     batchNumber: string;
     quantity: number;
     unitPrice: number;
+    freeQuantity: number;
     gstRate: number;
     gstAmount: number;
     total: number;
@@ -122,10 +123,11 @@ export default function BillingPage() {
                     items: items.map(item => ({
                         productId: item.productId,
                         batchId: item.batchId,
-                        quantity: item.quantity
+                        quantity: item.quantity + (item.freeQuantity || 0)
                     })),
                     isCash: true,
-                    discountAmount: 0
+                    // Discount logic: If free items exist, treating their value as discount
+                    discountAmount: items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0)
                 }),
             });
 
@@ -187,6 +189,7 @@ export default function BillingPage() {
             batchId: defaultBatch.id,
             batchNumber: defaultBatch.batchNumber,
             quantity: 1,
+            freeQuantity: 0,
             unitPrice: defaultBatch.salePrice,
             gstRate: product.gstRate,
             gstAmount: (defaultBatch.salePrice * product.gstRate) / 100,
@@ -337,6 +340,7 @@ export default function BillingPage() {
                                                 <TableHead className="w-[300px]">Product Name</TableHead>
                                                 <TableHead>Batch</TableHead>
                                                 <TableHead className="text-right">Qty</TableHead>
+                                                <TableHead className="text-right">Free</TableHead>
                                                 <TableHead className="text-right">Price</TableHead>
                                                 <TableHead className="text-right">GST %</TableHead>
                                                 <TableHead className="text-right">Total</TableHead>
@@ -373,6 +377,15 @@ export default function BillingPage() {
                                                             className="h-8 w-20 ml-auto text-right font-semibold"
                                                             value={item.quantity}
                                                             onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Input
+                                                            type="number"
+                                                            className="h-8 w-16 ml-auto text-right font-semibold text-green-600 bg-green-50"
+                                                            placeholder="0"
+                                                            value={item.freeQuantity}
+                                                            onChange={(e) => updateItem(item.id, 'freeQuantity', parseInt(e.target.value) || 0)}
                                                         />
                                                     </TableCell>
                                                     <TableCell className="text-right font-mono text-slate-600">
@@ -471,8 +484,10 @@ export default function BillingPage() {
                                     <span className="font-mono">₹{totals.gst.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm border-b border-slate-800 pb-4">
-                                    <span className="text-slate-400">Discount:</span>
-                                    <span className="font-mono text-red-400">-₹0.00</span>
+                                    <span className="text-slate-400">Discount (Bulk Offers):</span>
+                                    <span className="font-mono text-red-400">
+                                        -₹{items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0).toFixed(2)}
+                                    </span>
                                 </div>
                                 <div className="pt-2 flex justify-between items-end">
                                     <span className="text-sm font-bold uppercase text-slate-400">Net Payable</span>
@@ -524,8 +539,15 @@ export default function BillingPage() {
                     id: item.id,
                     name: item.name,
                     batchNumber: item.batchNumber,
-                    quantity: item.quantity,
+                    quantity: item.quantity, // Print only billed quantity? Or "10 + 2"?
+                    // Let's pass a description string or modifying quantity display in print
+                    // For now, let's keep it simple: quantity is Billed Qty. Free is separate line or note? 
+                    // Better: Pass "Net Qty" or "10 + 2" string to print?
+                    // The interface expects number. Let's send billed quantity, and Handle free in print component.
+                    // Wait, InvoicePrint props need update to support freeQuantity.
+                    // For now, let's just pass quantity as is (paid qty) and update print component next.
                     unitPrice: item.unitPrice,
+                    freeQuantity: item.freeQuantity || 0,
                     gstRate: item.gstRate,
                     gstAmount: item.gstAmount,
                     total: item.total

@@ -16,6 +16,7 @@ interface InvoicePrintProps {
         batchNumber: string;
         expiryDate?: string;
         quantity: number;
+        freeQuantity?: number;
         unitPrice: number;
         gstRate: number;
         gstAmount: number;
@@ -31,7 +32,7 @@ interface InvoicePrintProps {
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
     ({ invoiceNumber, date, customer, items, totals }, ref) => {
         return (
-            <div ref={ref} className="hidden print:block p-8 bg-white text-black font-sans max-w-[210mm] mx-auto min-h-[290mm]">
+            <div ref={ref} className="hidden print:block p-6 bg-white text-black font-sans max-w-[210mm] mx-auto h-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8 border-b-2 border-slate-800 pb-4">
                     <div className="flex items-center gap-4">
@@ -102,7 +103,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                     <p className="text-[10px] text-slate-500">HSN: 3004</p>
                                 </td>
                                 <td className="py-3 text-slate-600">{item.batchNumber}</td>
-                                <td className="py-3 text-right font-medium">{item.quantity}</td>
+                                <td className="py-3 text-right font-medium">
+                                    {item.quantity}
+                                    {item.freeQuantity ? <span className="text-xs text-slate-500"> + {item.freeQuantity}</span> : null}
+                                </td>
                                 <td className="py-3 text-right text-slate-600">{item.unitPrice.toFixed(2)}</td>
                                 <td className="py-3 text-right text-xs text-slate-500">{item.gstRate}%</td>
                                 <td className="py-3 text-right font-bold text-slate-900">

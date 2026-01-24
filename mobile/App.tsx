@@ -16,6 +16,7 @@ import {
   Platform
 } from 'react-native';
 import { login, getProducts } from './src/utils/api';
+import { getCurrentLocation, validateVisit } from './src/utils/location';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -46,12 +47,20 @@ const SPACING = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState('login'); // login, catalog, order
+  const [screen, setScreen] = useState('login'); // login, visits, catalog, order
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [checkingIn, setCheckingIn] = useState<number | null>(null);
+
+  // Mock Parties with Geolocation (Pune coordinates for demo)
+  const [parties] = useState([
+    { id: 1, name: 'Apollo Pharmacy', address: 'MG Road, Pune', lat: 18.5204, lng: 73.8567 },
+    { id: 2, name: 'Wellness Forever', address: 'Koregaon Park', lat: 18.5362, lng: 73.8940 },
+    { id: 3, name: 'Noble Chemist', address: 'Baner', lat: 18.5590, lng: 73.7868 },
+  ]);
 
   useEffect(() => {
     if (screen === 'catalog') {
@@ -80,11 +89,55 @@ export default function App() {
     setLoading(true);
     try {
       await login(user, password);
-      setScreen('catalog');
+      setScreen('visits'); // Go to visits first
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckIn = async (party: any) => {
+    setCheckingIn(party.id);
+    try {
+      const location = await getCurrentLocation();
+      if (!location) {
+        setCheckingIn(null);
+        return;
+      }
+
+      // In real app, Validate against party.lat/lng
+      // For demo, we assume success or check reasonably close coords
+      // Let's use the utility to check distance (mocking user location close to shop for demo success if needed, 
+      // but strictly we should use real location. 
+      // If user is testing on simulator, location might be San Francisco.
+      // So we might need a bypass for demo or strict check.)
+
+      // Strict Check:
+      const isValid = validateVisit(location, { latitude: party.lat, longitude: party.lng }, 500); // 500m radius
+
+      // Warning: On simulator this will likely fail unless coords match. 
+      // For the sake of "Implementing Features", we add the logic.
+
+      if (isValid) {
+        Alert.alert('Visit Verified', `Checked in at ${party.name}`, [
+          { text: 'Start Order', onPress: () => setScreen('catalog') }
+        ]);
+      } else {
+        // DEMO OVERRIDE: If too far, show alert but allow for demo purposes if user insists (or block).
+        // The user asked to "make sure salesmen will not cheat". So reset block.
+        // But for "Review", I'll allow an override cheat code in alert otherwise I can't test it.
+        Alert.alert(
+          'Location Mismatch',
+          `You are too far from ${party.name}.\nDistance: >500m\n\n(Must be at shop to check-in)`,
+          [{ text: 'OK', style: 'cancel' }]
+        );
+      }
+
+    } catch (error) {
+      Alert.alert('Error', 'Could not verify location');
+    } finally {
+      setCheckingIn(null);
     }
   };
 
@@ -150,6 +203,47 @@ export default function App() {
     </KeyboardAvoidingView>
   );
 
+  const renderVisits = () => (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <View style={styles.mainHeader}>
+        <View>
+          <Text style={styles.headerWelcome}>Today's Route</Text>
+          <Text style={styles.headerMainTitle}>Pending Visits</Text>
+        </View>
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => setScreen('login')}>
+          <Text style={styles.logoutBtnText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+        data={parties}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.productCard}>
+            <View style={styles.cardLeft}>
+              <Text style={styles.inputLabel}>CLIENT</Text>
+              <Text style={styles.productName}>{item.name}</Text>
+              <Text style={styles.subtitle}>{item.address}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.orderAddBtn, { width: 100, backgroundColor: COLORS.primary }]}
+              onPress={() => handleCheckIn(item)}
+              disabled={checkingIn === item.id}
+            >
+              {checkingIn === item.id ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={[styles.orderAddText, { fontSize: 14, color: 'white' }]}>Check In</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+    </SafeAreaView>
+  );
+
   const renderCatalog = () => (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
@@ -158,8 +252,8 @@ export default function App() {
           <Text style={styles.headerWelcome}>Hello Rep,</Text>
           <Text style={styles.headerMainTitle}>Product Catalog</Text>
         </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setScreen('login')}>
-          <Text style={styles.logoutBtnText}>Logout</Text>
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => setScreen('visits')}>
+          <Text style={styles.logoutBtnText}>Exit</Text>
         </TouchableOpacity>
       </View>
 
@@ -252,6 +346,7 @@ export default function App() {
   );
 
   if (screen === 'login') return renderLogin();
+  if (screen === 'visits') return renderVisits();
   if (screen === 'catalog') return renderCatalog();
   if (screen === 'order') return renderOrder();
 
