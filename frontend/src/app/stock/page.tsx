@@ -41,11 +41,14 @@ interface Product {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 import { cn } from "@/lib/utils";
+import { EditStockDialog } from "@/components/stock/edit-stock-dialog";
 
 export default function StockPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [editingBatch, setEditingBatch] = useState<any>(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
 
     useEffect(() => {
         fetchStock();
@@ -157,7 +160,10 @@ export default function StockPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
-                                            onClick={() => alert("Edit Stock Feature coming soon!")}
+                                            onClick={() => {
+                                                setEditingBatch(b);
+                                                setEditDialogOpen(true);
+                                            }}
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </Button>
@@ -168,6 +174,13 @@ export default function StockPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <EditStockDialog
+                batch={editingBatch}
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                onSuccess={fetchStock}
+            />
         </div>
     );
 }
