@@ -6,24 +6,24 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('parties')
-//@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PartiesController {
     constructor(private readonly partiesService: PartiesService) { }
 
     @Get('customers')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     findAllCustomers() {
         return this.partiesService.findAllCustomers();
     }
 
     @Get('customers/search')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
     searchCustomers(@Query('q') query: string) {
         return this.partiesService.searchCustomers(query);
     }
 
     @Post('customers')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     createCustomer(@Body() data: any) {
         return this.partiesService.createCustomer(data);
     }

@@ -197,6 +197,7 @@ export default function ReportsPage() {
                                     <TableRow className="bg-slate-50">
                                         <TableHead>Date</TableHead>
                                         <TableHead>Invoice ID</TableHead>
+                                        <TableHead>Sold By</TableHead>
                                         <TableHead className="text-right">Total Amount</TableHead>
                                         <TableHead className="text-right">Status</TableHead>
                                     </TableRow>
@@ -206,6 +207,16 @@ export default function ReportsPage() {
                                         <TableRow key={s.id}>
                                             <TableCell className="text-slate-500 text-xs">{new Date(s.createdAt).toLocaleString()}</TableCell>
                                             <TableCell className="font-mono font-bold text-slate-700">{s.id.slice(-8).toUpperCase()}</TableCell>
+                                            <TableCell className="text-xs">
+                                                {s.user ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-slate-900">{s.user.name}</span>
+                                                        <span className="text-[10px] text-slate-500 lowercase">{s.user.role.replace('_', ' ')}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400 italic">Unknown</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-right font-mono font-bold">₹{s.netAmount.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Paid</Badge>

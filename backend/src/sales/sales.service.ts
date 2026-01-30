@@ -105,7 +105,11 @@ export class SalesService {
 
     async findAll() {
         return this.prisma.sale.findMany({
-            include: { customer: true, items: { include: { product: true, batch: true } } },
+            include: {
+                customer: true,
+                items: { include: { product: true, batch: true } },
+                user: { select: { name: true, role: true } }
+            },
             orderBy: { createdAt: 'desc' },
         });
     }

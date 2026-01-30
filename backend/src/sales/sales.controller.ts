@@ -6,12 +6,12 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('sales')
-//@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class SalesController {
     constructor(private readonly salesService: SalesService) { }
 
     @Post('invoices')
-    //@Roles(Role.ADMIN, Role.BILLING_OPERATOR)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
     createInvoice(@Body() data: any, @Request() req: any) {
         return this.salesService.createInvoice(data, req.user?.userId);
     }
