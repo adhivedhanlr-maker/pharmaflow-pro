@@ -26,7 +26,8 @@ import {
     Building2,
     Phone,
     Loader2,
-    Trash2
+    Trash2,
+    Edit
 } from "lucide-react";
 import {
     Tabs,
@@ -35,6 +36,12 @@ import {
     TabsTrigger
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Party {
     id: string;
@@ -78,6 +85,29 @@ export default function PartiesPage() {
             console.error("Failed to fetch parties:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+
+        try {
+            const endpoint = activeTab === "customers" ? "customers" : "suppliers";
+            const response = await fetch(`${API_BASE}/parties/${endpoint}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+
+            if (response.ok) {
+                fetchParties(); // Refresh list
+            } else {
+                alert('Failed to delete. This party may have associated transactions.');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete party');
         }
     };
 
@@ -161,9 +191,26 @@ export default function PartiesPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => alert('Edit functionality coming soon')}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleDelete(p.id, p.name)}
+                                                            className="text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -210,9 +257,26 @@ export default function PartiesPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => alert('Edit functionality coming soon')}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleDelete(p.id, p.name)}
+                                                            className="text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))}

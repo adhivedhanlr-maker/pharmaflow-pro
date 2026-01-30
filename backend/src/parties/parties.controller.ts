@@ -40,4 +40,16 @@ export class PartiesController {
     createSupplier(@Body() data: any) {
         return this.partiesService.createSupplier(data);
     }
+
+    @Put('customers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    updateCustomer(@Param('id') id: string, @Body() data: any) {
+        return this.partiesService.updateCustomer(id, data);
+    }
+
+    @Put('suppliers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    updateSupplier(@Param('id') id: string, @Body() data: any) {
+        return this.partiesService.updateSupplier(id, data);
+    }
 }
