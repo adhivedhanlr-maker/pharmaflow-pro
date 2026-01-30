@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
+import { usePasswordStrength } from "@/hooks/use-password-strength";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -168,12 +169,9 @@ export default function UsersPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Password</label>
-                                <Input
-                                    type="password"
-                                    placeholder="Minimum 6 characters"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    required
+                                <PasswordInput
+                                    password={formData.password}
+                                    onChange={(val) => setFormData({ ...formData, password: val })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -267,6 +265,55 @@ export default function UsersPage() {
                     </Table>
                 </CardContent>
             </Card>
+        </div>
+    );
+}
+
+// Password Input Component with Strength Indicator
+function PasswordInput({ password, onChange }: { password: string; onChange: (val: string) => void }) {
+    const strength = usePasswordStrength(password);
+
+    const getStrengthColor = () => {
+        switch (strength.level) {
+            case 'strong': return 'bg-green-500';
+            case 'medium': return 'bg-yellow-500';
+            default: return 'bg-red-500';
+        }
+    };
+
+    const getStrengthWidth = () => {
+        return `${(strength.score / 5) * 100}%`;
+    };
+
+    return (
+        <div className="space-y-2">
+            <Input
+                type="password"
+                placeholder="Enter strong password"
+                value={password}
+                onChange={(e) => onChange(e.target.value)}
+                required
+            />
+            {password && (
+                <>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full transition-all duration-300 ${getStrengthColor()}`}
+                            style={{ width: getStrengthWidth() }}
+                        />
+                    </div>
+                    {strength.feedback.length > 0 && (
+                        <ul className="text-xs text-slate-500 space-y-0.5">
+                            {strength.feedback.map((item, idx) => (
+                                <li key={idx}>• {item}</li>
+                            ))}
+                        </ul>
+                    )}
+                    {strength.level === 'strong' && (
+                        <p className="text-xs text-green-600 font-medium">✓ Strong password</p>
+                    )}
+                </>
+            )}
         </div>
     );
 }

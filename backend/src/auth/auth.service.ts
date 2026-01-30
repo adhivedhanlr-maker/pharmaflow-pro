@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
+import { PasswordValidator } from './password-validator';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,15 @@ export class AuthService {
     ) { }
 
     async register(data: any) {
+        // Validate password strength
+        const validation = PasswordValidator.validate(data.password);
+        if (!validation.isValid) {
+            throw new BadRequestException({
+                message: 'Password does not meet requirements',
+                errors: validation.errors
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(data.password, 10);
         try {
             const user = await this.prisma.user.create({
