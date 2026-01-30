@@ -5,56 +5,56 @@ const prisma = new PrismaClient();
 
 // Realistic pharmaceutical products
 const PRODUCTS = [
-    { name: 'Paracetamol 500mg', manufacturer: 'Cipla', hsn: '30049099' },
-    { name: 'Amoxicillin 250mg', manufacturer: 'Sun Pharma', hsn: '30042000' },
-    { name: 'Azithromycin 500mg', manufacturer: 'Lupin', hsn: '30042000' },
-    { name: 'Ciprofloxacin 500mg', manufacturer: 'Dr. Reddy\'s', hsn: '30042000' },
-    { name: 'Metformin 500mg', manufacturer: 'USV', hsn: '30049099' },
-    { name: 'Atorvastatin 10mg', manufacturer: 'Torrent', hsn: '30049099' },
-    { name: 'Amlodipine 5mg', manufacturer: 'Alkem', hsn: '30049099' },
-    { name: 'Omeprazole 20mg', manufacturer: 'Cadila', hsn: '30049099' },
-    { name: 'Pantoprazole 40mg', manufacturer: 'Alembic', hsn: '30049099' },
-    { name: 'Cetirizine 10mg', manufacturer: 'Mankind', hsn: '30049099' },
-    { name: 'Montelukast 10mg', manufacturer: 'Glenmark', hsn: '30049099' },
-    { name: 'Levocetrizine 5mg', manufacturer: 'Intas', hsn: '30049099' },
-    { name: 'Diclofenac 50mg', manufacturer: 'Ipca', hsn: '30049099' },
-    { name: 'Ibuprofen 400mg', manufacturer: 'Abbott', hsn: '30049099' },
-    { name: 'Aspirin 75mg', manufacturer: 'Bayer', hsn: '30049099' },
-    { name: 'Clopidogrel 75mg', manufacturer: 'Piramal', hsn: '30049099' },
-    { name: 'Losartan 50mg', manufacturer: 'Micro Labs', hsn: '30049099' },
-    { name: 'Telmisartan 40mg', manufacturer: 'Macleods', hsn: '30049099' },
-    { name: 'Ramipril 5mg', manufacturer: 'Sanofi', hsn: '30049099' },
-    { name: 'Glimepiride 2mg', manufacturer: 'Wockhardt', hsn: '30049099' },
-    { name: 'Insulin Glargine 100IU', manufacturer: 'Biocon', hsn: '30043100' },
-    { name: 'Salbutamol Inhaler', manufacturer: 'GSK', hsn: '30049099' },
-    { name: 'Budesonide Inhaler', manufacturer: 'AstraZeneca', hsn: '30049099' },
-    { name: 'Ranitidine 150mg', manufacturer: 'Aurobindo', hsn: '30049099' },
-    { name: 'Domperidone 10mg', manufacturer: 'Ajanta', hsn: '30049099' },
-    { name: 'Ondansetron 4mg', manufacturer: 'Natco', hsn: '30049099' },
-    { name: 'Tramadol 50mg', manufacturer: 'Zydus', hsn: '30042000' },
-    { name: 'Gabapentin 300mg', manufacturer: 'Hetero', hsn: '30049099' },
-    { name: 'Pregabalin 75mg', manufacturer: 'Strides', hsn: '30049099' },
-    { name: 'Vitamin D3 60000IU', manufacturer: 'Mankind', hsn: '30049099' },
-    { name: 'Calcium Carbonate 500mg', manufacturer: 'Cipla', hsn: '30049099' },
-    { name: 'Multivitamin Tablets', manufacturer: 'HealthKart', hsn: '30049099' },
-    { name: 'Folic Acid 5mg', manufacturer: 'Sun Pharma', hsn: '30049099' },
-    { name: 'Iron Tablets', manufacturer: 'Lupin', hsn: '30049099' },
-    { name: 'Zinc Tablets 50mg', manufacturer: 'Dr. Reddy\'s', hsn: '30049099' },
-    { name: 'Cough Syrup 100ml', manufacturer: 'Dabur', hsn: '30049099' },
-    { name: 'Antacid Syrup 200ml', manufacturer: 'Himalaya', hsn: '30049099' },
-    { name: 'Betadine Solution 100ml', manufacturer: 'Win Medicare', hsn: '30049099' },
-    { name: 'Dettol Liquid 500ml', manufacturer: 'Reckitt', hsn: '30049099' },
-    { name: 'Hand Sanitizer 500ml', manufacturer: 'Lifebuoy', hsn: '30049099' },
-    { name: 'Surgical Mask (Box of 50)', manufacturer: '3M', hsn: '63079000' },
-    { name: 'N95 Mask (Box of 20)', manufacturer: 'Venus', hsn: '63079000' },
-    { name: 'Disposable Gloves (Box of 100)', manufacturer: 'Kimberly Clark', hsn: '40151900' },
-    { name: 'Digital Thermometer', manufacturer: 'Omron', hsn: '90251100' },
-    { name: 'BP Monitor', manufacturer: 'Dr. Morepen', hsn: '90189000' },
-    { name: 'Glucometer', manufacturer: 'Accu-Chek', hsn: '90271000' },
-    { name: 'Glucose Test Strips (50)', manufacturer: 'OneTouch', hsn: '90271000' },
-    { name: 'Insulin Syringes (Box of 10)', manufacturer: 'BD', hsn: '90183100' },
-    { name: 'Cotton Wool 100g', manufacturer: 'Johnson & Johnson', hsn: '30059000' },
-    { name: 'Bandage Roll 6cm', manufacturer: 'Hansaplast', hsn: '30059000' },
+    { name: 'Paracetamol 500mg', company: 'Cipla', hsn: '30049099', mrp: 15 },
+    { name: 'Amoxicillin 250mg', company: 'Sun Pharma', hsn: '30042000', mrp: 120 },
+    { name: 'Azithromycin 500mg', company: 'Lupin', hsn: '30042000', mrp: 250 },
+    { name: 'Ciprofloxacin 500mg', company: 'Dr. Reddy\'s', hsn: '30042000', mrp: 180 },
+    { name: 'Metformin 500mg', company: 'USV', hsn: '30049099', mrp: 45 },
+    { name: 'Atorvastatin 10mg', company: 'Torrent', hsn: '30049099', mrp: 95 },
+    { name: 'Amlodipine 5mg', company: 'Alkem', hsn: '30049099', mrp: 65 },
+    { name: 'Omeprazole 20mg', company: 'Cadila', hsn: '30049099', mrp: 75 },
+    { name: 'Pantoprazole 40mg', company: 'Alembic', hsn: '30049099', mrp: 85 },
+    { name: 'Cetirizine 10mg', company: 'Mankind', hsn: '30049099', mrp: 25 },
+    { name: 'Montelukast 10mg', company: 'Glenmark', hsn: '30049099', mrp: 145 },
+    { name: 'Levocetrizine 5mg', company: 'Intas', hsn: '30049099', mrp: 55 },
+    { name: 'Diclofenac 50mg', company: 'Ipca', hsn: '30049099', mrp: 35 },
+    { name: 'Ibuprofen 400mg', company: 'Abbott', hsn: '30049099', mrp: 45 },
+    { name: 'Aspirin 75mg', company: 'Bayer', hsn: '30049099', mrp: 25 },
+    { name: 'Clopidogrel 75mg', company: 'Piramal', hsn: '30049099', mrp: 195 },
+    { name: 'Losartan 50mg', company: 'Micro Labs', hsn: '30049099', mrp: 125 },
+    { name: 'Telmisartan 40mg', company: 'Macleods', hsn: '30049099', mrp: 135 },
+    { name: 'Ramipril 5mg', company: 'Sanofi', hsn: '30049099', mrp: 115 },
+    { name: 'Glimepiride 2mg', company: 'Wockhardt', hsn: '30049099', mrp: 85 },
+    { name: 'Insulin Glargine 100IU', company: 'Biocon', hsn: '30043100', mrp: 850 },
+    { name: 'Salbutamol Inhaler', company: 'GSK', hsn: '30049099', mrp: 165 },
+    { name: 'Budesonide Inhaler', company: 'AstraZeneca', hsn: '30049099', mrp: 285 },
+    { name: 'Ranitidine 150mg', company: 'Aurobindo', hsn: '30049099', mrp: 35 },
+    { name: 'Domperidone 10mg', company: 'Ajanta', hsn: '30049099', mrp: 45 },
+    { name: 'Ondansetron 4mg', company: 'Natco', hsn: '30049099', mrp: 75 },
+    { name: 'Tramadol 50mg', company: 'Zydus', hsn: '30042000', mrp: 95 },
+    { name: 'Gabapentin 300mg', company: 'Hetero', hsn: '30049099', mrp: 125 },
+    { name: 'Pregabalin 75mg', company: 'Strides', hsn: '30049099', mrp: 185 },
+    { name: 'Vitamin D3 60000IU', company: 'Mankind', hsn: '30049099', mrp: 55 },
+    { name: 'Calcium Carbonate 500mg', company: 'Cipla', hsn: '30049099', mrp: 65 },
+    { name: 'Multivitamin Tablets', company: 'HealthKart', hsn: '30049099', mrp: 295 },
+    { name: 'Folic Acid 5mg', company: 'Sun Pharma', hsn: '30049099', mrp: 25 },
+    { name: 'Iron Tablets', company: 'Lupin', hsn: '30049099', mrp: 45 },
+    { name: 'Zinc Tablets 50mg', company: 'Dr. Reddy\'s', hsn: '30049099', mrp: 35 },
+    { name: 'Cough Syrup 100ml', company: 'Dabur', hsn: '30049099', mrp: 85 },
+    { name: 'Antacid Syrup 200ml', company: 'Himalaya', hsn: '30049099', mrp: 95 },
+    { name: 'Betadine Solution 100ml', company: 'Win Medicare', hsn: '30049099', mrp: 125 },
+    { name: 'Dettol Liquid 500ml', company: 'Reckitt', hsn: '30049099', mrp: 145 },
+    { name: 'Hand Sanitizer 500ml', company: 'Lifebuoy', hsn: '30049099', mrp: 95 },
+    { name: 'Surgical Mask (Box of 50)', company: '3M', hsn: '63079000', mrp: 450 },
+    { name: 'N95 Mask (Box of 20)', company: 'Venus', hsn: '63079000', mrp: 850 },
+    { name: 'Disposable Gloves (Box of 100)', company: 'Kimberly Clark', hsn: '40151900', mrp: 650 },
+    { name: 'Digital Thermometer', company: 'Omron', hsn: '90251100', mrp: 295 },
+    { name: 'BP Monitor', company: 'Dr. Morepen', hsn: '90189000', mrp: 1250 },
+    { name: 'Glucometer', company: 'Accu-Chek', hsn: '90271000', mrp: 950 },
+    { name: 'Glucose Test Strips (50)', company: 'OneTouch', hsn: '90271000', mrp: 850 },
+    { name: 'Insulin Syringes (Box of 10)', company: 'BD', hsn: '90183100', mrp: 185 },
+    { name: 'Cotton Wool 100g', company: 'Johnson & Johnson', hsn: '30059000', mrp: 65 },
+    { name: 'Bandage Roll 6cm', company: 'Hansaplast', hsn: '30059000', mrp: 45 },
 ];
 
 const CUSTOMERS = [
@@ -116,10 +116,10 @@ function generateBatchNumber() {
 async function seed() {
     console.log('🌱 Starting seed...');
 
-    // Clear existing data (optional - comment out if you want to keep existing data)
+    // Clear existing data
     console.log('🗑️  Clearing existing data...');
     await prisma.saleReturnItem.deleteMany();
-    await prisma.salesReturn.deleteMany();
+    await prisma.saleReturn.deleteMany();
     await prisma.purchaseReturnItem.deleteMany();
     await prisma.purchaseReturn.deleteMany();
     await prisma.saleItem.deleteMany();
@@ -136,7 +136,7 @@ async function seed() {
     console.log('👥 Creating users...');
     const hashedPassword = await bcrypt.hash('Admin@123', 10);
 
-    const admin = await prisma.user.create({
+    await prisma.user.create({
         data: {
             username: 'admin',
             password: hashedPassword,
@@ -188,8 +188,10 @@ async function seed() {
         const product = await prisma.product.create({
             data: {
                 name: prod.name,
-                manufacturer: prod.manufacturer,
+                company: prod.company,
                 hsnCode: prod.hsn,
+                mrp: prod.mrp,
+                gstRate: 12,
             },
         });
         products.push(product);
@@ -242,17 +244,16 @@ async function seed() {
         const numItems = randomInt(3, 10);
 
         const purchaseItems = [];
-        let totalAmount = 0;
 
         for (let j = 0; j < numItems; j++) {
             const product = products[randomInt(0, products.length - 1)];
             const quantity = randomInt(50, 500);
             const purchasePrice = randomPrice(10, 500);
-            const salePrice = purchasePrice * randomPrice(1.15, 1.40); // 15-40% markup
+            const salePrice = purchasePrice * randomPrice(1.15, 1.40);
             const gstRate = 12;
 
             const expiryDate = new Date(purchaseDate);
-            expiryDate.setMonth(expiryDate.getMonth() + randomInt(12, 36)); // 1-3 years expiry
+            expiryDate.setMonth(expiryDate.getMonth() + randomInt(12, 36));
 
             const batch = await prisma.batch.create({
                 data: {
@@ -262,10 +263,12 @@ async function seed() {
                     purchasePrice,
                     salePrice,
                     currentStock: quantity,
-                    gstRate,
                 },
             });
             batches.push(batch);
+
+            const gstAmount = (quantity * purchasePrice * gstRate) / 100;
+            const itemTotalAmount = quantity * purchasePrice + gstAmount;
 
             purchaseItems.push({
                 productId: product.id,
@@ -273,16 +276,22 @@ async function seed() {
                 quantity,
                 purchasePrice,
                 gstRate,
+                gstAmount,
+                totalAmount: itemTotalAmount,
             });
-
-            totalAmount += quantity * purchasePrice * (1 + gstRate / 100);
         }
+
+        const totalGrossAmount = purchaseItems.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+        const totalGstAmount = purchaseItems.reduce((sum, item) => sum + item.gstAmount, 0);
+        const netAmount = totalGrossAmount + totalGstAmount;
 
         await prisma.purchase.create({
             data: {
                 supplierId: supplier.id,
                 billNumber: `BILL-${Date.now()}-${i}`,
-                totalAmount,
+                totalAmount: totalGrossAmount,
+                gstAmount: totalGstAmount,
+                netAmount,
                 createdAt: purchaseDate,
                 items: {
                     create: purchaseItems,
@@ -295,7 +304,7 @@ async function seed() {
             where: { id: supplier.id },
             data: {
                 currentBalance: {
-                    increment: totalAmount,
+                    increment: netAmount,
                 },
             },
         });
@@ -308,13 +317,11 @@ async function seed() {
         const customer = customers[randomInt(0, customers.length - 1)];
         const saleDate = randomDate(startDate, endDate);
         const numItems = randomInt(1, 8);
-        const isCash = Math.random() > 0.3; // 70% cash, 30% credit
+        const isCash = Math.random() > 0.3;
 
         const saleItems = [];
-        let totalAmount = 0;
 
         for (let j = 0; j < numItems; j++) {
-            // Pick a random batch that has stock
             const availableBatches = batches.filter(b => b.currentStock > 0);
             if (availableBatches.length === 0) continue;
 
@@ -323,7 +330,9 @@ async function seed() {
             const quantity = randomInt(1, maxQty);
 
             const unitPrice = batch.salePrice;
-            const gstRate = batch.gstRate;
+            const gstRate = 12;
+            const gstAmount = (quantity * unitPrice * gstRate) / 100;
+            const itemTotal = quantity * unitPrice + gstAmount;
 
             saleItems.push({
                 productId: batch.productId,
@@ -331,9 +340,9 @@ async function seed() {
                 quantity,
                 unitPrice,
                 gstRate,
+                gstAmount,
+                totalAmount: itemTotal,
             });
-
-            totalAmount += quantity * unitPrice * (1 + gstRate / 100);
 
             // Update batch stock
             batch.currentStock -= quantity;
@@ -344,11 +353,17 @@ async function seed() {
         }
 
         if (saleItems.length > 0) {
+            const totalGrossAmount = saleItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+            const totalGstAmount = saleItems.reduce((sum, item) => sum + item.gstAmount, 0);
+            const netAmount = totalGrossAmount + totalGstAmount;
+
             await prisma.sale.create({
                 data: {
                     customerId: customer.id,
                     invoiceNumber: `PF-${Date.now()}-${i}`,
-                    totalAmount,
+                    totalAmount: totalGrossAmount,
+                    gstAmount: totalGstAmount,
+                    netAmount,
                     isCash,
                     createdAt: saleDate,
                     items: {
@@ -363,7 +378,7 @@ async function seed() {
                     where: { id: customer.id },
                     data: {
                         currentBalance: {
-                            increment: totalAmount,
+                            increment: netAmount,
                         },
                     },
                 });
@@ -388,7 +403,7 @@ async function seed() {
 
         const returnAmount = returnQty * returnItem.unitPrice * (1 + returnItem.gstRate / 100);
 
-        await prisma.salesReturn.create({
+        await prisma.saleReturn.create({
             data: {
                 saleId: sale.id,
                 totalAmount: returnAmount,
