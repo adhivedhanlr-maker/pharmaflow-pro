@@ -101,9 +101,9 @@ export default function Dashboard() {
             Real-time summary of your pharmaceutical distribution operations.
           </p>
         </div>
-        <Button variant="outline" onClick={fetchStats}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Refresh Data
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          <Loader2 className="h-4 w-4 mr-2" />
+          Refresh
         </Button>
       </div>
 
