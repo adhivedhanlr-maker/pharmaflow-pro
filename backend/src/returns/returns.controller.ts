@@ -21,4 +21,16 @@ export class ReturnsController {
     createPurchaseReturn(@Body() data: any) {
         return this.returnsService.createPurchaseReturn(data);
     }
+
+    @Get('sales/:invoiceNumber')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
+    getSaleForReturn(@Param('invoiceNumber') invoiceNumber: string) {
+        return this.returnsService.getSaleForReturn(invoiceNumber);
+    }
+
+    @Get('purchase/:billNumber')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    getPurchaseForReturn(@Param('billNumber') billNumber: string) {
+        return this.returnsService.getPurchaseForReturn(billNumber);
+    }
 }

@@ -117,4 +117,54 @@ export class ReturnsService {
             });
         });
     }
+
+    // Get sale details for return
+    async getSaleForReturn(invoiceNumber: string) {
+        const sale = await this.prisma.sale.findFirst({
+            where: { invoiceNumber },
+            include: {
+                customer: true,
+                items: {
+                    include: {
+                        batch: {
+                            include: {
+                                product: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!sale) {
+            throw new NotFoundException('Invoice not found');
+        }
+
+        return sale;
+    }
+
+    // Get purchase details for return
+    async getPurchaseForReturn(billNumber: string) {
+        const purchase = await this.prisma.purchase.findFirst({
+            where: { billNumber },
+            include: {
+                supplier: true,
+                items: {
+                    include: {
+                        batch: {
+                            include: {
+                                product: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!purchase) {
+            throw new NotFoundException('Purchase bill not found');
+        }
+
+        return purchase;
+    }
 }
