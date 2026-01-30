@@ -17,6 +17,7 @@ import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BusinessProfileModule } from './business-profile/business-profile.module';
+import { AuditLogModule } from './audit/audit-log.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { BusinessProfileModule } from './business-profile/business-profile.modul
       },
     }),
     BusinessProfileModule,
+    AuditLogModule,
   ],
 
   controllers: [AppController],

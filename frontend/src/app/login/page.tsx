@@ -14,6 +14,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [twoFactorCode, setTwoFactorCode] = useState("");
+    const [requires2FA, setRequires2FA] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -33,9 +35,41 @@ export default function LoginPage() {
             const data = await response.json();
 
             if (response.ok) {
-                login(data.access_token, data.user);
+                // Check if 2FA is required
+                if (data.requires2FA) {
+                    setRequires2FA(true);
+                    setError(null);
+                } else {
+                    login(data.access_token, data.user);
+                }
             } else {
                 setError(data.message || "Invalid username or password");
+            }
+        } catch (err) {
+            setError("Network error. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerify2FA = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/2fa/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, token: twoFactorCode }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                login(data.access_token, data.user);
+            } else {
+                setError(data.message || "Invalid 2FA code");
             }
         } catch (err) {
             setError("Network error. Please check your connection.");
@@ -68,47 +102,91 @@ export default function LoginPage() {
                         <CardDescription>Enter your credentials to access the dashboard</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {error && (
-                                <Alert variant="destructive" className="py-2 text-xs">
-                                    <AlertDescription>{error}</AlertDescription>
-                                </Alert>
-                            )}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Username</label>
-                                <div className="relative">
-                                    <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        className="pl-10"
-                                        placeholder="Enter username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Password</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        type="password"
-                                        className="pl-10"
-                                        placeholder="Enter password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>
-                                {loading ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    "Sign In"
+                        {!requires2FA ? (
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {error && (
+                                    <Alert variant="destructive" className="py-2 text-xs">
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
                                 )}
-                            </Button>
-                        </form>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Username</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            className="pl-10"
+                                            placeholder="Enter username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Password</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            type="password"
+                                            className="pl-10"
+                                            placeholder="Enter password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>
+                                    {loading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Sign In"
+                                    )}
+                                </Button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleVerify2FA} className="space-y-4">
+                                {error && (
+                                    <Alert variant="destructive" className="py-2 text-xs">
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Two-Factor Code</label>
+                                    <p className="text-xs text-slate-500">Enter the 6-digit code from your authenticator app</p>
+                                    <Input
+                                        type="text"
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        value={twoFactorCode}
+                                        onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                                        className="text-center text-2xl tracking-widest"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setRequires2FA(false);
+                                            setTwoFactorCode('');
+                                            setError(null);
+                                        }}
+                                        className="flex-1"
+                                    >
+                                        Back
+                                    </Button>
+                                    <Button type="submit" className="flex-1" disabled={loading || twoFactorCode.length !== 6}>
+                                        {loading ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            "Verify"
+                                        )}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
                     </CardContent>
                 </Card>
 

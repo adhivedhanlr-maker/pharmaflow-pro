@@ -21,6 +21,7 @@ import {
     Upload,
     Loader2
 } from "lucide-react";
+import TwoFactorSetup from "@/components/settings/two-factor-setup";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -253,6 +254,8 @@ export default function SettingsPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <TwoFactorSetup />
             </div>
         </div>
     );

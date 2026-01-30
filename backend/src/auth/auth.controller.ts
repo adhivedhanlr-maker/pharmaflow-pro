@@ -2,23 +2,43 @@ import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req } fro
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { TwoFactorService } from './two-factor.service';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
-        private twoFactorService: TwoFactorService
+        private twoFactorService: TwoFactorService,
+        private auditLogService: AuditLogService,
     ) { }
 
     @Post('register')
-    register(@Body() registerDto: any) {
-        return this.authService.register(registerDto);
+    async register(@Body() registerDto: any, @Req() req: any) {
+        const user = await this.authService.register(registerDto);
+        await this.auditLogService.log({
+            userId: user.id,
+            action: AuditAction.REGISTER,
+            entity: 'User',
+            entityId: user.id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return user;
     }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
-    login(@Body() loginDto: any) {
-        return this.authService.login(loginDto.username, loginDto.password);
+    async login(@Body() loginDto: any, @Req() req: any) {
+        const result = await this.authService.login(loginDto.username, loginDto.password);
+        if (!result.requires2FA && result.user) {
+            await this.auditLogService.log({
+                userId: result.user.id,
+                action: AuditAction.LOGIN,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent'],
+            });
+        }
+        return result;
     }
 
     // 2FA Endpoints

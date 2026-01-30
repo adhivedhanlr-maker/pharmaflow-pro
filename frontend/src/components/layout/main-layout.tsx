@@ -13,11 +13,15 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useSessionTimeout } from "@/hooks/use-session-timeout";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { user, isLoading } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Enable session timeout tracking
+    useSessionTimeout();
 
     const isLoginPage = pathname === "/login";
 
