@@ -8,6 +8,7 @@ interface User {
     username: string;
     name: string;
     role: string;
+    twoFactorEnabled?: boolean;
 }
 
 interface AuthContextType {
