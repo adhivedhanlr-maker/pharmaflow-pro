@@ -25,6 +25,7 @@ export class PartiesController {
     @Post('customers')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     createCustomer(@Body() data: any) {
+        console.log('Create Customer Request:', data);
         return this.partiesService.createCustomer(data);
     }
 

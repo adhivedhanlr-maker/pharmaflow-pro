@@ -19,7 +19,10 @@ interface CustomerDialogProps {
     trigger?: React.ReactNode;
 }
 
+import { useAuth } from "@/context/auth-context";
+
 export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps) {
+    const { token } = useAuth();
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -43,7 +46,10 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
             const endpoint = isCustomer ? "customers" : "suppliers";
             const response = await fetch(`${API_BASE}/parties/${endpoint}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(formData),
             });
 

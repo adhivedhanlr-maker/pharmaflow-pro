@@ -27,7 +27,15 @@ export class BusinessProfileController {
 
     @Put()
     async updateProfile(@Request() req: any, @Body() data: any) {
-        return this.businessProfileService.updateProfile(req.user.id, data);
+        console.log('Update Profile Request:', { userId: req.user.id, data });
+        try {
+            const result = await this.businessProfileService.updateProfile(req.user.id, data);
+            console.log('Update Result:', result);
+            return result;
+        } catch (error) {
+            console.error('Update Profile Error:', error);
+            throw error;
+        }
     }
 
     @Post('upload-logo')
