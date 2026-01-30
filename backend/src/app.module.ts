@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,9 +16,14 @@ import { AlertsModule } from './alerts/alerts.module';
 import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { BusinessProfileModule } from './business-profile/business-profile.module';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     PrismaModule,
     AuthModule,
     InventoryModule,
@@ -42,6 +49,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         from: process.env.SMTP_FROM,
       },
     }),
+    BusinessProfileModule,
   ],
 
   controllers: [AppController],

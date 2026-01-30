@@ -4,6 +4,13 @@ import { format } from 'date-fns';
 interface InvoicePrintProps {
     invoiceNumber: string;
     date: Date;
+    businessProfile?: {
+        companyName: string;
+        address: string;
+        email?: string;
+        phone?: string;
+        logoUrl?: string;
+    };
     customer: {
         name: string;
         address: string;
@@ -30,26 +37,38 @@ interface InvoicePrintProps {
 }
 
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
-    ({ invoiceNumber, date, customer, items, totals }, ref) => {
+    ({ invoiceNumber, date, customer, items, totals, businessProfile }, ref) => {
+        // Default values to fallback if profile not set
+        const companyName = businessProfile?.companyName || "PharmaFlow";
+        const companyAddress = businessProfile?.address || "Address not configured";
+        // Construct full logo URL if it's a relative path (starts with /uploads)
+        const logoUrl = businessProfile?.logoUrl
+            ? (businessProfile.logoUrl.startsWith('http') ? businessProfile.logoUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${businessProfile.logoUrl}`)
+            : "/pharmaflow-logo.png";
+
         return (
             <div ref={ref} className="hidden print:block p-6 bg-white text-black font-sans max-w-[210mm] mx-auto h-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8 border-b-2 border-slate-800 pb-4">
                     <div className="flex items-center gap-4">
                         <img
-                            src="/pharmaflow-logo.png"
-                            alt="PharmaFlow Logo"
+                            src={logoUrl}
+                            alt="Company Logo"
                             className="h-16 w-16 object-contain rounded-lg"
+                            onError={(e) => {
+                                // Fallback if image fails
+                                (e.target as HTMLImageElement).style.display = 'none';
+                            }}
                         />
                         <div>
-                            <h1 className="text-3xl font-bold uppercase tracking-wide text-slate-900">PharmaFlow</h1>
-                            <p className="text-sm font-medium text-slate-500">Pro Edition</p>
+                            <h1 className="text-3xl font-bold uppercase tracking-wide text-slate-900">{companyName}</h1>
+                            <p className="text-sm font-medium text-slate-500">Tax Invoice</p>
                         </div>
                     </div>
                     <div className="text-right text-sm">
-                        <h2 className="font-bold text-lg mb-1">Tax Invoice</h2>
+                        <h2 className="font-bold text-lg mb-1">Invoice</h2>
                         <p className="text-slate-600">Original for Recipient</p>
-                        <p className="mt-2 text-xs text-slate-400">GSTIN: 27AAACN1234F1Z1</p>
+                        <p className="mt-2 text-xs text-slate-400">Date: {format(date, 'dd MMM yyyy')}</p>
                     </div>
                 </div>
 
@@ -57,10 +76,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                 <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
                         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Billed By</h3>
-                        <p className="font-bold text-lg">Antigravity Medical Systems</p>
-                        <p className="text-sm text-slate-600">123 Pharma Plaza, Industrial Area</p>
-                        <p className="text-sm text-slate-600">Pune, Maharashtra - 411001</p>
-                        <p className="text-sm text-slate-600">Email: info@pharmaflow.pro</p>
+                        <p className="font-bold text-lg">{companyName}</p>
+                        <p className="text-sm text-slate-600 max-w-[250px]">{companyAddress}</p>
+                        {businessProfile?.phone && <p className="text-sm text-slate-600">Phone: {businessProfile.phone}</p>}
+                        {businessProfile?.email && <p className="text-sm text-slate-600">Email: {businessProfile.email}</p>}
                     </div>
                     <div>
                         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Billed To</h3>

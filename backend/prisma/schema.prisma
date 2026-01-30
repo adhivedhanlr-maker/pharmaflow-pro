@@ -25,6 +25,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   Sales     Sale[]
+  businessProfile BusinessProfile?
 }
 
 model Product {
@@ -199,3 +200,17 @@ model Notification {
 
 
 
+
+model BusinessProfile {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+  companyName String
+  gstin       String?
+  email       String?
+  phone       String?
+  address     String?
+  logoUrl     String?  // Path to uploaded logo file
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

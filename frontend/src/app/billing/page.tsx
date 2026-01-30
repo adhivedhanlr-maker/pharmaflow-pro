@@ -77,21 +77,43 @@ interface Customer {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+import { useAuth } from "@/context/auth-context";
+
 export default function BillingPage() {
+    const { token } = useAuth();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState("");
     const [items, setItems] = useState<BillingItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [businessProfile, setBusinessProfile] = useState<any>(null);
 
     useEffect(() => {
         fetchData();
-    }, []);
+        if (token) {
+            fetchBusinessProfile();
+        }
+    }, [token]);
+
+    const fetchBusinessProfile = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/business-profile`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setBusinessProfile(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch business profile:", error);
+        }
+    };
 
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Note: If these endpoints become protected, add Authorization header here too
             const custRes = await fetch(`${API_BASE}/parties?type=customer`);
             const prodRes = await fetch(`${API_BASE}/inventory/products`);
             if (custRes.ok) setCustomers(await custRes.json());
@@ -534,6 +556,7 @@ export default function BillingPage() {
             <InvoicePrint
                 invoiceNumber="DRAFT-001"
                 date={new Date()}
+                businessProfile={businessProfile}
                 customer={printCustomer}
                 items={items.map(item => ({
                     id: item.id,
