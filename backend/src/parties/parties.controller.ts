@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { PartiesService } from './parties.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -47,9 +47,21 @@ export class PartiesController {
         return this.partiesService.updateCustomer(id, data);
     }
 
+    @Delete('customers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    deleteCustomer(@Param('id') id: string) {
+        return this.partiesService.deleteCustomer(id);
+    }
+
     @Put('suppliers/:id')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)
     updateSupplier(@Param('id') id: string, @Body() data: any) {
         return this.partiesService.updateSupplier(id, data);
+    }
+
+    @Delete('suppliers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    deleteSupplier(@Param('id') id: string) {
+        return this.partiesService.deleteSupplier(id);
     }
 }

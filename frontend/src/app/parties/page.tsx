@@ -58,12 +58,15 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 import { cn } from "@/lib/utils";
 
 import { CustomerDialog } from "@/components/billing/customer-dialog";
+import { EditPartyDialog } from "@/components/billing/edit-party-dialog";
 
 export default function PartiesPage() {
     const [activeTab, setActiveTab] = useState("customers");
     const [parties, setParties] = useState<Party[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [editingParty, setEditingParty] = useState<Party | null>(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
 
     useEffect(() => {
         fetchParties();
@@ -109,6 +112,11 @@ export default function PartiesPage() {
             console.error('Delete error:', error);
             alert('Failed to delete party');
         }
+    };
+
+    const handleEdit = (party: Party) => {
+        setEditingParty(party);
+        setEditDialogOpen(true);
     };
 
     const filteredParties = parties.filter(p =>
@@ -198,7 +206,7 @@ export default function PartiesPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => alert('Edit functionality coming soon')}>
+                                                        <DropdownMenuItem onClick={() => handleEdit(p)}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Edit
                                                         </DropdownMenuItem>
@@ -264,7 +272,7 @@ export default function PartiesPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => alert('Edit functionality coming soon')}>
+                                                        <DropdownMenuItem onClick={() => handleEdit(p)}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Edit
                                                         </DropdownMenuItem>
@@ -286,6 +294,14 @@ export default function PartiesPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <EditPartyDialog
+                type={activeTab === "customers" ? "customer" : "supplier"}
+                party={editingParty}
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                onSuccess={fetchParties}
+            />
         </div>
     );
 }

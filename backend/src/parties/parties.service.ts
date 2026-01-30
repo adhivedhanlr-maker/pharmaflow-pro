@@ -47,6 +47,24 @@ export class PartiesService {
         return this.prisma.supplier.update({ where: { id }, data });
     }
 
+    async deleteCustomer(id: string) {
+        // Check if customer has any sales
+        const salesCount = await this.prisma.sale.count({ where: { customerId: id } });
+        if (salesCount > 0) {
+            throw new Error('Cannot delete customer with existing sales transactions');
+        }
+        return this.prisma.customer.delete({ where: { id } });
+    }
+
+    async deleteSupplier(id: string) {
+        // Check if supplier has any purchases
+        const purchasesCount = await this.prisma.purchase.count({ where: { supplierId: id } });
+        if (purchasesCount > 0) {
+            throw new Error('Cannot delete supplier with existing purchase transactions');
+        }
+        return this.prisma.supplier.delete({ where: { id } });
+    }
+
     // Search/Autocomplete for Billing
     async searchCustomers(query: string) {
         return this.prisma.customer.findMany({
