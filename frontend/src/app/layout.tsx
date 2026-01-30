@@ -17,6 +17,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PharmaFlow Pro",
   description: "B2B Pharmaceutical Distribution System",
+  manifest: "/manifest.json",
+  themeColor: "#0f172a",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PharmaFlow Pro",
+  },
   icons: {
     icon: [
       { url: '/logo.png', sizes: '32x32', type: 'image/png' },
@@ -29,6 +42,8 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/context/auth-context";
 import { MainLayout } from "@/components/layout/main-layout";
+import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 export default function RootLayout({
   children,
@@ -40,6 +55,8 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <MainLayout>{children}</MainLayout>
+          <KeyboardShortcuts />
+          <PWAInstallPrompt />
         </AuthProvider>
       </body>
     </html>
