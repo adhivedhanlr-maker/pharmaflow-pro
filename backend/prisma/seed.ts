@@ -239,8 +239,8 @@ async function seed() {
     console.log('📦 Creating purchases (5 months)...');
     const batches = [];
 
-    // Create 100-150 purchases over 5 months
-    for (let i = 0; i < 120; i++) {
+    // Create 30 purchases over 5 months (reduced from 120)
+    for (let i = 0; i < 30; i++) {
         const supplier = suppliers[randomInt(0, suppliers.length - 1)];
         const purchaseDate = randomDate(startDate, endDate);
         const numItems = randomInt(3, 10);
@@ -314,8 +314,8 @@ async function seed() {
 
     console.log('💰 Creating sales (5 months)...');
 
-    // Create 300-400 sales over 5 months
-    for (let i = 0; i < 350; i++) {
+    // Create 50 sales over 5 months (reduced from 350)
+    for (let i = 0; i < 50; i++) {
         const customer = customers[randomInt(0, customers.length - 1)];
         const saleDate = randomDate(startDate, endDate);
         const numItems = randomInt(1, 8);
@@ -448,8 +448,8 @@ async function seed() {
     console.log(`   - ${customers.length} customers`);
     console.log(`   - ${suppliers.length} suppliers`);
     console.log(`   - ${batches.length} batches`);
-    console.log(`   - 120 purchases`);
-    console.log(`   - 350 sales`);
+    console.log(`   - 30 purchases`);
+    console.log(`   - 50 sales`);
     console.log(`   - 5 returns`);
     console.log(`   - 5 users (admin/Admin@123, billing1/Admin@123, etc.)`);
 }
