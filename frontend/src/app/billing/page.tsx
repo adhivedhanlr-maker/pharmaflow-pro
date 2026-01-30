@@ -87,6 +87,7 @@ export default function BillingPage() {
     const [items, setItems] = useState<BillingItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isCash, setIsCash] = useState(true);
     const [businessProfile, setBusinessProfile] = useState<any>(null);
 
     useEffect(() => {
@@ -147,7 +148,7 @@ export default function BillingPage() {
                         batchId: item.batchId,
                         quantity: item.quantity + (item.freeQuantity || 0)
                     })),
-                    isCash: true,
+                    isCash: isCash,
                     // Discount logic: If free items exist, treating their value as discount
                     discountAmount: items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0)
                 }),
@@ -535,8 +536,20 @@ export default function BillingPage() {
                                 <CardTitle className="text-xs font-bold uppercase text-slate-500">Payment Mode</CardTitle>
                             </CardHeader>
                             <CardContent className="flex gap-2">
-                                <Button variant="default" className="flex-1 h-12 text-xs font-bold uppercase">Cash</Button>
-                                <Button variant="outline" className="flex-1 h-12 text-xs font-bold uppercase">Credit</Button>
+                                <Button
+                                    variant={isCash ? "default" : "outline"}
+                                    onClick={() => setIsCash(true)}
+                                    className="flex-1 h-12 text-xs font-bold uppercase"
+                                >
+                                    Cash
+                                </Button>
+                                <Button
+                                    variant={!isCash ? "default" : "outline"}
+                                    onClick={() => setIsCash(false)}
+                                    className="flex-1 h-12 text-xs font-bold uppercase"
+                                >
+                                    Credit
+                                </Button>
                             </CardContent>
                         </Card>
 

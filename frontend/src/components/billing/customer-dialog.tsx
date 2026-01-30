@@ -42,6 +42,12 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
         e.preventDefault();
         setIsLoading(true);
 
+        if (!token) {
+            alert("Authentication Error: You are not logged in or session expired.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const endpoint = isCustomer ? "customers" : "suppliers";
             const response = await fetch(`${API_BASE}/parties/${endpoint}`, {
