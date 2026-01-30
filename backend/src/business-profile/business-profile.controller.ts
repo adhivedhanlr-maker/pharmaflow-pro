@@ -22,14 +22,14 @@ export class BusinessProfileController {
 
     @Get()
     async getProfile(@Request() req: any) {
-        return this.businessProfileService.getProfile(req.user.id);
+        return this.businessProfileService.getProfile(req.user.userId);
     }
 
     @Put()
     async updateProfile(@Request() req: any, @Body() data: any) {
-        console.log('Update Profile Request:', { userId: req.user.id, data });
+        console.log('Update Profile Request:', { userId: req.user.userId, data });
         try {
-            const result = await this.businessProfileService.updateProfile(req.user.id, data);
+            const result = await this.businessProfileService.updateProfile(req.user.userId, data);
             console.log('Update Result:', result);
             return result;
         } catch (error) {
@@ -56,6 +56,6 @@ export class BusinessProfileController {
     async uploadLogo(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
         // The file is served at /uploads/filename
         const logoUrl = `/uploads/${file.filename}`;
-        return this.businessProfileService.updateLogo(req.user.id, logoUrl);
+        return this.businessProfileService.updateLogo(req.user.userId, logoUrl);
     }
 }
