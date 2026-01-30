@@ -65,8 +65,12 @@ export default function PartiesPage() {
     const fetchParties = async () => {
         setLoading(true);
         try {
-            const type = activeTab === "customers" ? "customer" : "supplier";
-            const response = await fetch(`${API_BASE}/parties?type=${type}`);
+            const endpoint = activeTab === "customers" ? "customers" : "suppliers";
+            const response = await fetch(`${API_BASE}/parties/${endpoint}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
             if (response.ok) {
                 setParties(await response.json());
             }
