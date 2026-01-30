@@ -37,6 +37,10 @@ interface Sale {
     netAmount: number;
     gstAmount: number;
     createdAt: string;
+    user?: {
+        name: string;
+        role: string;
+    };
 }
 
 interface ExpiringBatch {
