@@ -29,6 +29,8 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/context/auth-context";
 import { MainLayout } from "@/components/layout/main-layout";
+import { NeonAuthUIProvider } from '@neondatabase/neon-js';
+import { auth } from '@/lib/auth';
 
 export default function RootLayout({
   children,
@@ -38,11 +40,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <MainLayout>{children}</MainLayout>
-        </AuthProvider>
+        <NeonAuthUIProvider auth={auth}>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </NeonAuthUIProvider>
       </body>
     </html>
   );
 }
-
