@@ -130,6 +130,8 @@ async function seed() {
     await prisma.product.deleteMany();
     await prisma.customer.deleteMany();
     await prisma.supplier.deleteMany();
+    await prisma.businessProfile.deleteMany();
+    await prisma.auditLog.deleteMany();
     await prisma.user.deleteMany();
 
     // Create users
