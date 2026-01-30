@@ -6,8 +6,8 @@ services:
     plan: free
     branch: master
     rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/main
     envVars:
       - key: DATABASE_URL
         sync: false
