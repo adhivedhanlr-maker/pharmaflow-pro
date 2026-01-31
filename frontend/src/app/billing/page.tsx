@@ -678,6 +678,11 @@ export default function BillingPage() {
                 }))}
                 totals={totals}
             />
+            <BarcodeScanner
+                isOpen={scannerOpen}
+                onClose={() => setScannerOpen(false)}
+                onScan={handleBarcodeScan}
+            />
         </RoleGate>
     );
 }
