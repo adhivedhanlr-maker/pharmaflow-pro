@@ -13,9 +13,10 @@ import {
   Alert,
   Dimensions,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
-import { login, getProducts, getCustomers, recordVisit, createOrder } from './src/utils/api';
+import { login, getProducts, getCustomers, recordVisit, createOrder, createCustomer } from './src/utils/api';
 import { getCurrentLocation, calculateDistance, validateVisit } from './src/utils/location';
 
 const { width, height } = Dimensions.get('window');
@@ -57,6 +58,9 @@ export default function App() {
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
+  const [isDiscoverMode, setIsDiscoverMode] = useState(false);
+  const [nearbyShops, setNearbyShops] = useState<any[]>([]);
+  const [googleKey, setGoogleKey] = useState("");
 
   useEffect(() => {
     if (screen === 'catalog') {
@@ -65,6 +69,57 @@ export default function App() {
       fetchParties();
     }
   }, [screen]);
+
+  const fetchNearbyDiscovery = async () => {
+    setLoading(true);
+    try {
+      const location = await getCurrentLocation();
+      if (!location) return;
+
+      // In a real app, we would use the Google Places API here:
+      // const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.latitude},${location.longitude}&radius=2000&type=pharmacy&key=${googleKey}`);
+
+      // For demo, we simulate nearby pharmacies in Nileshwar
+      const mockNearby = [
+        { id: 'near_1', name: 'Nileshwar Grand Pharms', address: 'Main Road, Nileshwar', phone: '04672280001', lat: 12.2560, lng: 75.1345 },
+        { id: 'near_2', name: 'Kasaragod Med Plus', address: 'Railway Station Rd', phone: '04672280002', lat: 12.2550, lng: 75.1330 },
+        { id: 'near_3', name: 'LifeCare Drug House', address: 'Market Junction', phone: '04672282222', lat: 12.2580, lng: 75.1360 },
+      ];
+
+      setParties(mockNearby);
+    } catch (err) {
+      Alert.alert("Error", "Could not discover nearby shops");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDiscovery = async (shop: any) => {
+    setLoading(true);
+    try {
+      const partyData = {
+        name: shop.name,
+        address: shop.address,
+        phone: shop.phone,
+        latitude: shop.lat,
+        longitude: shop.lng,
+        gstin: "PENDING"
+      };
+
+      // Call common customer creation API
+      // Since it's a lead, we might mark it differently but for now just add it
+      await createCustomer(partyData);
+
+      Alert.alert("Success", `${shop.name} added to your customer list!`, [
+        { text: "View List", onPress: () => setIsDiscoverMode(false) }
+      ]);
+      fetchParties(); // Refresh the real list
+    } catch (error) {
+      Alert.alert("Error", "Failed to add shop to list");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -276,10 +331,27 @@ export default function App() {
       </View>
 
       <View style={styles.searchSection}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tab, !isDiscoverMode && styles.activeTab]}
+            onPress={() => setIsDiscoverMode(false)}
+          >
+            <Text style={[styles.tabText, !isDiscoverMode && styles.activeTabText]}>My Customers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, isDiscoverMode && styles.activeTab]}
+            onPress={() => {
+              setIsDiscoverMode(true);
+              fetchNearbyDiscovery();
+            }}
+          >
+            <Text style={[styles.tabText, isDiscoverMode && styles.activeTabText]}>Discover Nearby</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.searchBar}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search pharmacies..."
+            placeholder={isDiscoverMode ? "Search nearby shops..." : "Search my pharmacies..."}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -299,24 +371,51 @@ export default function App() {
           renderItem={({ item }) => (
             <View style={styles.visitCard}>
               <View style={styles.visitInfo}>
-                <Text style={styles.visitLabel}>PHARMACY</Text>
+                <Text style={styles.visitLabel}>{isDiscoverMode ? 'POTENTIAL PHARMACY' : 'PHARMACY'}</Text>
                 <Text style={styles.visitName}>{item.name}</Text>
                 <Text style={styles.visitAddress}>{item.address || 'No Address Listed'}</Text>
+
+                <View style={styles.actionRow}>
+                  {item.phone && (
+                    <TouchableOpacity
+                      style={styles.actionIconBtn}
+                      onPress={() => Linking.openURL(`tel:${item.phone}`)}
+                    >
+                      <Text style={styles.actionIconText}>📞 Call Now</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.actionIconBtn}
+                    onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${item.lat || 0},${item.lng || 0}`)}
+                  >
+                    <Text style={styles.actionIconText}>📍 Navigate</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity
-                style={[styles.checkInBtn, checkingIn === item.id && styles.btnDisabled]}
-                onPress={() => handleCheckIn(item)}
-                disabled={checkingIn === item.id}
-              >
-                {checkingIn === item.id ? (
-                  <ActivityIndicator color="white" size="small" />
-                ) : (
-                  <>
-                    <Text style={styles.checkInText}>CHECK IN</Text>
-                    <Text style={styles.checkInSubtext}>Start Visit</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              {isDiscoverMode ? (
+                <TouchableOpacity
+                  style={[styles.checkInBtn, { backgroundColor: COLORS.success }]}
+                  onPress={() => handleAddDiscovery(item)}
+                >
+                  <Text style={styles.checkInText}>ADD</Text>
+                  <Text style={styles.checkInSubtext}>To List</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.checkInBtn, checkingIn === item.id && styles.btnDisabled]}
+                  onPress={() => handleCheckIn(item)}
+                  disabled={checkingIn === item.id}
+                >
+                  {checkingIn === item.id ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.checkInText}>CHECK IN</Text>
+                      <Text style={styles.checkInSubtext}>Start Visit</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           )}
           ListEmptyComponent={
@@ -507,5 +606,17 @@ const styles = StyleSheet.create({
   visitAddress: { fontSize: 13, color: COLORS.textLight, marginTop: 4 },
   checkInBtn: { backgroundColor: COLORS.primary, width: 100, height: 60, borderRadius: 15, justifyContent: 'center', alignItems: 'center', elevation: 4 },
   checkInText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-  checkInSubtext: { color: COLORS.primaryLight, fontSize: 10, fontWeight: '600' }
+  checkInSubtext: { color: COLORS.primaryLight, fontSize: 10, fontWeight: '600' },
+
+  // Tabs
+  tabBar: { flexDirection: 'row', marginBottom: 12, backgroundColor: '#e2e8f0', borderRadius: 12, padding: 4 },
+  tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10 },
+  activeTab: { backgroundColor: 'white', elevation: 2 },
+  tabText: { fontSize: 13, color: COLORS.textLight, fontWeight: '600' },
+  activeTabText: { color: COLORS.primary, fontWeight: '800' },
+
+  // Actions
+  actionRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  actionIconBtn: { backgroundColor: COLORS.primaryLight, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  actionIconText: { fontSize: 11, color: COLORS.primary, fontWeight: '700' }
 });

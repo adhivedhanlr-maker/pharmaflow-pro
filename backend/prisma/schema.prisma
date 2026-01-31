@@ -24,6 +24,8 @@ model User {
   role      Role     @default(BILLING_OPERATOR)
   twoFactorEnabled Boolean @default(false)
   twoFactorSecret  String?
+  lastLat          Float?
+  lastLng          Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   Sales     Sale[]

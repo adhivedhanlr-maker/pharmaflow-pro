@@ -7,25 +7,36 @@ export class VisitsService {
     constructor(private prisma: PrismaService) { }
 
     async checkIn(userId: string, dto: CheckInDto) {
-        return this.prisma.visit.create({
-            data: {
-                repId: userId,
-                customerId: dto.customerId,
-                latitude: dto.latitude,
-                longitude: dto.longitude,
-                distance: dto.distance,
-                status: dto.status,
-            },
-            include: {
-                customer: true,
-                rep: {
-                    select: {
-                        id: true,
-                        name: true,
-                        username: true,
+        return this.prisma.$transaction(async (tx) => {
+            // Update rep's last known location
+            await tx.user.update({
+                where: { id: userId },
+                data: {
+                    lastLat: dto.latitude,
+                    lastLng: dto.longitude
+                }
+            });
+
+            return tx.visit.create({
+                data: {
+                    repId: userId,
+                    customerId: dto.customerId,
+                    latitude: dto.latitude,
+                    longitude: dto.longitude,
+                    distance: dto.distance,
+                    status: dto.status,
+                },
+                include: {
+                    customer: true,
+                    rep: {
+                        select: {
+                            id: true,
+                            name: true,
+                            username: true,
+                        },
                     },
                 },
-            },
+            });
         });
     }
 
@@ -62,6 +73,25 @@ export class VisitsService {
                         name: true,
                     },
                 },
+            },
+        });
+    }
+
+    async getActiveRepLocations() {
+        return this.prisma.user.findMany({
+            where: {
+                role: 'SALES_REP',
+                NOT: {
+                    lastLat: null,
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+                username: true,
+                lastLat: true,
+                lastLng: true,
+                updatedAt: true,
             },
         });
     }

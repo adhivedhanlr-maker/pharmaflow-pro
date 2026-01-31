@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Building2, User, MapPin } from "lucide-react";
+import { Loader2, Plus, Building2, User, MapPin, Search } from "lucide-react";
+import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
 
 interface CustomerDialogProps {
     type: "customer" | "supplier";
@@ -39,6 +40,28 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
 
     const isCustomer = type === "customer";
     const label = isCustomer ? "Customer" : "Supplier";
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
+        libraries: ['places'] as any
+    });
+
+    const [autocomplete, setAutocomplete] = useState<any>(null);
+
+    const onPlaceSelected = () => {
+        if (autocomplete) {
+            const place = autocomplete.getPlace();
+            setFormData({
+                ...formData,
+                name: place.name || "",
+                address: place.formatted_address || "",
+                phone: place.formatted_phone_number || "",
+                latitude: place.geometry?.location?.lat() || null,
+                longitude: place.geometry?.location?.lng() || null,
+            });
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,14 +121,31 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Name</label>
                         <div className="relative">
-                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder={`${label} Name`}
-                                className="pl-8"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                required
-                            />
+                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                            {isLoaded ? (
+                                <Autocomplete
+                                    onLoad={setAutocomplete}
+                                    onPlaceChanged={onPlaceSelected}
+                                    options={{ types: ['pharmacy', 'establishment'] }}
+                                >
+                                    <Input
+                                        placeholder={`Search or type ${label} Name`}
+                                        className="pl-8"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </Autocomplete>
+                            ) : (
+                                <Input
+                                    placeholder={`${label} Name`}
+                                    className="pl-8"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                            )}
+                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-slate-300" />
                         </div>
                     </div>
                     <div className="space-y-2">

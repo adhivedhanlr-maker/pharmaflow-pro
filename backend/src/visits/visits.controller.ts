@@ -28,4 +28,16 @@ export class VisitsController {
     getMyVisits(@Request() req: any) {
         return this.visitsService.getRepVisits(req.user?.userId);
     }
+
+    @Get('active-locations')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    getActiveLocations() {
+        return this.visitsService.getActiveRepLocations();
+    }
+
+    @Post('location')
+    @Roles(Role.SALES_REP)
+    updateLocation(@Body() data: { latitude: number, longitude: number }, @Request() req: any) {
+        return this.visitsService.updateUserLocation(req.user?.userId, data.latitude, data.longitude);
+    }
 }

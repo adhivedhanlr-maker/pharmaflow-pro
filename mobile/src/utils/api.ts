@@ -73,3 +73,10 @@ export const createOrder = async (orderData: any) => {
         body: JSON.stringify(orderData),
     });
 };
+
+export const createCustomer = async (customerData: any) => {
+    return apiCall('/parties/customers', {
+        method: 'POST',
+        body: JSON.stringify(customerData),
+    });
+};
