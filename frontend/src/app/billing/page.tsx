@@ -134,16 +134,11 @@ export default function BillingPage() {
         }
     };
 
-    const fetchProducts = async (search: string) => {
-        if (!search || search.length < 2) {
-            setProducts([]);
-            return;
-        }
-
+    const fetchProducts = async (search: string = "") => {
         setLoadingProducts(true);
         try {
             const params = new URLSearchParams();
-            params.append('search', search);
+            if (search) params.append('search', search);
             params.append('take', '50');
             params.append('onlyWithStock', 'true');
 
@@ -164,12 +159,10 @@ export default function BillingPage() {
     // Debounce product search
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (productSearch) {
-                fetchProducts(productSearch);
-            }
+            fetchProducts(productSearch);
         }, 300);
         return () => clearTimeout(timer);
-    }, [productSearch]);
+    }, [productSearch, token]);
 
     // Debounce customer search
     useEffect(() => {
