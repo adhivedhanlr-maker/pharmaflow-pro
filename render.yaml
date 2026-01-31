@@ -1,12 +1,11 @@
 services:
   - type: web
     name: pharmaflow-backend
-    runtime: node
+    runtime: docker
     region: oregon
     plan: free
     branch: master
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm run start:prod
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         sync: false
