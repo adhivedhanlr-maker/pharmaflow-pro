@@ -18,6 +18,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BusinessProfileModule } from './business-profile/business-profile.module';
 import { AuditLogModule } from './audit/audit-log.module';
+import { VisitsModule } from './visits/visits.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuditLogModule } from './audit/audit-log.module';
     ReturnsModule,
     AlertsModule,
     UsersModule,
+    VisitsModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

@@ -116,7 +116,7 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <Card>
                         <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                             Total Sales
@@ -157,12 +157,24 @@ export default function ReportsPage() {
                             <div className="text-xs text-blue-600 mt-1">Total invoices generated</div>
                         </CardContent>
                     </Card>
+                    <Card className="border-blue-100 bg-blue-50/10 hover:bg-blue-50/20 cursor-pointer" onClick={() => window.location.href = '/reports/visits'}>
+                        <CardHeader className="pb-2 text-blue-600 font-bold uppercase tracking-wider text-[10px]">
+                            Field Visits
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-blue-700 font-mono">LIVE</div>
+                            <div className="text-xs text-blue-500 flex items-center mt-1">
+                                <ArrowRight className="h-3 w-3 mr-1" /> View Tracking Report
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <Tabs defaultValue="expiry" className="space-y-4">
                     <TabsList className="bg-muted/50 p-1">
                         <TabsTrigger value="expiry">Expiry Risk Analysis</TabsTrigger>
                         <TabsTrigger value="sales">Recent Activity</TabsTrigger>
+                        <TabsTrigger value="visits" onClick={() => window.location.href = '/reports/visits'}>Field Force Tracking</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="expiry">

@@ -1,32 +1,39 @@
 import { Platform } from 'react-native';
 
-// Use the Render backend URL
 const API_BASE = 'https://pharmaflow-pro-backend.onrender.com';
+let authToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+    authToken = token;
+};
 
 export const apiCall = async (endpoint: string, options: any = {}) => {
     const url = `${API_BASE}${endpoint}`;
 
-    // Add authentication token if available (could use SecureStore or AsyncStorage)
-    // For now, let's keep it simple
-    const defaultHeaders = {
+    const headers: any = {
         'Content-Type': 'application/json',
     };
+
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
 
     try {
         const response = await fetch(url, {
             ...options,
             headers: {
-                ...defaultHeaders,
+                ...headers,
                 ...options.headers,
             },
         });
 
+        const data = await response.json().catch(() => ({}));
+
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || 'API request failed');
+            throw new Error(data.message || 'API request failed');
         }
 
-        return await response.json();
+        return data;
     } catch (error) {
         console.error(`API Error (${endpoint}):`, error);
         throw error;
@@ -34,16 +41,28 @@ export const apiCall = async (endpoint: string, options: any = {}) => {
 };
 
 export const login = async (username: string, password: string) => {
-    return apiCall('/auth/login', {
+    const response = await apiCall('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
     });
+    if (response.token) {
+        setAuthToken(response.token);
+    }
+    return response;
 };
 
 export const getProducts = async () => {
     return apiCall('/inventory/products');
 };
 
-export const getStock = async () => {
-    return apiCall('/stock/batches');
+export const getCustomers = async () => {
+    const response = await apiCall('/parties/customers');
+    return response.data || response;
+};
+
+export const recordVisit = async (visitData: any) => {
+    return apiCall('/visits/check-in', {
+        method: 'POST',
+        body: JSON.stringify(visitData),
+    });
 };
