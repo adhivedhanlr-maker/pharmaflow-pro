@@ -6,10 +6,38 @@ export class PartiesService {
     constructor(private prisma: PrismaService) { }
 
     // Customer Methods
-    async findAllCustomers() {
-        return this.prisma.customer.findMany({
-            orderBy: { name: 'asc' },
-        });
+    async findAllCustomers(params?: {
+        skip?: number;
+        take?: number;
+        search?: string;
+    }) {
+        const { skip = 0, take = 100, search } = params || {};
+
+        const where = search
+            ? {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { gstin: { contains: search, mode: 'insensitive' as const } },
+                    { phone: { contains: search, mode: 'insensitive' as const } },
+                ],
+            }
+            : {};
+
+        const [customers, total] = await Promise.all([
+            this.prisma.customer.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { name: 'asc' },
+            }),
+            this.prisma.customer.count({ where }),
+        ]);
+
+        return {
+            data: customers,
+            total,
+            hasMore: skip + customers.length < total,
+        };
     }
 
     async findCustomerById(id: string) {
@@ -27,10 +55,38 @@ export class PartiesService {
     }
 
     // Supplier Methods
-    async findAllSuppliers() {
-        return this.prisma.supplier.findMany({
-            orderBy: { name: 'asc' },
-        });
+    async findAllSuppliers(params?: {
+        skip?: number;
+        take?: number;
+        search?: string;
+    }) {
+        const { skip = 0, take = 100, search } = params || {};
+
+        const where = search
+            ? {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { gstin: { contains: search, mode: 'insensitive' as const } },
+                    { phone: { contains: search, mode: 'insensitive' as const } },
+                ],
+            }
+            : {};
+
+        const [suppliers, total] = await Promise.all([
+            this.prisma.supplier.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { name: 'asc' },
+            }),
+            this.prisma.supplier.count({ where }),
+        ]);
+
+        return {
+            data: suppliers,
+            total,
+            hasMore: skip + suppliers.length < total,
+        };
     }
 
     async findSupplierById(id: string) {

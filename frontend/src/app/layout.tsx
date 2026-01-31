@@ -44,6 +44,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { MainLayout } from "@/components/layout/main-layout";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { RoleSwitcher } from "@/components/dev/role-switcher";
 
 export default function RootLayout({
   children,
@@ -57,6 +58,7 @@ export default function RootLayout({
           <MainLayout>{children}</MainLayout>
           <KeyboardShortcuts />
           <PWAInstallPrompt />
+          <RoleSwitcher />
         </AuthProvider>
       </body>
     </html>

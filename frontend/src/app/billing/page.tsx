@@ -89,9 +89,11 @@ export default function BillingPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [isCash, setIsCash] = useState(true);
     const [businessProfile, setBusinessProfile] = useState<any>(null);
-
+    const [productSearch, setProductSearch] = useState("");
+    const [customerSearch, setCustomerSearch] = useState("");
+    const [loadingProducts, setLoadingProducts] = useState(false);
     useEffect(() => {
-        fetchData();
+        fetchCustomers();
         if (token) {
             fetchBusinessProfile();
         }
@@ -111,20 +113,67 @@ export default function BillingPage() {
         }
     };
 
-    const fetchData = async () => {
+    const fetchCustomers = async (search?: string) => {
         setLoading(true);
         try {
-            // Note: If these endpoints become protected, add Authorization header here too
-            const custRes = await fetch(`${API_BASE}/parties?type=customer`);
-            const prodRes = await fetch(`${API_BASE}/inventory/products`);
-            if (custRes.ok) setCustomers(await custRes.json());
-            if (prodRes.ok) setProducts(await prodRes.json());
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            params.append('take', '100');
+
+            const custRes = await fetch(`${API_BASE}/parties/customers?${params}`);
+            if (custRes.ok) {
+                const data = await custRes.json();
+                setCustomers(data.data || data);
+            }
         } catch (error) {
-            console.error("Failed to fetch data:", error);
+            console.error("Failed to fetch customers:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    const fetchProducts = async (search: string) => {
+        if (!search || search.length < 2) {
+            setProducts([]);
+            return;
+        }
+
+        setLoadingProducts(true);
+        try {
+            const params = new URLSearchParams();
+            params.append('search', search);
+            params.append('take', '50');
+            params.append('onlyWithStock', 'true');
+
+            const prodRes = await fetch(`${API_BASE}/inventory/products?${params}`);
+            if (prodRes.ok) {
+                const data = await prodRes.json();
+                setProducts(data.data || data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch products:", error);
+        } finally {
+            setLoadingProducts(false);
+        }
+    };
+
+    // Debounce product search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (productSearch) {
+                fetchProducts(productSearch);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [productSearch]);
+
+    // Debounce customer search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCustomers(customerSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [customerSearch]);
 
     const handleSave = async () => {
         if (!selectedCustomerId) {
@@ -300,27 +349,35 @@ export default function BillingPage() {
                                 <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Customer Details</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex gap-4">
-                                    <div className="flex-1">
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            value={selectedCustomerId}
-                                            onChange={(e) => setSelectedCustomerId(e.target.value)}
-                                        >
-                                            <option value="">Select Customer</option>
-                                            {customers.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name} - {c.gstin}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <CustomerDialog
-                                        type="customer"
-                                        trigger={<Button variant="outline">New Customer</Button>}
-                                        onSuccess={(newCustomer) => {
-                                            setCustomers([...customers, newCustomer]);
-                                            setSelectedCustomerId(newCustomer.id);
-                                        }}
+                                <div className="space-y-3">
+                                    <Input
+                                        placeholder="Search customers..."
+                                        value={customerSearch}
+                                        onChange={(e) => setCustomerSearch(e.target.value)}
+                                        className="w-full"
                                     />
+                                    <div className="flex gap-4">
+                                        <div className="flex-1">
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={selectedCustomerId}
+                                                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                                            >
+                                                <option value="">Select Customer</option>
+                                                {customers.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name} - {c.gstin}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <CustomerDialog
+                                            type="customer"
+                                            trigger={<Button variant="outline">New Customer</Button>}
+                                            onSuccess={(newCustomer) => {
+                                                setCustomers([...customers, newCustomer]);
+                                                setSelectedCustomerId(newCustomer.id);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -334,21 +391,32 @@ export default function BillingPage() {
                                     </PopoverTrigger>
                                     <PopoverContent className="p-0" side="bottom" align="end">
                                         <Command>
-                                            <CommandInput placeholder="Search product..." />
+                                            <CommandInput
+                                                placeholder="Search product..."
+                                                value={productSearch}
+                                                onValueChange={setProductSearch}
+                                            />
                                             <CommandList>
-                                                <CommandEmpty>No product found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {products.map((p) => (
-                                                        <CommandItem
-                                                            key={p.id}
-                                                            onSelect={() => addItem(p)}
-                                                            className="flex justify-between"
-                                                        >
-                                                            <span>{p.name}</span>
-                                                            <span className="text-xs text-muted-foreground">GST: {p.gstRate}%</span>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
+                                                {loadingProducts ? (
+                                                    <div className="py-6 text-center text-sm">
+                                                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                                                    </div>
+                                                ) : products.length === 0 ? (
+                                                    <CommandEmpty>Type to search products...</CommandEmpty>
+                                                ) : (
+                                                    <CommandGroup>
+                                                        {products.map((p) => (
+                                                            <CommandItem
+                                                                key={p.id}
+                                                                onSelect={() => addItem(p)}
+                                                                className="flex justify-between"
+                                                            >
+                                                                <span>{p.name}</span>
+                                                                <span className="text-xs text-muted-foreground">GST: {p.gstRate}%</span>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                )}
                                             </CommandList>
                                         </Command>
                                     </PopoverContent>

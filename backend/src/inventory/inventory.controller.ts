@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // I need to create this
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,8 +12,20 @@ export class InventoryController {
 
     @Get('products')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
-    findAllProducts() {
-        return this.inventoryService.findAllProducts();
+    findAllProducts(
+        @Query('skip') skip?: string,
+        @Query('take') take?: string,
+        @Query('search') search?: string,
+        @Query('includeBatches') includeBatches?: string,
+        @Query('onlyWithStock') onlyWithStock?: string,
+    ) {
+        return this.inventoryService.findAllProducts({
+            skip: skip ? parseInt(skip, 10) : undefined,
+            take: take ? parseInt(take, 10) : undefined,
+            search,
+            includeBatches: includeBatches === 'false' ? false : true,
+            onlyWithStock: onlyWithStock === 'true',
+        });
     }
 
     @Get('products/:id')

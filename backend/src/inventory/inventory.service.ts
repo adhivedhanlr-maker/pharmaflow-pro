@@ -6,10 +6,56 @@ export class InventoryService {
     constructor(private prisma: PrismaService) { }
 
     // Product Methods
-    async findAllProducts() {
-        return this.prisma.product.findMany({
-            include: { batches: true },
-        });
+    async findAllProducts(params?: {
+        skip?: number;
+        take?: number;
+        search?: string;
+        includeBatches?: boolean;
+        onlyWithStock?: boolean;
+    }) {
+        const {
+            skip = 0,
+            take = 100,
+            search,
+            includeBatches = true,
+            onlyWithStock = false,
+        } = params || {};
+
+        const where = search
+            ? {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { hsnCode: { contains: search, mode: 'insensitive' as const } },
+                    { company: { contains: search, mode: 'insensitive' as const } },
+                ],
+            }
+            : {};
+
+        const [products, total] = await Promise.all([
+            this.prisma.product.findMany({
+                where,
+                skip,
+                take,
+                ...(includeBatches && {
+                    include: {
+                        batches: onlyWithStock
+                            ? {
+                                where: { currentStock: { gt: 0 } },
+                                orderBy: { expiryDate: 'asc' as const },
+                            }
+                            : { orderBy: { expiryDate: 'asc' as const } },
+                    },
+                }),
+                orderBy: { name: 'asc' },
+            }),
+            this.prisma.product.count({ where }),
+        ]);
+
+        return {
+            data: products,
+            total,
+            hasMore: skip + products.length < total,
+        };
     }
 
     async findProductById(id: string) {

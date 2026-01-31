@@ -43,6 +43,9 @@ model Product {
   batches     Batch[]
   saleItems   SaleItem[]
   purchaseItems PurchaseItem[]
+
+  @@index([name])
+  @@index([company])
 }
 
 model Batch {
@@ -61,6 +64,8 @@ model Batch {
   purchaseItems PurchaseItem[]
 
   @@unique([productId, batchNumber])
+  @@index([currentStock])
+  @@index([expiryDate])
 }
 
 model Customer {
@@ -74,6 +79,9 @@ model Customer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   sales        Sale[]
+
+  @@index([name])
+  @@index([phone])
 }
 
 model Supplier {
@@ -86,6 +94,9 @@ model Supplier {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   purchases    Purchase[]
+
+  @@index([name])
+  @@index([phone])
 }
 
 model Sale {

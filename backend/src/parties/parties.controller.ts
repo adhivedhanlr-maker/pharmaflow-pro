@@ -12,8 +12,16 @@ export class PartiesController {
 
     @Get('customers')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
-    findAllCustomers() {
-        return this.partiesService.findAllCustomers();
+    findAllCustomers(
+        @Query('skip') skip?: string,
+        @Query('take') take?: string,
+        @Query('search') search?: string,
+    ) {
+        return this.partiesService.findAllCustomers({
+            skip: skip ? parseInt(skip, 10) : undefined,
+            take: take ? parseInt(take, 10) : undefined,
+            search,
+        });
     }
 
     @Get('customers/search')
@@ -31,8 +39,16 @@ export class PartiesController {
 
     @Get('suppliers')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
-    findAllSuppliers() {
-        return this.partiesService.findAllSuppliers();
+    findAllSuppliers(
+        @Query('skip') skip?: string,
+        @Query('take') take?: string,
+        @Query('search') search?: string,
+    ) {
+        return this.partiesService.findAllSuppliers({
+            skip: skip ? parseInt(skip, 10) : undefined,
+            take: take ? parseInt(take, 10) : undefined,
+            search,
+        });
     }
 
     @Post('suppliers')

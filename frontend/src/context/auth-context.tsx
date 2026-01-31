@@ -18,6 +18,8 @@ interface AuthContextType {
     logout: () => void;
     isLoading: boolean;
     isAuthenticated: boolean;
+    testMode: boolean;
+    switchRole: (role: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,17 +28,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [testMode, setTestMode] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
 
-    const isAuthenticated = !!token;
+    const isAuthenticated = !!token || testMode;
 
     useEffect(() => {
         // Check for existing session on mount
         const storedToken = localStorage.getItem("auth_token");
         const storedUser = localStorage.getItem("auth_user");
+        const isTestMode = localStorage.getItem("test_mode") === "true";
+        const testUser = localStorage.getItem("test_user");
 
-        if (storedToken && storedUser) {
+        if (isTestMode && testUser) {
+            setTestMode(true);
+            setUser(JSON.parse(testUser));
+        } else if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
         }
@@ -60,11 +68,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push("/");
     };
 
+    const switchRole = (role: string) => {
+        // Only allow in development mode
+        if (process.env.NODE_ENV !== 'production') {
+            const testUser: User = {
+                id: `test-${role.toLowerCase()}`,
+                username: `test_${role.toLowerCase()}`,
+                name: `Test ${role}`,
+                role: role,
+            };
+            setUser(testUser);
+            setTestMode(true);
+            localStorage.setItem("test_mode", "true");
+            localStorage.setItem("test_user", JSON.stringify(testUser));
+        }
+    };
+
     const logout = () => {
         setToken(null);
         setUser(null);
+        setTestMode(false);
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+        localStorage.removeItem("test_mode");
+        localStorage.removeItem("test_user");
         document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         // Neon Logout
         // auth.logout(); // If available in the client
@@ -72,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated, testMode, switchRole }}>
             {children}
         </AuthContext.Provider>
     );
