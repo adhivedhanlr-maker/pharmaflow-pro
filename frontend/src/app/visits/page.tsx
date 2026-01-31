@@ -91,8 +91,8 @@ export default function VisitsPage() {
                         customerId: customer.id,
                         latitude,
                         longitude,
-                        distanceMeters: Math.round(distance),
-                        isVerified: isValid
+                        distance: Math.round(distance),
+                        status: isValid ? "VERIFIED" : "MISMATCH"
                     })
                 });
 

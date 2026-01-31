@@ -148,22 +148,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         </div>
       )}
 
-      <div className="p-4 border-t mt-auto">
-        <button
-          onClick={() => {
-            logout();
-            onNavigate?.();
-          }}
-          className={cn(
-            "flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-red-600 hover:bg-red-50",
-            isCollapsed && "justify-center px-2"
-          )}
-          title={isCollapsed ? "Sign Out" : undefined}
-        >
-          <LogOut className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
-          {!isCollapsed && <span>Sign Out</span>}
-        </button>
-      </div>
     </div>
   );
 }

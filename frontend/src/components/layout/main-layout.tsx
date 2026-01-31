@@ -12,6 +12,11 @@ import {
     SheetContent,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { useState } from "react";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 
@@ -62,17 +67,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         PharmaFlow
                     </span>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={logout}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                            <LogOut className="h-5 w-5" />
-                        </Button>
-                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                            <User className="h-4 w-4 text-white" />
-                        </div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center cursor-pointer shadow-sm hover:opacity-90">
+                                    <User className="h-5 w-5 text-white" />
+                                </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-2 shadow-xl border-slate-200" align="end">
+                                <button
+                                    onClick={logout}
+                                    className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Sign Out
+                                </button>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 
