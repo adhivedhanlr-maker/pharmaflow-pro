@@ -103,10 +103,15 @@ export default function VisitsPage() {
                         window.location.href = `/billing?customerId=${customer.id}`;
                     } else {
                         alert(`Check-in recorded, but you are ${Math.round(distance)}m away. Distance mismatch flagged.`);
+                        // Optional: Still navigate but with a flag? For now just stay.
                     }
+                } else {
+                    const errorMsg = await response.text();
+                    alert(`Server Error: ${response.status} - ${errorMsg || "Failed to record check-in"}`);
                 }
             } catch (error) {
-                alert("Failed to sync check-in with server");
+                console.error("Check-in Error:", error);
+                alert("Network Error: Could not connect to the server. Please check your internet.");
             } finally {
                 setCheckingIn(null);
             }

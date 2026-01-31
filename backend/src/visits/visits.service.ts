@@ -77,6 +77,23 @@ export class VisitsService {
         });
     }
 
+    async syncLocation(userId: string, lat: number, lng: number) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                lastLat: lat,
+                lastLng: lng,
+            },
+            select: {
+                id: true,
+                name: true,
+                lastLat: true,
+                lastLng: true,
+                updatedAt: true,
+            }
+        });
+    }
+
     async getActiveRepLocations() {
         return this.prisma.user.findMany({
             where: {

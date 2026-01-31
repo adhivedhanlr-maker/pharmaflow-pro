@@ -35,9 +35,9 @@ export class VisitsController {
         return this.visitsService.getActiveRepLocations();
     }
 
-    @Post('location')
+    @Post('sync-location')
     @Roles(Role.SALES_REP)
-    updateLocation(@Body() data: { latitude: number, longitude: number }, @Request() req: any) {
-        return this.visitsService.updateUserLocation(req.user?.userId, data.latitude, data.longitude);
+    syncLocation(@Body() data: { latitude: number, longitude: number }, @Request() req: any) {
+        return this.visitsService.syncLocation(req.user?.userId, data.latitude, data.longitude);
     }
 }

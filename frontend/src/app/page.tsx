@@ -8,11 +8,13 @@ import {
   Package,
   Users,
   AlertCircle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
 import { io } from "socket.io-client";
+import { cn } from "@/lib/utils";
 
 interface Stats {
   salesToday: number;
@@ -132,8 +134,13 @@ export default function Dashboard() {
             Here's what's happening today in {user?.role.replace('_', ' ').toLowerCase()}.
           </p>
         </div>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          <Loader2 className="h-4 w-4 mr-2" />
+        <Button
+          variant="outline"
+          onClick={fetchStats}
+          disabled={loading}
+          className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+        >
+          <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
           Refresh
         </Button>
       </div>

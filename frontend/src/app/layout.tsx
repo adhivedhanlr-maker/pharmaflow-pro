@@ -47,6 +47,12 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { RoleSwitcher } from "@/components/dev/role-switcher";
+import { useGPSSync } from "@/hooks/use-gps-sync";
+
+function GlobalHooks() {
+  useGPSSync();
+  return null;
+}
 
 export default function RootLayout({
   children,
@@ -63,6 +69,7 @@ export default function RootLayout({
               <KeyboardShortcuts />
               <PWAInstallPrompt />
               <RoleSwitcher />
+              <GlobalHooks />
             </ShortcutProvider>
           </SocketProvider>
         </AuthProvider>
