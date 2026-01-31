@@ -42,6 +42,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/context/auth-context";
 import { SocketProvider } from "@/context/socket-context";
+import { ShortcutProvider } from "@/context/shortcut-context";
 import { MainLayout } from "@/components/layout/main-layout";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -57,10 +58,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <SocketProvider>
-            <MainLayout>{children}</MainLayout>
-            <KeyboardShortcuts />
-            <PWAInstallPrompt />
-            <RoleSwitcher />
+            <ShortcutProvider>
+              <MainLayout>{children}</MainLayout>
+              <KeyboardShortcuts />
+              <PWAInstallPrompt />
+              <RoleSwitcher />
+            </ShortcutProvider>
           </SocketProvider>
         </AuthProvider>
       </body>

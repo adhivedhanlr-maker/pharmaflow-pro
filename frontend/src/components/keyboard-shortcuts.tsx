@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Command } from "lucide-react";
+import { useShortcut } from "@/context/shortcut-context";
 
 interface Shortcut {
     key: string;
@@ -22,10 +23,18 @@ export function KeyboardShortcuts() {
     const router = useRouter();
     const pathname = usePathname();
     const [showHelp, setShowHelp] = useState(false);
+    const { triggerHints } = useShortcut();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Show keyboard shortcuts help (Ctrl+/)
+            // Show keyboard hints (Alt + /) - NEW TRIGGER
+            if (e.altKey && e.key === '/') {
+                e.preventDefault();
+                triggerHints();
+                return;
+            }
+
+            // Show keyboard shortcuts help (Ctrl + /) - Keep as fallback
             if (e.ctrlKey && e.key === '/') {
                 e.preventDefault();
                 setShowHelp(true);
@@ -40,35 +49,26 @@ export function KeyboardShortcuts() {
 
             // Global navigation shortcuts (Alt + Key)
             if (e.altKey) {
-                e.preventDefault();
-                switch (e.key.toLowerCase()) {
-                    case 'd':
-                        router.push('/dashboard');
-                        break;
-                    case 'b':
-                        router.push('/billing');
-                        break;
-                    case 'p':
-                        router.push('/purchases');
-                        break;
-                    case 's':
-                        router.push('/stock');
-                        break;
-                    case 'c':
-                        router.push('/parties');
-                        break;
-                    case 'r':
-                        router.push('/returns');
-                        break;
-                    case 'i':
-                        router.push('/inventory');
-                        break;
-                    case 'u':
-                        router.push('/users');
-                        break;
-                    case 'e':
-                        router.push('/reports');
-                        break;
+                // Don't prevent default for combinations that might be hints
+                // but if it's a known navigation key, handle it
+                const key = e.key.toLowerCase();
+                const navRoutes: Record<string, string> = {
+                    'd': '/dashboard',
+                    'b': '/billing',
+                    'p': '/purchases',
+                    's': '/stock',
+                    'c': '/parties',
+                    'r': '/returns',
+                    'i': '/inventory',
+                    'u': '/users',
+                    'e': '/reports',
+                    'o': '/orders',
+                    'v': '/visits',
+                };
+
+                if (navRoutes[key]) {
+                    e.preventDefault();
+                    router.push(navRoutes[key]);
                 }
             }
 
@@ -185,20 +185,6 @@ export function KeyboardShortcuts() {
 
     return (
         <>
-            {/* Floating keyboard hint */}
-            <div className="fixed bottom-4 right-4 z-40 hidden lg:block">
-                <button
-                    onClick={() => setShowHelp(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg hover:bg-slate-800 transition-colors"
-                >
-                    <Command className="h-3 w-3" />
-                    <span>Keyboard Shortcuts</span>
-                    <Badge variant="outline" className="bg-slate-800 text-white border-slate-700">
-                        Ctrl + /
-                    </Badge>
-                </button>
-            </div>
-
             {/* Shortcuts help dialog */}
             <Dialog open={showHelp} onOpenChange={setShowHelp}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

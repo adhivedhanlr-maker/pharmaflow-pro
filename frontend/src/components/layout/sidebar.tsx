@@ -21,19 +21,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { useShortcut } from "@/context/shortcut-context";
+import { Badge } from "@/components/ui/badge";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"] },
-  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
-  { icon: ShoppingCart, label: "Purchases", href: "/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"] },
-  { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"] },
-  { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
-  { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"] },
-  { icon: ShoppingCart, label: "Requirements", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"] },
-  { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"] },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"], hint: "D" },
+  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "B" },
+  { icon: ShoppingCart, label: "Purchases", href: "/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"], hint: "P" },
+  { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
+  { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
+  { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
+  { icon: ShoppingCart, label: "Requirements", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" }, // Added O for Orders/Requirements
+  { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"], hint: "V" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
-  { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"] },
-  { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"] },
+  { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
+  { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"], hint: "U" },
 ];
 
 interface SidebarProps {
@@ -44,6 +46,9 @@ interface SidebarProps {
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { user } = useAuth();
+  const { showHints } = useShortcut();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const filteredMenuItems = menuItems.filter(item =>
@@ -102,7 +107,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative group",
                 isActive
                   ? "bg-primary/10 text-primary shadow-sm"
                   : "text-muted-foreground hover:bg-muted",
@@ -112,6 +117,14 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             >
               <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary", isCollapsed && "h-5 w-5")} />
               {!isCollapsed && <span>{item.label}</span>}
+
+              {showHints && item.hint && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in duration-200">
+                  <Badge variant="outline" className="h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold bg-slate-900 text-white border-slate-700 shadow-sm pointer-events-none">
+                    {item.hint}
+                  </Badge>
+                </div>
+              )}
             </Link>
           );
         })}
@@ -122,7 +135,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             href="/settings"
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+              "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative group",
               pathname === "/settings"
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted",
@@ -132,6 +145,14 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
           >
             <Settings className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
             {!isCollapsed && <span>Settings</span>}
+
+            {showHints && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in duration-200">
+                <Badge variant="outline" className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold bg-slate-900 text-white border-slate-700 shadow-sm pointer-events-none">
+                  S
+                </Badge>
+              </div>
+            )}
           </Link>
         </div>
       )}
