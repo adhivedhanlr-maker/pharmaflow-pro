@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Building2, User } from "lucide-react";
+import { Loader2, Plus, Building2, User, MapPin } from "lucide-react";
 
 interface CustomerDialogProps {
     type: "customer" | "supplier";
@@ -28,11 +28,13 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
     // Simple form state (in a real app, use react-hook-form + zod)
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<any>({
         name: "",
         gstin: "",
         phone: "",
-        address: ""
+        address: "",
+        latitude: null,
+        longitude: null
     });
 
     const isCustomer = type === "customer";
@@ -63,7 +65,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 const newParty = await response.json();
                 onSuccess(newParty);
                 setOpen(false);
-                setFormData({ name: "", gstin: "", phone: "", address: "" });
+                setFormData({ name: "", gstin: "", phone: "", address: "", latitude: null, longitude: null });
             } else {
                 alert("Failed to create party"); // Replace with toast later
             }
@@ -136,6 +138,56 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                             />
                         </div>
                     </div>
+
+                    <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold uppercase text-slate-500">GPS Coordinates</label>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-[10px] bg-white"
+                                onClick={() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition((pos) => {
+                                            setFormData({
+                                                ...formData,
+                                                latitude: pos.coords.latitude,
+                                                longitude: pos.coords.longitude
+                                            });
+                                        });
+                                    }
+                                }}
+                            >
+                                <MapPin className="h-3 w-3 mr-1" /> Detect My Location
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-slate-400">Latitude</label>
+                                <Input
+                                    type="number"
+                                    step="any"
+                                    placeholder="0.0000"
+                                    className="h-8 text-xs font-mono"
+                                    value={formData.latitude || ""}
+                                    onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-slate-400">Longitude</label>
+                                <Input
+                                    type="number"
+                                    step="any"
+                                    placeholder="0.0000"
+                                    className="h-8 text-xs font-mono"
+                                    value={formData.longitude || ""}
+                                    onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end pt-4">
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

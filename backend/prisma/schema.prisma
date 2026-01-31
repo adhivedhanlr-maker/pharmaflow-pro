@@ -75,6 +75,8 @@ model Customer {
   gstin        String?
   address      String?
   phone        String?
+  latitude     Float?
+  longitude    Float?
   creditLimit  Float    @default(0)
   currentBalance Float  @default(0)
   createdAt    DateTime @default(now())
