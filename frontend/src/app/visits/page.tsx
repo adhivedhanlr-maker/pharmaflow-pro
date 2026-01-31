@@ -99,8 +99,8 @@ export default function VisitsPage() {
                 if (response.ok) {
                     if (isValid) {
                         alert(`Success! Check-in verified at ${customer.name}. You are within ${Math.round(distance)}m.`);
-                        // Navigate to billing to take order if verified
-                        window.location.href = `/billing?customerId=${customer.id}`;
+                        // Navigate to orders page to capture requirements
+                        window.location.href = `/orders?customerId=${customer.id}`;
                     } else {
                         alert(`Check-in recorded, but you are ${Math.round(distance)}m away. Distance mismatch flagged.`);
                         // Optional: Still navigate but with a flag? For now just stay.
