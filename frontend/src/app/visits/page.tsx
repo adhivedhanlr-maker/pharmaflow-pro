@@ -116,9 +116,13 @@ export default function VisitsPage() {
                 setCheckingIn(null);
             }
         }, (error) => {
-            alert("Location access denied. Please enable GPS to check in.");
+            alert("Location Error: " + error.message + ". Please ensure GPS is enabled and signal is strong.");
             setCheckingIn(null);
-        }, { enableHighAccuracy: true });
+        }, {
+            enableHighAccuracy: true,
+            timeout: 11000,
+            maximumAge: 60000
+        });
     };
 
     const filteredCustomers = customers.filter(c =>

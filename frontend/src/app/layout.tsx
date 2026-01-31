@@ -18,13 +18,6 @@ export const metadata: Metadata = {
   title: "PharmaFlow Pro",
   description: "B2B Pharmaceutical Distribution System",
   manifest: "/manifest.json",
-  themeColor: "#0f172a",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -40,6 +33,14 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0f172a",
+};
+
 import { AuthProvider } from "@/context/auth-context";
 import { SocketProvider } from "@/context/socket-context";
 import { ShortcutProvider } from "@/context/shortcut-context";
@@ -47,12 +48,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { RoleSwitcher } from "@/components/dev/role-switcher";
-import { useGPSSync } from "@/hooks/use-gps-sync";
-
-function GlobalHooks() {
-  useGPSSync();
-  return null;
-}
+import { GlobalHooks } from "@/components/layout/global-hooks";
 
 export default function RootLayout({
   children,

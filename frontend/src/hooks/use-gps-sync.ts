@@ -43,7 +43,11 @@ export function useGPSSync() {
                 (error) => {
                     console.error("GPS Access Error:", error.message);
                 },
-                { enableHighAccuracy: true }
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
             );
         };
 

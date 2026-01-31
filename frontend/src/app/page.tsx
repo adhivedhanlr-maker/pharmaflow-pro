@@ -155,7 +155,9 @@ export default function Dashboard() {
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stat.value}</div>
+              <div className={cn("text-3xl font-bold transition-opacity", loading && "opacity-50")}>
+                {loading ? "..." : stat.value}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {stat.description}
               </p>
