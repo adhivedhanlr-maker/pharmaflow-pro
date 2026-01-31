@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,12 @@ export default function BillingPage() {
     const [productSearch, setProductSearch] = useState("");
     const [customerSearch, setCustomerSearch] = useState("");
     const [loadingProducts, setLoadingProducts] = useState(false);
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const customerId = searchParams.get('customerId');
+        if (customerId) setSelectedCustomerId(customerId);
+    }, [searchParams]);
 
     useEffect(() => {
         if (token) {

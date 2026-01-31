@@ -15,7 +15,8 @@ import {
   RefreshCcw,
   ChevronLeft,
   ChevronRight,
-  UserCog
+  UserCog,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"] },
   { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
   { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"] },
+  { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"] },
   { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"] },
   { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"] },
 ];
