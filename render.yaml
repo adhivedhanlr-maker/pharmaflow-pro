@@ -5,9 +5,8 @@ services:
     region: oregon
     plan: free
     branch: master
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm run start:prod
     envVars:
       - key: DATABASE_URL
         sync: false
