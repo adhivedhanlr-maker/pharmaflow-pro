@@ -275,6 +275,17 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchSection}>
+        <View style={styles.searchBar}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search pharmacies..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+      </View>
+
       {loading ? (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -282,26 +293,28 @@ export default function App() {
         </View>
       ) : (
         <FlatList
-          data={parties}
-          keyExtractor={(item) => item.id}
+          data={parties.filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+          keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <View style={styles.productCard}>
-              <View style={styles.cardLeft}>
-                <Text style={styles.inputLabel}>CLIENT</Text>
-                <Text style={styles.productName}>{item.name}</Text>
-                <Text style={styles.subtitle}>{item.address || 'No Address Listed'}</Text>
-                <Text style={[styles.subtitle, { color: COLORS.primary }]}>{item.phone || ''}</Text>
+            <View style={styles.visitCard}>
+              <View style={styles.visitInfo}>
+                <Text style={styles.visitLabel}>PHARMACY</Text>
+                <Text style={styles.visitName}>{item.name}</Text>
+                <Text style={styles.visitAddress}>{item.address || 'No Address Listed'}</Text>
               </View>
               <TouchableOpacity
-                style={[styles.orderAddBtn, { width: 100, backgroundColor: COLORS.primary }]}
+                style={[styles.checkInBtn, checkingIn === item.id && styles.btnDisabled]}
                 onPress={() => handleCheckIn(item)}
                 disabled={checkingIn === item.id}
               >
                 {checkingIn === item.id ? (
                   <ActivityIndicator color="white" size="small" />
                 ) : (
-                  <Text style={[styles.orderAddText, { fontSize: 14, color: 'white' }]}>Check In</Text>
+                  <>
+                    <Text style={styles.checkInText}>CHECK IN</Text>
+                    <Text style={styles.checkInSubtext}>Start Visit</Text>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
@@ -484,5 +497,15 @@ const styles = StyleSheet.create({
   cartCard: { backgroundColor: '#334155', borderRadius: 20, padding: SPACING.lg, marginBottom: SPACING.lg },
   cartTitle: { color: COLORS.white, fontSize: 16, fontWeight: 'bold' },
   submitBtn: { backgroundColor: COLORS.success, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 40 },
-  submitBtnText: { color: COLORS.white, fontSize: 18, fontWeight: 'bold' }
+  submitBtnText: { color: COLORS.white, fontSize: 18, fontWeight: 'bold' },
+
+  // Visit Screen Styles
+  visitCard: { backgroundColor: COLORS.white, borderRadius: 20, padding: 20, marginBottom: 16, elevation: 2, flexDirection: 'row', alignItems: 'center' },
+  visitInfo: { flex: 1 },
+  visitLabel: { fontSize: 10, color: COLORS.primary, fontWeight: 'bold', letterSpacing: 1, marginBottom: 4 },
+  visitName: { fontSize: 18, fontWeight: '900', color: COLORS.text },
+  visitAddress: { fontSize: 13, color: COLORS.textLight, marginTop: 4 },
+  checkInBtn: { backgroundColor: COLORS.primary, width: 100, height: 60, borderRadius: 15, justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  checkInText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
+  checkInSubtext: { color: COLORS.primaryLight, fontSize: 10, fontWeight: '600' }
 });
