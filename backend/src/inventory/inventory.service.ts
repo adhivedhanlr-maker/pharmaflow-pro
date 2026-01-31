@@ -108,4 +108,42 @@ export class InventoryService {
             include: { batches: true },
         });
     }
+
+    async findByBarcode(code: string) {
+        // Try to find product by barcode
+        const product = await this.prisma.product.findUnique({
+            where: { barcode: code },
+            include: {
+                batches: {
+                    where: { currentStock: { gt: 0 } },
+                    orderBy: { expiryDate: 'asc' },
+                },
+            },
+        });
+
+        if (product) {
+            return product;
+        }
+
+        // Try to find batch by batch barcode
+        const batch = await this.prisma.batch.findUnique({
+            where: { batchBarcode: code },
+            include: {
+                product: {
+                    include: {
+                        batches: {
+                            where: { currentStock: { gt: 0 } },
+                            orderBy: { expiryDate: 'asc' },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (batch) {
+            return { ...batch.product, selectedBatch: batch };
+        }
+
+        throw new NotFoundException(`No product or batch found with barcode: ${code}`);
+    }
 }

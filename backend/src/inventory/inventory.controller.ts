@@ -51,4 +51,10 @@ export class InventoryController {
     getLowStock() {
         return this.inventoryService.getLowStock();
     }
+
+    @Get('products/barcode/:code')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
+    findByBarcode(@Param('code') code: string) {
+        return this.inventoryService.findByBarcode(code);
+    }
 }

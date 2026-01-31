@@ -42,6 +42,8 @@ model Product {
   mrp         Float
   company     String?
   reorderLevel Int     @default(10)
+  barcode     String?  @unique
+  barcodeType String?  // "EAN13", "UPC", "CODE128", etc.
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   batches     Batch[]
@@ -51,11 +53,13 @@ model Product {
 
   @@index([name])
   @@index([company])
+  @@index([barcode])
 }
 
 model Batch {
   id          String   @id @default(cuid())
   batchNumber String
+  batchBarcode String?  @unique
   expiryDate  DateTime
   productId   String
   product     Product  @relation(fields: [productId], references: [id])
@@ -71,6 +75,7 @@ model Batch {
   @@unique([productId, batchNumber])
   @@index([currentStock])
   @@index([expiryDate])
+  @@index([batchBarcode])
 }
 
 model Customer {

@@ -22,7 +22,8 @@ import {
     ChevronRight,
     Loader2,
     ShoppingCart,
-    ShieldAlert
+    ShieldAlert,
+    Camera
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,6 +44,7 @@ import { InvoicePrint } from "@/components/billing/invoice-print";
 import { CustomerDialog } from "@/components/billing/customer-dialog";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
+import { BarcodeScanner } from "@/components/barcode/barcode-scanner";
 
 interface BillingItem {
     id: string;
@@ -94,6 +96,7 @@ export default function BillingPage() {
     const [productSearch, setProductSearch] = useState("");
     const [customerSearch, setCustomerSearch] = useState("");
     const [loadingProducts, setLoadingProducts] = useState(false);
+    const [scannerOpen, setScannerOpen] = useState(false);
     const searchParams = useSearchParams();
 
     useEffect(() => {
