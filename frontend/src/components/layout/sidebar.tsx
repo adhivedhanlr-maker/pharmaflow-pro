@@ -29,6 +29,7 @@ const menuItems = [
   { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"] },
   { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
   { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"] },
+  { icon: ShoppingCart, label: "Requirements", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"] },
   { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"] },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
   { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"] },

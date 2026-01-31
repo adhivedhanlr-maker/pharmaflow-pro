@@ -6,6 +6,6 @@ import { SalesGateway } from './sales.gateway';
 @Module({
     providers: [SalesService, SalesGateway],
     controllers: [SalesController],
-    exports: [SalesService],
+    exports: [SalesService, SalesGateway],
 })
 export class SalesModule { }

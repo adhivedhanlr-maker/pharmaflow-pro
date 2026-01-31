@@ -16,7 +16,7 @@ import {
   Platform,
   Linking
 } from 'react-native';
-import { login, getProducts, getCustomers, recordVisit, createOrder, createCustomer } from './src/utils/api';
+import { login, getProducts, getCustomers, recordVisit, createOrder, createCustomer, createRequirement } from './src/utils/api';
 import { getCurrentLocation, calculateDistance, validateVisit } from './src/utils/location';
 
 const { width, height } = Dimensions.get('window');
@@ -205,7 +205,7 @@ export default function App() {
         setSelectedParty(party);
         setCart([]); // Clear previous cart
         Alert.alert('Visit Verified', `Checked in at ${party.name}`, [
-          { text: 'Start Order', onPress: () => setScreen('catalog') }
+          { text: 'Capture Requirements', onPress: () => setScreen('catalog') }
         ]);
       } else {
         Alert.alert(
@@ -242,19 +242,19 @@ export default function App() {
         customerId: selectedParty.id,
         items: cart.map(item => ({
           productId: item.productId,
-          quantity: item.quantity
+          quantity: item.quantity,
+          price: item.price
         })),
-        isCash: true,
-        discountAmount: 0
+        totalAmount: cart.reduce((acc, i) => acc + (i.price * i.quantity), 0)
       };
 
-      await createOrder(orderData);
+      await createRequirement(orderData);
 
-      Alert.alert("Order Received", "The order has been sent to the billing desk for processing.", [
+      Alert.alert("Requirement Sent", "Your requirements have been sent to the billing desk. They will verify stock and prepare the dispatch.", [
         { text: "OK", onPress: () => setScreen('visits') }
       ]);
     } catch (error: any) {
-      Alert.alert("Order Failed", error.message || "Could not submit order");
+      Alert.alert("Failed", error.message || "Could not submit requirements");
     } finally {
       setLoading(false);
     }
