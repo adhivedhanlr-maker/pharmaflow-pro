@@ -46,9 +46,7 @@ interface SidebarProps {
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { user } = useAuth();
   const { showHints } = useShortcut();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const filteredMenuItems = menuItems.filter(item =>
