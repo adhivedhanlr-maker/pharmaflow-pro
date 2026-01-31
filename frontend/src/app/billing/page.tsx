@@ -20,7 +20,8 @@ import {
     Printer,
     ChevronRight,
     Loader2,
-    ShoppingCart
+    ShoppingCart,
+    ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,6 +40,8 @@ import {
 import { cn } from "@/lib/utils";
 import { InvoicePrint } from "@/components/billing/invoice-print";
 import { CustomerDialog } from "@/components/billing/customer-dialog";
+import { useAuth } from "@/context/auth-context";
+import { RoleGate } from "@/components/auth/role-gate";
 
 interface BillingItem {
     id: string;
@@ -77,8 +80,6 @@ interface Customer {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-import { useAuth } from "@/context/auth-context";
-
 export default function BillingPage() {
     const { token } = useAuth();
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -92,9 +93,10 @@ export default function BillingPage() {
     const [productSearch, setProductSearch] = useState("");
     const [customerSearch, setCustomerSearch] = useState("");
     const [loadingProducts, setLoadingProducts] = useState(false);
+
     useEffect(() => {
-        fetchCustomers();
         if (token) {
+            fetchCustomers();
             fetchBusinessProfile();
         }
     }, [token]);
@@ -159,7 +161,7 @@ export default function BillingPage() {
     // Debounce product search
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchProducts(productSearch);
+            if (token) fetchProducts(productSearch);
         }, 300);
         return () => clearTimeout(timer);
     }, [productSearch, token]);
@@ -167,10 +169,10 @@ export default function BillingPage() {
     // Debounce customer search
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchCustomers(customerSearch);
+            if (token) fetchCustomers(customerSearch);
         }, 300);
         return () => clearTimeout(timer);
-    }, [customerSearch]);
+    }, [customerSearch, token]);
 
     const handleSave = async () => {
         if (!selectedCustomerId) {
@@ -186,7 +188,10 @@ export default function BillingPage() {
         try {
             const response = await fetch(`${API_BASE}/sales/invoices`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     customerId: selectedCustomerId,
                     items: items.map(item => ({
@@ -195,7 +200,6 @@ export default function BillingPage() {
                         quantity: item.quantity + (item.freeQuantity || 0)
                     })),
                     isCash: isCash,
-                    // Discount logic: If free items exist, treating their value as discount
                     discountAmount: items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0)
                 }),
             });
@@ -205,7 +209,6 @@ export default function BillingPage() {
                 alert("Invoice saved successfully!");
                 setItems([]);
                 setSelectedCustomerId("");
-                // Trigger print here if needed
             } else {
                 const error = await response.json();
                 alert(`Error: ${error.message}`);
@@ -235,7 +238,7 @@ export default function BillingPage() {
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [handleSave]); // Re-bind if save logic changes (usually stable)
+    }, [handleSave]);
 
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
@@ -276,7 +279,6 @@ export default function BillingPage() {
             if (item.id === id) {
                 const updated = { ...item, [field]: value };
 
-                // If batch changes, update price
                 if (field === 'batchId') {
                     const product = products.find(p => p.id === item.productId);
                     const batch = product?.batches.find(b => b.id === value);
@@ -294,8 +296,6 @@ export default function BillingPage() {
         }));
     };
 
-    // handleSave was here, moved up.
-
     const handlePrint = () => {
         if (!selectedCustomerId || items.length === 0) {
             alert("Please select a customer and add items before printing.");
@@ -304,26 +304,29 @@ export default function BillingPage() {
         window.print();
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    // Find selected customer details for the invoice
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-
-    // Create a safe default for the invoice component if no customer is selected yet (though logic prevents print)
     const printCustomer = selectedCustomer ? {
         name: selectedCustomer.name,
-        address: "Address on file", // Add address to customer interface if needed later
+        address: "Address on file",
         gstin: selectedCustomer.gstin,
     } : { name: "", address: "" };
 
     return (
-        <>
+        <RoleGate
+            allowedRoles={["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]}
+            fallback={
+                <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 text-center">
+                    <div className="bg-red-50 p-6 rounded-full">
+                        <ShieldAlert className="h-16 w-16 text-red-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold">Access Denied</h1>
+                    <p className="text-slate-500 max-w-sm">
+                        Invoice generation and billing features are restricted to authorized personnel.
+                    </p>
+                    <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
+                </div>
+            }
+        >
             <div className="space-y-6 no-print">
                 <div className="flex items-center justify-between">
                     <div>
@@ -420,7 +423,6 @@ export default function BillingPage() {
                                 </Popover>
                             </CardHeader>
                             <CardContent className="p-0">
-                                {/* Desktop Table View */}
                                 <div className="hidden md:block">
                                     <Table>
                                         <TableHeader>
@@ -438,7 +440,7 @@ export default function BillingPage() {
                                         <TableBody>
                                             {items.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
+                                                    <TableCell colSpan={8} className="text-center py-20 text-muted-foreground">
                                                         <div className="flex flex-col items-center gap-2">
                                                             <ShoppingCart className="h-8 w-8 opacity-20" />
                                                             <p>No items added yet. Search products to add.</p>
@@ -500,8 +502,6 @@ export default function BillingPage() {
                                         </TableBody>
                                     </Table>
                                 </div>
-
-                                {/* Mobile Card View */}
                                 <div className="md:hidden space-y-4 p-4 bg-slate-50">
                                     {items.length === 0 ? (
                                         <div className="text-center py-10 text-muted-foreground bg-white rounded-lg border border-dashed">
@@ -513,7 +513,7 @@ export default function BillingPage() {
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <h4 className="font-bold text-slate-900">{item.name}</h4>
-                                                    <div className="ttext-xs text-slate-500 mt-1 flex gap-2">
+                                                    <div className="text-xs text-slate-500 mt-1 flex gap-2">
                                                         <Badge variant="outline" className="text-[10px] h-5">Batch: {item.batchNumber}</Badge>
                                                         <Badge variant="secondary" className="text-[10px] h-5">GST: {item.gstRate}%</Badge>
                                                     </div>
@@ -527,7 +527,6 @@ export default function BillingPage() {
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
-
                                             <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-md">
                                                 <div className="flex items-center gap-2 flex-1">
                                                     <span className="text-xs font-semibold text-slate-500">Qty:</span>
@@ -583,8 +582,6 @@ export default function BillingPage() {
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {/* Mobile Sticky Footer for Summary */}
                         <div className="md:hidden fixed bottom-[60px] left-0 right-0 bg-slate-900 text-white p-4 border-t border-slate-800 flex justify-between items-center z-30 shadow-[0_-5px_10px_rgba(0,0,0,0.1)]">
                             <div>
                                 <div className="text-xs text-slate-400 uppercase">Net Payable</div>
@@ -595,7 +592,6 @@ export default function BillingPage() {
                                 Save
                             </Button>
                         </div>
-
                         <Card className="border-slate-200">
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-xs font-bold uppercase text-slate-500">Payment Mode</CardTitle>
@@ -617,7 +613,6 @@ export default function BillingPage() {
                                 </Button>
                             </CardContent>
                         </Card>
-
                         <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 space-y-1">
                             <h4 className="text-xs font-bold text-amber-800">Shortcut Keys:</h4>
                             <ul className="text-[10px] text-amber-700 grid grid-cols-2 gap-1">
@@ -629,8 +624,6 @@ export default function BillingPage() {
                     </div>
                 </div>
             </div>
-
-            {/* Hidden Print Component - Only visible during print */}
             <InvoicePrint
                 invoiceNumber="DRAFT-001"
                 date={new Date()}
@@ -640,13 +633,7 @@ export default function BillingPage() {
                     id: item.id,
                     name: item.name,
                     batchNumber: item.batchNumber,
-                    quantity: item.quantity, // Print only billed quantity? Or "10 + 2"?
-                    // Let's pass a description string or modifying quantity display in print
-                    // For now, let's keep it simple: quantity is Billed Qty. Free is separate line or note? 
-                    // Better: Pass "Net Qty" or "10 + 2" string to print?
-                    // The interface expects number. Let's send billed quantity, and Handle free in print component.
-                    // Wait, InvoicePrint props need update to support freeQuantity.
-                    // For now, let's just pass quantity as is (paid qty) and update print component next.
+                    quantity: item.quantity,
                     unitPrice: item.unitPrice,
                     freeQuantity: item.freeQuantity || 0,
                     gstRate: item.gstRate,
@@ -655,6 +642,6 @@ export default function BillingPage() {
                 }))}
                 totals={totals}
             />
-        </>
+        </RoleGate>
     );
 }

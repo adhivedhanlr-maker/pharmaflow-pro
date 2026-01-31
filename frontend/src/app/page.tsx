@@ -10,6 +10,8 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
+import { RoleGate } from "@/components/auth/role-gate";
 
 interface Stats {
   salesToday: number;
@@ -21,6 +23,7 @@ interface Stats {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<Stats>({
     salesToday: 0,
     stockItems: 0,
@@ -74,6 +77,7 @@ export default function Dashboard() {
       description: "Total invoices generated",
       icon: TrendingUp,
       color: "text-green-600",
+      roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]
     },
     {
       title: "Active Batches",
@@ -81,6 +85,7 @@ export default function Dashboard() {
       description: "Items in inventory",
       icon: Package,
       color: "text-blue-600",
+      roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"]
     },
     {
       title: "Total Customers",
@@ -88,6 +93,7 @@ export default function Dashboard() {
       description: "Active database",
       icon: Users,
       color: "text-purple-600",
+      roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]
     },
     {
       title: "Expiring Soon",
@@ -95,8 +101,11 @@ export default function Dashboard() {
       description: "Next 30 days",
       icon: AlertCircle,
       color: "text-red-600",
+      roles: ["ADMIN", "WAREHOUSE_MANAGER"]
     },
   ];
+
+  const filteredStats = statConfig.filter(stat => user && stat.roles.includes(user.role));
 
   return (
     <div className="space-y-6">
@@ -104,7 +113,8 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
           <p className="text-muted-foreground">
-            Real-time summary of your pharmaceutical distribution operations.
+            Welcome back, <span className="font-semibold text-foreground">{user?.name}</span>.
+            Here's what's happening today in {user?.role.replace('_', ' ').toLowerCase()}.
           </p>
         </div>
         <Button variant="outline" onClick={() => window.location.reload()}>
@@ -114,7 +124,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statConfig.map((stat) => (
+        {filteredStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -133,33 +143,37 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-1 md:col-span-2 lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Business Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground py-10 text-center">
-              Sales performance chart will appear here as more data is collected.
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Inventory Health</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Healthy Items</span>
-                <span className="font-bold text-green-600">92%</span>
+        <RoleGate allowedRoles={["ADMIN", "ACCOUNTANT", "BILLING_OPERATOR"]}>
+          <Card className="col-span-1 md:col-span-2 lg:col-span-4">
+            <CardHeader>
+              <CardTitle>Business Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground py-10 text-center">
+                Sales performance chart will appear here as more data is collected.
               </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div className="bg-green-500 h-full w-[92%]" />
+            </CardContent>
+          </Card>
+        </RoleGate>
+        <RoleGate allowedRoles={["ADMIN", "WAREHOUSE_MANAGER"]}>
+          <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+            <CardHeader>
+              <CardTitle>Inventory Health</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Healthy Items</span>
+                  <span className="font-bold text-green-600">92%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-green-500 h-full w-[92%]" />
+                </div>
+                <p className="text-[10px]">Based on current stock levels and expiry dates.</p>
               </div>
-              <p className="text-[10px]">Based on current stock levels and expiry dates.</p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </RoleGate>
       </div>
     </div>
   );

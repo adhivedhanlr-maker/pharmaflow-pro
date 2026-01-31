@@ -18,16 +18,17 @@ import {
   UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Receipt, label: "Billing", href: "/billing" },
-  { icon: ShoppingCart, label: "Purchases", href: "/purchases" },
-  { icon: Package, label: "Stock", href: "/stock" },
-  { icon: Users, label: "Parties", href: "/parties" },
-  { icon: BarChart3, label: "Reports", href: "/reports" },
-  { icon: RefreshCcw, label: "Returns", href: "/returns" },
-  { icon: UserCog, label: "User Management", href: "/users" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"] },
+  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
+  { icon: ShoppingCart, label: "Purchases", href: "/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"] },
+  { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"] },
+  { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"] },
+  { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"] },
+  { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"] },
+  { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"] },
 ];
 
 interface SidebarProps {
@@ -37,7 +38,12 @@ interface SidebarProps {
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const filteredMenuItems = menuItems.filter(item =>
+    user && item.roles.includes(user.role)
+  );
 
   return (
     <div className={cn(
@@ -83,7 +89,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         </button>
       </div>
       <nav className="flex-1 px-4 space-y-1 py-4 overflow-y-auto">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -105,23 +111,25 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
           );
         })}
       </nav>
-      <div className="p-4 border-t">
-        <Link
-          href="/settings"
-          onClick={onNavigate}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-            pathname === "/settings"
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted",
-            isCollapsed && "justify-center px-2"
-          )}
-          title={isCollapsed ? "Settings" : undefined}
-        >
-          <Settings className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
-          {!isCollapsed && <span>Settings</span>}
-        </Link>
-      </div>
+      {user?.role === "ADMIN" && (
+        <div className="p-4 border-t">
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+              pathname === "/settings"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted",
+              isCollapsed && "justify-center px-2"
+            )}
+            title={isCollapsed ? "Settings" : undefined}
+          >
+            <Settings className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
+            {!isCollapsed && <span>Settings</span>}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
