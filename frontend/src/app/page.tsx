@@ -36,17 +36,23 @@ export default function Dashboard() {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      const headers = {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      };
       const [prodRes, custRes, expRes, saleRes] = await Promise.all([
-        fetch(`${API_BASE}/inventory/products`),
-        fetch(`${API_BASE}/parties?type=customer`),
-        fetch(`${API_BASE}/inventory/alerts/expiring`),
-        fetch(`${API_BASE}/sales/invoices`)
+        fetch(`${API_BASE}/inventory/products`, { headers }),
+        fetch(`${API_BASE}/parties/customers`, { headers }),
+        fetch(`${API_BASE}/inventory/alerts/expiring`, { headers }),
+        fetch(`${API_BASE}/sales/invoices`, { headers })
       ]);
 
-      const products = prodRes.ok ? await prodRes.json() : [];
-      const customers = custRes.ok ? await custRes.json() : [];
+      const productsData = prodRes.ok ? await prodRes.json() : { data: [] };
+      const customersData = custRes.ok ? await custRes.json() : { data: [] };
       const expiring = expRes.ok ? await expRes.json() : [];
       const sales = saleRes.ok ? await saleRes.json() : [];
+
+      const products = productsData.data || productsData;
+      const customers = customersData.data || customersData;
 
       setStats({
         salesToday: Array.isArray(sales) ? sales.length : 0,

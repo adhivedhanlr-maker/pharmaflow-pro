@@ -79,13 +79,22 @@ export default function PurchasesPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
+            const headers = {
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            };
             const [supRes, prodRes] = await Promise.all([
-                fetch(`${API_BASE}/parties?type=supplier`),
-                fetch(`${API_BASE}/inventory/products`)
+                fetch(`${API_BASE}/parties/suppliers`, { headers }),
+                fetch(`${API_BASE}/inventory/products`, { headers })
             ]);
 
-            if (supRes.ok) setSuppliers(await supRes.json());
-            if (prodRes.ok) setProducts(await prodRes.json());
+            if (supRes.ok) {
+                const result = await supRes.json();
+                setSuppliers(result.data || result);
+            }
+            if (prodRes.ok) {
+                const result = await prodRes.json();
+                setProducts(result.data || result);
+            }
         } catch (error) {
             console.error("Failed to fetch data:", error);
             setError("Failed to load suppliers or products. Please check backend connection.");
@@ -161,7 +170,10 @@ export default function PurchasesPage() {
         try {
             const response = await fetch(`${API_BASE}/purchases`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem('auth_token')}`
+                },
                 body: JSON.stringify({
                     supplierId: selectedSupplierId,
                     billNumber,

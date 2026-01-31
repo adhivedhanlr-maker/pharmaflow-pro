@@ -82,7 +82,8 @@ export default function PartiesPage() {
                 }
             });
             if (response.ok) {
-                setParties(await response.json());
+                const result = await response.json();
+                setParties(result.data || result);
             }
         } catch (error) {
             console.error("Failed to fetch parties:", error);

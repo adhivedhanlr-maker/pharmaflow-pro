@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Card,
     CardContent,
@@ -57,9 +57,14 @@ export default function StockPage() {
     const fetchStock = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/inventory/products`);
+            const response = await fetch(`${API_BASE}/inventory/products`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
             if (response.ok) {
-                setProducts(await response.json());
+                const result = await response.json();
+                setProducts(result.data || result);
             }
         } catch (error) {
             console.error("Failed to fetch stock:", error);
@@ -68,16 +73,19 @@ export default function StockPage() {
         }
     };
 
-    const allBatches = products.flatMap(p =>
-        p.batches.map(b => ({
-            ...b,
-            productName: p.name,
-            id: b.id // ensure we have unique id
-        }))
-    ).filter(b =>
-        b.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const allBatches = useMemo(() => {
+        if (!Array.isArray(products)) return [];
+        return products.flatMap(p =>
+            p.batches.map(b => ({
+                ...b,
+                productName: p.name,
+                id: b.id // ensure we have unique id
+            }))
+        ).filter(b =>
+            b.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            b.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [products, searchQuery]);
 
     const getStatusBadge = (stock: number, expiry: string) => {
         const expDate = new Date(expiry);
