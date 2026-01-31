@@ -156,7 +156,12 @@ export default function SettingsPage() {
                                 <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 w-40 h-40 flex flex-col items-center justify-center relative bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
                                     onClick={() => document.getElementById('logo-upload')?.click()}>
                                     {logoPreview ? (
-                                        <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-contain" />
+                                        <img
+                                            src={logoPreview}
+                                            alt="Logo Preview"
+                                            className="h-full w-full object-contain"
+                                            onError={() => setLogoPreview(null)}
+                                        />
                                     ) : (
                                         <div className="text-center text-slate-400">
                                             <Upload className="h-8 w-8 mx-auto mb-2" />
