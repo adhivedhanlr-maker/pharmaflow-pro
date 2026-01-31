@@ -60,7 +60,6 @@ export default function App() {
   const [cart, setCart] = useState<any[]>([]);
   const [isDiscoverMode, setIsDiscoverMode] = useState(false);
   const [nearbyShops, setNearbyShops] = useState<any[]>([]);
-  const [googleKey, setGoogleKey] = useState("");
 
   useEffect(() => {
     if (screen === 'catalog') {
@@ -76,19 +75,25 @@ export default function App() {
       const location = await getCurrentLocation();
       if (!location) return;
 
-      // In a real app, we would use the Google Places API here:
-      // const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.latitude},${location.longitude}&radius=2000&type=pharmacy&key=${googleKey}`);
+      // Overpass API Query for pharmacies within 2000m
+      const query = `[out:json];node(around:2000,${location.latitude},${location.longitude})["amenity"~"pharmacy|drugstore|chemist"];out;`;
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
-      // For demo, we simulate nearby pharmacies in Nileshwar
-      const mockNearby = [
-        { id: 'near_1', name: 'Nileshwar Grand Pharms', address: 'Main Road, Nileshwar', phone: '04672280001', lat: 12.2560, lng: 75.1345 },
-        { id: 'near_2', name: 'Kasaragod Med Plus', address: 'Railway Station Rd', phone: '04672280002', lat: 12.2550, lng: 75.1330 },
-        { id: 'near_3', name: 'LifeCare Drug House', address: 'Market Junction', phone: '04672282222', lat: 12.2580, lng: 75.1360 },
-      ];
-
-      setParties(mockNearby);
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const mappedResults = (data.elements || []).map((el: any) => ({
+          id: `osm_${el.id}`,
+          name: el.tags?.name || 'Unnamed Pharmacy',
+          address: el.tags?.['addr:street'] || 'Nearby Location',
+          phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+          lat: el.lat,
+          lng: el.lon
+        }));
+        setParties(mappedResults);
+      }
     } catch (err) {
-      Alert.alert("Error", "Could not discover nearby shops");
+      Alert.alert("Error", "Could not discover nearby shops using free source");
     } finally {
       setLoading(false);
     }

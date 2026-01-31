@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Building2, User, MapPin, Search } from "lucide-react";
-import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { Loader2, Plus, Building2, User, MapPin, Search, Map as MapIcon } from "lucide-react";
+// Removed Google Maps imports
 
 interface CustomerDialogProps {
     type: "customer" | "supplier";
@@ -41,26 +41,39 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
     const isCustomer = type === "customer";
     const label = isCustomer ? "Customer" : "Supplier";
 
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-        libraries: ['places'] as any
-    });
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
-    const [autocomplete, setAutocomplete] = useState<any>(null);
-
-    const onPlaceSelected = () => {
-        if (autocomplete) {
-            const place = autocomplete.getPlace();
-            setFormData({
-                ...formData,
-                name: place.name || "",
-                address: place.formatted_address || "",
-                phone: place.formatted_phone_number || "",
-                latitude: place.geometry?.location?.lat() || null,
-                longitude: place.geometry?.location?.lng() || null,
-            });
+    const handleNominatimSearch = async (query: string) => {
+        setFormData({ ...formData, name: query });
+        if (query.length < 3) {
+            setSearchResults([]);
+            return;
         }
+
+        setIsSearching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=5&addressdetails=1`);
+            if (res.ok) {
+                const data = await res.json();
+                setSearchResults(data);
+            }
+        } catch (err) {
+            console.error("Nominatim error:", err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const selectPharmacy = (place: any) => {
+        setFormData({
+            ...formData,
+            name: place.display_name.split(',')[0],
+            address: place.display_name,
+            latitude: parseFloat(place.lat),
+            longitude: parseFloat(place.lon)
+        });
+        setSearchResults([]);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -120,32 +133,39 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Name</label>
-                        <div className="relative">
+                        <div className="relative group">
                             <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
-                            {isLoaded ? (
-                                <Autocomplete
-                                    onLoad={setAutocomplete}
-                                    onPlaceChanged={onPlaceSelected}
-                                    options={{ types: ['pharmacy', 'establishment'] }}
-                                >
-                                    <Input
-                                        placeholder={`Search or type ${label} Name`}
-                                        className="pl-8"
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                    />
-                                </Autocomplete>
-                            ) : (
-                                <Input
-                                    placeholder={`${label} Name`}
-                                    className="pl-8"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
+                            <Input
+                                placeholder={`Search or type ${label} Name`}
+                                className="pl-8"
+                                value={formData.name}
+                                onChange={e => handleNominatimSearch(e.target.value)}
+                                required
+                            />
+                            {isSearching && (
+                                <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-slate-300" />
                             )}
-                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-slate-300" />
+
+                            {searchResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                    {searchResults.map((res: any, idx: number) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            className="w-full text-left p-3 hover:bg-slate-50 border-b last:border-0"
+                                            onClick={() => selectPharmacy(res)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <MapIcon className="h-3 w-3 text-blue-500" />
+                                                <div>
+                                                    <p className="text-xs font-bold">{res.display_name.split(',')[0]}</p>
+                                                    <p className="text-[10px] text-slate-500 truncate">{res.display_name}</p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="space-y-2">
