@@ -40,10 +40,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storedUser = localStorage.getItem("auth_user");
         const isTestMode = localStorage.getItem("test_mode") === "true";
         const testUser = localStorage.getItem("test_user");
+        const testToken = localStorage.getItem("test_token");
 
-        if (isTestMode && testUser) {
+        if (isTestMode && testUser && testToken) {
             setTestMode(true);
             setUser(JSON.parse(testUser));
+            setToken(testToken);
         } else if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
@@ -79,8 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             };
             setUser(testUser);
             setTestMode(true);
+
+            // Create a mock token for test mode (base64 encoded test user info)
+            const mockToken = `test_${btoa(JSON.stringify(testUser))}`;
+            setToken(mockToken);
+
             localStorage.setItem("test_mode", "true");
             localStorage.setItem("test_user", JSON.stringify(testUser));
+            localStorage.setItem("test_token", mockToken);
         }
     };
 
@@ -92,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("auth_user");
         localStorage.removeItem("test_mode");
         localStorage.removeItem("test_user");
+        localStorage.removeItem("test_token");
         document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         // Neon Logout
         // auth.logout(); // If available in the client
