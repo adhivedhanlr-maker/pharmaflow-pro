@@ -17,14 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Search,
-    RefreshCcw,
-    ArrowLeftRight,
-    Loader2,
-    CheckCircle2,
-    AlertCircle
-} from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, ChevronRight, AlertCircle, CheckCircle2, Clock, Loader2, ArrowLeftRight } from "lucide-react";
 import {
     Tabs,
     TabsContent,
@@ -219,7 +212,7 @@ export default function ReturnsPage() {
                             <CardHeader className="pb-3 border-b">
                                 <CardTitle className="text-lg font-bold flex items-center justify-between">
                                     <span className="flex items-center">
-                                        <RefreshCcw className="mr-2 h-5 w-5 text-blue-600" />
+                                        <RefreshCw className="mr-2 h-5 w-5 text-blue-600" />
                                         Sales Return - {transaction.invoiceNumber}
                                     </span>
                                     <span className="text-sm text-muted-foreground">Customer: {transaction.customer?.name}</span>

@@ -12,12 +12,13 @@ import {
   Users,
   BarChart3,
   Settings,
-  RefreshCcw,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
   UserCog,
   MapPin,
-  Navigation
+  Navigation,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -34,7 +35,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Requirements", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" }, // Added O for Orders/Requirements
   { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"], hint: "V" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
-  { icon: RefreshCcw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
+  { icon: RefreshCw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
   { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"], hint: "U" },
 ];
 
@@ -45,7 +46,7 @@ interface SidebarProps {
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { showHints } = useShortcut();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -128,7 +129,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         })}
       </nav>
       {user?.role === "ADMIN" && (
-        <div className="p-4 border-t">
+        <div className="px-4 py-2 border-t">
           <Link
             href="/settings"
             onClick={onNavigate}
@@ -143,17 +144,26 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
           >
             <Settings className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
             {!isCollapsed && <span>Settings</span>}
-
-            {showHints && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in duration-200">
-                <Badge variant="outline" className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold bg-slate-900 text-white border-slate-700 shadow-sm pointer-events-none">
-                  S
-                </Badge>
-              </div>
-            )}
           </Link>
         </div>
       )}
+
+      <div className="p-4 border-t mt-auto">
+        <button
+          onClick={() => {
+            logout();
+            onNavigate?.();
+          }}
+          className={cn(
+            "flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-red-600 hover:bg-red-50",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? "Sign Out" : undefined}
+        >
+          <LogOut className={cn("h-4 w-4 shrink-0", isCollapsed && "h-5 w-5")} />
+          {!isCollapsed && <span>Sign Out</span>}
+        </button>
+      </div>
     </div>
   );
 }

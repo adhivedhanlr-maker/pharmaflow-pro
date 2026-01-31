@@ -1,11 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useAuth } from "@/context/auth-context";
-import { Menu } from "lucide-react";
+import { Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -17,8 +17,9 @@ import { useSessionTimeout } from "@/hooks/use-session-timeout";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { user, isLoading } = useAuth();
+    const { user, logout, isLoading } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const router = useRouter();
 
     // Enable session timeout tracking
     useSessionTimeout();
@@ -57,9 +58,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <Sidebar className="w-full h-full border-none" onNavigate={() => setIsMobileMenuOpen(false)} />
                         </SheetContent>
                     </Sheet>
-                    <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex-1">
                         PharmaFlow
                     </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={logout}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                            <User className="h-4 w-4 text-white" />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Desktop Header / Content Container */}
