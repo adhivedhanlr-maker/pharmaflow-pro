@@ -120,7 +120,9 @@ export default function BillingPage() {
             if (search) params.append('search', search);
             params.append('take', '100');
 
-            const custRes = await fetch(`${API_BASE}/parties/customers?${params}`);
+            const custRes = await fetch(`${API_BASE}/parties/customers?${params}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (custRes.ok) {
                 const data = await custRes.json();
                 setCustomers(data.data || data);
@@ -145,7 +147,9 @@ export default function BillingPage() {
             params.append('take', '50');
             params.append('onlyWithStock', 'true');
 
-            const prodRes = await fetch(`${API_BASE}/inventory/products?${params}`);
+            const prodRes = await fetch(`${API_BASE}/inventory/products?${params}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (prodRes.ok) {
                 const data = await prodRes.json();
                 setProducts(data.data || data);
