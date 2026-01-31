@@ -306,6 +306,29 @@ export default function BillingPage() {
         }));
     };
 
+    const handleBarcodeScan = async (barcode: string) => {
+        try {
+            const response = await fetch(`${API_BASE}/inventory/products/barcode/${barcode}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const product = await response.json();
+
+                if (product.batches && product.batches.length > 0) {
+                    addItem(product);
+                } else {
+                    alert(`Product "${product.name}" found but has no stock available.`);
+                }
+            } else {
+                alert(`No product found with barcode: ${barcode}`);
+            }
+        } catch (error) {
+            console.error("Barcode scan error:", error);
+            alert("Failed to lookup barcode. Please try manual entry.");
+        }
+    };
+
     const handlePrint = () => {
         if (!selectedCustomerId || items.length === 0) {
             alert("Please select a customer and add items before printing.");
@@ -431,6 +454,9 @@ export default function BillingPage() {
                                         </Command>
                                     </PopoverContent>
                                 </Popover>
+                                <Button size="sm" variant="outline" onClick={() => setScannerOpen(true)}>
+                                    <Camera className="mr-2 h-4 w-4" /> Scan Barcode
+                                </Button>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <div className="hidden md:block">
