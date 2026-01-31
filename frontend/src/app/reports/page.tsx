@@ -57,6 +57,7 @@ interface ExpiringBatch {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 import { cn } from "@/lib/utils";
+import { io } from "socket.io-client";
 
 export default function ReportsPage() {
     const [sales, setSales] = useState<Sale[]>([]);
@@ -65,6 +66,18 @@ export default function ReportsPage() {
 
     useEffect(() => {
         fetchReports();
+
+        // Real-time synchronization
+        const socket = io(API_BASE);
+
+        socket.on("new-order", (newSale: Sale) => {
+            console.log("New order received via WebSocket:", newSale);
+            setSales(prev => [newSale, ...prev]);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchReports = async () => {

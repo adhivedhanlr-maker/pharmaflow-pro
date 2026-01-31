@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
+import { io } from "socket.io-client";
 
 interface Stats {
   salesToday: number;
@@ -34,6 +35,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStats();
+
+    // Real-time synchronization
+    const socket = io(API_BASE);
+
+    socket.on("new-order", () => {
+      setStats(prev => ({
+        ...prev,
+        salesToday: prev.salesToday + 1
+      }));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchStats = async () => {

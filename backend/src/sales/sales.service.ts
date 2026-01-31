@@ -1,9 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SalesGateway } from './sales.gateway';
 
 @Injectable()
 export class SalesService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private salesGateway: SalesGateway
+    ) { }
 
     async createInvoice(data: any, userId?: string) {
         const { customerId, items, isCash, discountAmount = 0 } = data;
@@ -81,11 +85,11 @@ export class SalesService {
             // 6. Create Invoice
             const invoiceNumber = `INV-${Date.now()}`; // Simple generator for now
 
-            return tx.sale.create({
+            const result = await tx.sale.create({
                 data: {
                     invoiceNumber,
                     customerId,
-                    userId,
+                    userId: finalUserId,
                     totalAmount,
                     gstAmount: totalGst,
                     netAmount,
@@ -100,6 +104,11 @@ export class SalesService {
                     customer: true,
                 },
             });
+
+            // Notify real-time clients
+            this.salesGateway.notifyNewOrder(result);
+
+            return result;
         });
     }
 

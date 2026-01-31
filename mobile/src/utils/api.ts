@@ -66,3 +66,10 @@ export const recordVisit = async (visitData: any) => {
         body: JSON.stringify(visitData),
     });
 };
+
+export const createOrder = async (orderData: any) => {
+    return apiCall('/sales/invoices', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+    });
+};

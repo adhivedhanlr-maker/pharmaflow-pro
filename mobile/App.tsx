@@ -15,7 +15,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { login, getProducts, getCustomers, recordVisit } from './src/utils/api';
+import { login, getProducts, getCustomers, recordVisit, createOrder } from './src/utils/api';
 import { getCurrentLocation, calculateDistance, validateVisit } from './src/utils/location';
 
 const { width, height } = Dimensions.get('window');
@@ -55,6 +55,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [cart, setCart] = useState<any[]>([]);
 
   useEffect(() => {
     if (screen === 'catalog') {
@@ -140,6 +142,8 @@ export default function App() {
       await recordVisit(syncData);
 
       if (isValid) {
+        setSelectedParty(party);
+        setCart([]); // Clear previous cart
         Alert.alert('Visit Verified', `Checked in at ${party.name}`, [
           { text: 'Start Order', onPress: () => setScreen('catalog') }
         ]);
@@ -155,6 +159,44 @@ export default function App() {
       Alert.alert('Error', error.message || 'Could not verify location');
     } finally {
       setCheckingIn(null);
+    }
+  };
+
+  const handleAddToOrder = (product: any) => {
+    setCart([{
+      productId: product.id,
+      name: product.name,
+      quantity: 1,
+      mrp: product.mrp,
+      price: product.mrp * 0.9 // Default 10% discount for rep orders
+    }]);
+    setScreen('order');
+  };
+
+  const handleConfirmOrder = async () => {
+    if (cart.length === 0 || !selectedParty) return;
+
+    setLoading(true);
+    try {
+      const orderData = {
+        customerId: selectedParty.id,
+        items: cart.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity
+        })),
+        isCash: true,
+        discountAmount: 0
+      };
+
+      await createOrder(orderData);
+
+      Alert.alert("Order Received", "The order has been sent to the billing desk for processing.", [
+        { text: "OK", onPress: () => setScreen('visits') }
+      ]);
+    } catch (error: any) {
+      Alert.alert("Order Failed", error.message || "Could not submit order");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -323,9 +365,9 @@ export default function App() {
               </View>
               <View style={styles.cardRight}>
                 <Text style={styles.priceTag}>₹{(item.mrp * 0.9).toFixed(2)}</Text>
-                <View style={styles.orderAddBtn}>
+                <TouchableOpacity style={styles.orderAddBtn} onPress={() => handleAddToOrder(item)}>
                   <Text style={styles.orderAddText}>+</Text>
-                </View>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           )}
@@ -346,19 +388,38 @@ export default function App() {
 
       <ScrollView style={styles.orderBody}>
         <View style={styles.orderSection}>
-          <Text style={styles.orderLabel}>Order Details</Text>
-          <View style={styles.cartCard}>
-            <Text style={styles.cartTitle}>Item Selection</Text>
-            <Text style={styles.subtitle}>Selected item details will appear here</Text>
+          <Text style={styles.orderLabel}>Pharmacy Name</Text>
+          <View style={styles.productCard}>
+            <View style={styles.cardLeft}>
+              <Text style={styles.productName}>{selectedParty?.name}</Text>
+              <Text style={styles.subtitle}>{selectedParty?.address}</Text>
+            </View>
           </View>
+
+          <Text style={styles.orderLabel}>Items in order</Text>
+          {cart.map((item, idx) => (
+            <View key={idx} style={styles.productCard}>
+              <View style={styles.cardLeft}>
+                <Text style={styles.productName}>{item.name}</Text>
+                <Text style={styles.subtitle}>Qty: {item.quantity}</Text>
+              </View>
+              <View style={styles.cardRight}>
+                <Text style={styles.priceTag}>₹{item.price.toFixed(2)}</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
-        <TouchableOpacity style={styles.submitBtn} onPress={() => {
-          Alert.alert("Order Received", "The order has been sent to the billing desk for processing.", [
-            { text: "OK", onPress: () => setScreen('visits') }
-          ]);
-        }}>
-          <Text style={styles.submitBtnText}>Confirm Order</Text>
+        <TouchableOpacity
+          style={[styles.submitBtn, loading && styles.btnDisabled]}
+          onPress={handleConfirmOrder}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.submitBtnText}>Confirm Order</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
