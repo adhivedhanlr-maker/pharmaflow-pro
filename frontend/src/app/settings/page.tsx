@@ -65,7 +65,7 @@ export default function SettingsPage() {
                         logoUrl: data.logoUrl || ""
                     });
                     if (data.logoUrl) {
-                        setLogoPreview(`${API_BASE}${data.logoUrl}`);
+                        setLogoPreview(data.logoUrl);
                     }
                 }
             }

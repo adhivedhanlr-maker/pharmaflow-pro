@@ -12,8 +12,7 @@ import {
 import { BusinessProfileService } from './business-profile.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 
 @Controller('business-profile')
 @UseGuards(JwtAuthGuard)
@@ -41,21 +40,13 @@ export class BusinessProfileController {
     @Post('upload-logo')
     @UseInterceptors(
         FileInterceptor('file', {
-            storage: diskStorage({
-                destination: './uploads',
-                filename: (req, file, cb) => {
-                    const randomName = Array(32)
-                        .fill(null)
-                        .map(() => Math.round(Math.random() * 16).toString(16))
-                        .join('');
-                    cb(null, `${randomName}${extname(file.originalname)}`);
-                },
-            }),
+            storage: memoryStorage(),
         }),
     )
     async uploadLogo(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
-        // The file is served at /uploads/filename
-        const logoUrl = `/uploads/${file.filename}`;
+        // Convert buffer to base64 data URI
+        const base64Image = file.buffer.toString('base64');
+        const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
         return this.businessProfileService.updateLogo(req.user.userId, logoUrl);
     }
 }
