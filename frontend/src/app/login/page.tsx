@@ -227,7 +227,7 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pb-8">
+                    <div className="grid grid-cols-3 gap-3 pb-8">
                         <Button
                             variant="outline"
                             size="sm"
@@ -263,6 +263,15 @@ export default function LoginPage() {
                             disabled={loading}
                         >
                             Accountant
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
+                            onClick={() => handleQuickLogin('sales1')}
+                            disabled={loading}
+                        >
+                            Sales Rep
                         </Button>
                     </div>
                 </div>
