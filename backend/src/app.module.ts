@@ -20,6 +20,7 @@ import { BusinessProfileModule } from './business-profile/business-profile.modul
 import { AuditLogModule } from './audit/audit-log.module';
 import { VisitsModule } from './visits/visits.module';
 import { OrdersModule } from './orders/orders.module';
+import { RoutesModule } from './routes/routes.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { OrdersModule } from './orders/orders.module';
     UsersModule,
     VisitsModule,
     OrdersModule,
+    RoutesModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

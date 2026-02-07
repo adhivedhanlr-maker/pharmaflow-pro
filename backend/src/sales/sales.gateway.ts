@@ -11,7 +11,13 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: [
+            'http://localhost:3000',
+            'https://pharmaflow-pro-one.vercel.app',
+            'https://pharmaflow-pro-git-main-adhivedhanlrs-projects.vercel.app',
+            'https://pharmaflow-pro.vercel.app'
+        ],
+        credentials: true,
     },
 })
 export class SalesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {

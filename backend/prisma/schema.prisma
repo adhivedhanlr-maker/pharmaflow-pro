@@ -35,6 +35,7 @@ model User {
   visits    Visit[]
   orders    Order[]
   attendance Attendance[]
+  routes     Route[]
   businessProfile BusinessProfile?
 }
 
@@ -109,6 +110,7 @@ model Customer {
   sales        Sale[]
   visits       Visit[]
   orders       Order[]
+  routeStops   RouteStop[]
 
   @@index([name])
   @@index([phone])
@@ -326,4 +328,46 @@ enum OrderStatus {
   PROCESSING
   READY
   CANCELLED
+}
+
+model Route {
+  id        String      @id @default(cuid())
+  repId     String
+  rep       User        @relation(fields: [repId], references: [id])
+  date      DateTime
+  status    RouteStatus @default(DRAFT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  stops     RouteStop[]
+
+  @@unique([repId, date])
+  @@index([repId])
+  @@index([date])
+}
+
+model RouteStop {
+  id         String     @id @default(cuid())
+  routeId    String
+  route      Route      @relation(fields: [routeId], references: [id])
+  customerId String
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  stopOrder  Int
+  status     StopStatus @default(PENDING)
+  notes      String?
+  visitedAt  DateTime?
+
+  @@index([routeId])
+  @@index([customerId])
+}
+
+enum RouteStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
+enum StopStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
 }
