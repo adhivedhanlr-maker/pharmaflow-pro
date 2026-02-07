@@ -31,7 +31,8 @@ export class OrdersService {
                 quantity: i.quantity
             })),
             isCash: false, // Default to Credit for rep orders
-            discountAmount: 0
+            discountAmount: 0,
+            repId: order.repId // Pass the sales rep ID to the invoice
         }, userId);
 
         // Update Order Status

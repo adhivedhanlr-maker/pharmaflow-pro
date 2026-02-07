@@ -18,8 +18,8 @@ export class SalesController {
 
     @Get('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
-    findAll() {
-        return this.salesService.findAll();
+    findAll(@Request() req: any) {
+        return this.salesService.findAll(req.user);
     }
 
     @Post(':id/verify-delivery')

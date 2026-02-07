@@ -98,6 +98,7 @@ export class SalesService {
                     invoiceNumber,
                     customerId,
                     userId: finalUserId,
+                    repId: data.repId || finalUserId, // Auto-assign rep if provided, else creator
                     totalAmount,
                     gstAmount: totalGst,
                     netAmount,
@@ -111,6 +112,7 @@ export class SalesService {
                 include: {
                     items: true,
                     customer: true,
+                    rep: true // Include rep details
                 },
             });
 
@@ -121,12 +123,19 @@ export class SalesService {
         });
     }
 
-    async findAll() {
+    async findAll(user?: any) {
+        const where: any = {};
+        if (user && user.role === 'SALES_REP') {
+            where.repId = user.userId;
+        }
+
         return this.prisma.sale.findMany({
+            where,
             include: {
                 customer: true,
                 items: { include: { product: true, batch: true } },
-                user: { select: { name: true, role: true } }
+                user: { select: { name: true, role: true } },
+                rep: { select: { name: true } }
             },
             orderBy: { createdAt: 'desc' },
         });

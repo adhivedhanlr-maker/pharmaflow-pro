@@ -32,7 +32,8 @@ model User {
   overtimeRate     Float    @default(750) // Default 1.5x of 500
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Sales     Sale[]
+  Sales     Sale[]   @relation("SaleUser")
+  RepSales  Sale[]   @relation("SaleRep")
   visits    Visit[]
   orders    Order[]
   attendance Attendance[]
@@ -139,7 +140,9 @@ model Sale {
   customerId    String
   customer      Customer @relation(fields: [customerId], references: [id])
   userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
+  user          User?    @relation("SaleUser", fields: [userId], references: [id])
+  repId         String?  // Field for assigned Sales Rep (Delivery)
+  rep           User?    @relation("SaleRep", fields: [repId], references: [id])
   totalAmount   Float
   gstAmount     Float
   netAmount     Float
