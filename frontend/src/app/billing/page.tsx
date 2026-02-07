@@ -683,9 +683,7 @@ export default function BillingPage() {
                         </div>
                     </div>
                 </div>
-            </div>
-    )
-}
+            )}
             <InvoicePrint
                 invoiceNumber="DRAFT-001"
                 date={new Date()}

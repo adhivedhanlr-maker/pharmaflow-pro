@@ -93,7 +93,7 @@ export default function UsersPage() {
             });
             if (response.ok) {
                 setIsDialogOpen(false);
-                setFormData({ username: "", password: "", name: "", role: "BILLING_OPERATOR" });
+                setFormData({ username: "", password: "", name: "", role: "BILLING_OPERATOR", canGenerateInvoice: false });
                 fetchUsers();
             }
         } catch (error) {
