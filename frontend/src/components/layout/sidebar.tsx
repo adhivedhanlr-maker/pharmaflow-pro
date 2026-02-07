@@ -37,7 +37,8 @@ const menuItems = [
   { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
   { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
   { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
-  { icon: ShoppingCart, label: "Orders", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" }, // Added O for Orders/Requirements
+  { icon: ShoppingCart, label: "Orders", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },
+  { icon: Package, label: "Deliveries", href: "/deliveries", roles: ["ADMIN", "BILLING_OPERATOR", "SALES_REP"], hint: "L" },
   { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"], hint: "V" },
   { icon: Calendar, label: "Route Planner", href: "/admin/routes", roles: ["ADMIN"], hint: "R" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
@@ -65,7 +66,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     // For Sales Reps, hide items that are already in the bottom mobile nav
     // Mobile Nav has: Home(Dashboard), Visits, Take Orders(/orders), My Day
     if (user.role === "SALES_REP") {
-      const mobileNavPaths = ["/", "/visits", "/orders", "/visits/my-day"];
+      const mobileNavPaths = ["/", "/visits", "/orders", "/visits/my-day", "/rep/orders/create"];
       if (mobileNavPaths.includes(item.href)) return false;
     }
 
@@ -74,7 +75,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
   return (
     <div className={cn(
-      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300",
+      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300 z-50 relative", // Added z-50 and relative
       isCollapsed ? "w-20" : "w-64",
       className
     )}>
