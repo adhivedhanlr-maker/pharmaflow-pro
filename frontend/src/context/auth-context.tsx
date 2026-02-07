@@ -8,6 +8,7 @@ interface User {
     username: string;
     name: string;
     role: string;
+    isOnDuty?: boolean;
     twoFactorEnabled?: boolean;
 }
 
@@ -20,6 +21,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     testMode: boolean;
     switchRole: (role: string) => void;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -107,8 +109,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push("/login");
     };
 
+    const refreshUser = async () => {
+        if (!token) return;
+        try {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+            const response = await fetch(`${API_BASE}/users/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+                localStorage.setItem("auth_user", JSON.stringify(userData));
+            }
+        } catch (error) {
+            console.error("Failed to refresh user:", error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated, testMode, switchRole }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated, testMode, switchRole, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -11,8 +11,8 @@ export function useGPSSync() {
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // Only start sync if user is a SALES_REP
-        if (!token || user?.role !== 'SALES_REP') {
+        // Only start sync if user is a SALES_REP AND is ON DUTY
+        if (!token || user?.role !== 'SALES_REP' || !user?.isOnDuty) {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
@@ -62,5 +62,5 @@ export function useGPSSync() {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [user?.role, token]);
+    }, [user?.role, user?.isOnDuty, token]);
 }

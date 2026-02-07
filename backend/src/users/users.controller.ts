@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -7,10 +7,16 @@ import { Role } from '@prisma/client';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
+    @Post('duty')
+    @Roles(Role.SALES_REP)
+    toggleDuty(@Body() body: { isOnDuty: boolean }, @Request() req: any) {
+        return this.usersService.update(req.user.userId, { isOnDuty: body.isOnDuty });
+    }
+
+    @Roles(Role.ADMIN)
     @Get()
     findAll() {
         return this.usersService.findAll();
