@@ -21,7 +21,8 @@ import {
     User,
     ArrowRight,
     RefreshCw,
-    Package
+    Package,
+    Download
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
@@ -99,6 +100,31 @@ export default function RequirementsPage() {
         }
     };
 
+    const exportCSV = () => {
+        if (filteredOrders.length === 0) return;
+
+        const headers = ["Order #", "Date", "Customer", "Rep", "Total Amount", "Status"];
+        const rows = filteredOrders.map(o => [
+            o.orderNumber,
+            format(new Date(o.createdAt), 'yyyy-MM-dd HH:mm'),
+            o.customer.name,
+            o.rep.name,
+            o.totalAmount,
+            o.status
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `orders_export.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -107,6 +133,10 @@ export default function RequirementsPage() {
                     <p className="text-muted-foreground">Manage incoming field staff requirements and check stock readiness.</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={exportCSV} disabled={loading || filteredOrders.length === 0}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                    </Button>
                     <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
                         <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                         Refresh
@@ -130,8 +160,8 @@ export default function RequirementsPage() {
                     <CardTitle className="text-sm font-medium">Capture Queue</CardTitle>
                     <CardDescription>Items highlighted in red require immediate purchase to fulfill.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
+                <CardContent className="p-0 overflow-x-auto">
+                    <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow className="bg-slate-50/30">
                                 <TableHead className="w-[150px]">Order Details</TableHead>

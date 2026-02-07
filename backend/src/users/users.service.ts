@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { SalesGateway } from '../sales/sales.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
     constructor(
         private prisma: PrismaService,
-        private salesGateway: SalesGateway
+        private salesGateway: SalesGateway,
+        private notifications: NotificationsService
     ) { }
 
     async findAll() {
@@ -34,6 +36,8 @@ export class UsersService {
                 name: true,
                 role: true,
                 isOnDuty: true,
+                hourlyRate: true,
+                overtimeRate: true,
                 createdAt: true,
             },
         });
@@ -74,6 +78,12 @@ export class UsersService {
                         startTime: new Date(),
                     }
                 });
+
+                // Email Notification
+                const user = await this.prisma.user.findUnique({ where: { id } });
+                if (user) {
+                    this.notifications.notifyAdminOfDutyStart(user.name, new Date());
+                }
             } else {
                 // User going off duty - Close the last open session
                 const lastSession = await this.prisma.attendance.findFirst({
@@ -110,6 +120,8 @@ export class UsersService {
                 name: true,
                 role: true,
                 isOnDuty: true,
+                hourlyRate: true,
+                overtimeRate: true,
             },
         });
     }
@@ -121,7 +133,9 @@ export class UsersService {
                 user: {
                     select: {
                         name: true,
-                        role: true
+                        role: true,
+                        hourlyRate: true,
+                        overtimeRate: true
                     }
                 }
             }

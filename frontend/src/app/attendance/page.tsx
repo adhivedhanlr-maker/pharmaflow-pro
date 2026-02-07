@@ -30,6 +30,8 @@ interface AttendanceRecord {
     user: {
         name: string;
         role: string;
+        hourlyRate?: number;
+        overtimeRate?: number;
     };
 }
 
@@ -38,7 +40,7 @@ export default function AttendancePage() {
     const [loading, setLoading] = useState(false);
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
-    const [hourlyRate, setHourlyRate] = useState<string>("500");
+
 
     useEffect(() => {
         if (token) fetchAttendance();
@@ -81,13 +83,26 @@ export default function AttendancePage() {
             acc[curr.userId] = {
                 name: curr.user.name,
                 totalMinutes: 0,
-                sessions: 0
+                overtimeMinutes: 0,
+                sessions: 0,
+                hourlyRate: curr.user.hourlyRate || 500,
+                overtimeRate: curr.user.overtimeRate || 750
             };
         }
-        acc[curr.userId].totalMinutes += curr.duration;
+
+        let regularMins = curr.duration;
+        let otMins = 0;
+
+        if (curr.duration > 540) { // > 9 hours
+            regularMins = 540;
+            otMins = curr.duration - 540;
+        }
+
+        acc[curr.userId].totalMinutes += regularMins;
+        acc[curr.userId].overtimeMinutes += otMins;
         acc[curr.userId].sessions += 1;
         return acc;
-    }, {} as Record<string, { name: string, totalMinutes: number, sessions: number }>);
+    }, {} as Record<string, { name: string, totalMinutes: number, overtimeMinutes: number, sessions: number, hourlyRate: number, overtimeRate: number }>);
 
     const formatDuration = (minutes: number) => {
         const h = Math.floor(minutes / 60);
@@ -97,7 +112,7 @@ export default function AttendancePage() {
 
     return (
         <RoleGate allowedRoles={["ADMIN"]}>
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
                 <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Attendance & Payroll</h1>
@@ -119,27 +134,38 @@ export default function AttendancePage() {
                 {/* Payroll Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.entries(userTotals).map(([userId, stats]) => {
-                        const hours = stats.totalMinutes / 60;
-                        const pay = hours * parseFloat(hourlyRate || "0");
+                        const regularHours = stats.totalMinutes / 60;
+                        const otHours = stats.overtimeMinutes / 60;
+                        const pay = (regularHours * stats.hourlyRate) + (otHours * stats.overtimeRate);
 
                         return (
                             <Card key={userId} className="border-slate-200">
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-base font-medium">{stats.name}</CardTitle>
-                                    <CardDescription>{stats.sessions} sessions in {format(new Date(filterMonth), 'MMMM yyyy')}</CardDescription>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle className="text-base font-medium">{stats.name}</CardTitle>
+                                            <CardDescription>{stats.sessions} sessions in {format(new Date(filterMonth), 'MMMM yyyy')}</CardDescription>
+                                        </div>
+                                        <div className="text-right text-xs text-muted-foreground">
+                                            <div>Rate: ₹{stats.hourlyRate}/hr</div>
+                                            <div>OT: ₹{stats.overtimeRate}/hr</div>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex justify-between items-end">
                                         <div>
-                                            <p className="text-2xl font-bold">{formatDuration(stats.totalMinutes)}</p>
-                                            <p className="text-xs text-muted-foreground">Total Hours</p>
+                                            <p className="text-2xl font-bold">{formatDuration(stats.totalMinutes + stats.overtimeMinutes)}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Reg: {formatDuration(stats.totalMinutes)} • OT: {formatDuration(stats.overtimeMinutes)}
+                                            </p>
                                         </div>
                                         <div className="text-right">
                                             <div className="flex items-center gap-1 justify-end text-green-600 font-bold text-lg">
                                                 <DollarSign className="h-4 w-4" />
                                                 {pay.toFixed(2)}
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Est. Pay (@ {hourlyRate}/hr)</p>
+                                            <p className="text-xs text-muted-foreground">Est. Pay</p>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -148,22 +174,12 @@ export default function AttendancePage() {
                     })}
                 </div>
 
-                <div className="flex items-center gap-2 max-w-sm ml-auto">
-                    <span className="text-sm font-medium whitespace-nowrap">Hourly Rate (₹):</span>
-                    <Input
-                        type="number"
-                        value={hourlyRate}
-                        onChange={(e) => setHourlyRate(e.target.value)}
-                        className="w-24 h-8"
-                    />
-                </div>
-
                 <Card>
                     <CardHeader>
                         <CardTitle>Detailed Logs</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
+                    <CardContent className="p-0 overflow-x-auto">
+                        <Table className="min-w-[600px]">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Staff Name</TableHead>
