@@ -4,12 +4,44 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { SalesGateway } from '../sales/sales.gateway';
 
 
+import { SalesService } from '../sales/sales.service';
+
 @Injectable()
 export class OrdersService {
     constructor(
         private prisma: PrismaService,
-        private salesGateway: SalesGateway
+        private salesGateway: SalesGateway,
+        private salesService: SalesService
     ) { }
+
+    async convert(orderId: string, userId: string) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: true }
+        });
+
+        if (!order) throw new BadRequestException('Order not found');
+        if (order.status === 'READY') throw new BadRequestException('Order already converted');
+
+        // Create Invoice
+        const invoice = await this.salesService.createInvoice({
+            customerId: order.customerId,
+            items: order.items.map(i => ({
+                productId: i.productId,
+                quantity: i.quantity
+            })),
+            isCash: false, // Default to Credit for rep orders
+            discountAmount: 0
+        }, userId);
+
+        // Update Order Status
+        await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'READY' }
+        });
+
+        return invoice;
+    }
 
     async create(userId: string, dto: CreateOrderDto) {
         // ... (transaction logic remains same until notification) ...

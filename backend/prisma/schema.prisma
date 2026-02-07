@@ -149,6 +149,17 @@ model Sale {
   updatedAt     DateTime @updatedAt
   items         SaleItem[]
   returns       SaleReturn[]
+  deliveryStatus DeliveryStatus @default(PENDING)
+  deliveryOtp    String?
+  deliveredAt    DateTime?
+  deliveryProofUrl String?
+  deliverySignatureUrl String?
+}
+
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  RETURNED
 }
 
 model SaleItem {

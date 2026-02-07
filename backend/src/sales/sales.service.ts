@@ -103,6 +103,7 @@ export class SalesService {
                     netAmount,
                     discountAmount,
                     isCash,
+                    deliveryOtp: Math.floor(100000 + Math.random() * 900000).toString(),
                     items: {
                         create: invoiceItems,
                     },
@@ -130,4 +131,30 @@ export class SalesService {
             orderBy: { createdAt: 'desc' },
         });
     }
+
+    async verifyDelivery(invoiceId: string, otp: string, proofUrl?: string, signatureUrl?: string) {
+        const sale = await this.prisma.sale.findUnique({ where: { id: invoiceId } });
+        if (!sale) throw new NotFoundException('Invoice not found');
+
+        if (sale.deliveryStatus === 'DELIVERED') {
+            throw new BadRequestException('Invoice already delivered');
+        }
+
+        if (sale.deliveryOtp !== otp) {
+            throw new BadRequestException('Invalid OTP');
+        }
+
+        const updatedSale = await this.prisma.sale.update({
+            where: { id: invoiceId },
+            data: {
+                deliveryStatus: 'DELIVERED',
+                deliveredAt: new Date(),
+                deliveryProofUrl: proofUrl,
+                deliverySignatureUrl: signatureUrl,
+            },
+        });
+
+        return updatedSale;
+    }
 }
+

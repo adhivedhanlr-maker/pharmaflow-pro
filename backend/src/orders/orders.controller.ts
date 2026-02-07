@@ -33,4 +33,9 @@ export class OrdersController {
     updateStatus(@Param('id') id: string, @Body('status') status: string) {
         return this.ordersService.updateStatus(id, status);
     }
+    @Post(':id/convert')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
+    convert(@Param('id') id: string, @Request() req: any) {
+        return this.ordersService.convert(id, req.user.userId);
+    }
 }
