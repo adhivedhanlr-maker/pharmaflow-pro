@@ -41,7 +41,7 @@ interface DeliveryItem {
     createdAt: string;
 }
 
-export default function RequirementsPage() {
+export default function OrdersPage() {
     const { token, user } = useAuth();
     const [orders, setOrders] = useState<any[]>([]);
     const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
@@ -60,7 +60,7 @@ export default function RequirementsPage() {
 
         const socket = io(API_BASE);
         socket.on('new-requirement', () => fetchOrders());
-        socket.on('new-invoice', () => fetchDeliveries()); // Assume this event exists or generic update
+        socket.on('new-invoice', () => fetchDeliveries());
 
         return () => {
             socket.disconnect();
@@ -91,7 +91,6 @@ export default function RequirementsPage() {
             });
             if (res.ok) {
                 const data = await res.json();
-                // Filter for pending deliveries if needed, or show all with status
                 setDeliveries(data);
             }
         } catch (err) {
@@ -99,21 +98,31 @@ export default function RequirementsPage() {
         }
     };
 
-    const updateStatus = async (id: string, status: string) => {
+    const convertToInvoice = async (orderId: string) => {
+        setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/orders/${id}/status`, {
-                method: "PATCH",
+            const res = await fetch(`${API_BASE}/orders/${orderId}/convert`, {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ status })
+                }
             });
-            if (res.ok) {
-                fetchOrders();
+
+            if (!res.ok) {
+                const data = await res.json();
+                alert(data.message || "Failed to convert order");
+                return;
             }
+
+            fetchOrders();
+            fetchDeliveries();
+
         } catch (err) {
-            console.error(err);
+            console.error("Conversion failed:", err);
+            alert("An error occurred while converting the order.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -124,7 +133,6 @@ export default function RequirementsPage() {
 
     const onVerificationSuccess = () => {
         fetchDeliveries();
-        // Optional: Show success toast
     };
 
     // Filter Logic
@@ -143,7 +151,7 @@ export default function RequirementsPage() {
         switch (status) {
             case "PENDING": return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
             case "PROCESSING": return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Processing</Badge>;
-            case "READY": return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Ready</Badge>;
+            case "READY": return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Result</Badge>;
             case "DELIVERED": return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Delivered</Badge>;
             case "RETURNED": return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Returned</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
@@ -151,7 +159,7 @@ export default function RequirementsPage() {
     };
 
     const exportCSV = () => {
-        // ... existing export logic (simplified for brevity, can enable if needed)
+        // ... existing export logic
     };
 
     return (
@@ -160,6 +168,12 @@ export default function RequirementsPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Field Operations</h1>
                     <p className="text-muted-foreground">Manage requirements and verify deliveries.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                        Refresh
+                    </Button>
                 </div>
             </div>
 
@@ -198,7 +212,6 @@ export default function RequirementsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {/* Existing Order Rows Logic */}
                                     {filteredOrders.map((order) => (
                                         <TableRow key={order.id}>
                                             <TableCell>
@@ -212,9 +225,17 @@ export default function RequirementsPage() {
                                             <TableCell>₹{order.totalAmount.toLocaleString()}</TableCell>
                                             <TableCell>{getStatusBadge(order.status)}</TableCell>
                                             <TableCell className="text-right">
-                                                {order.status === "PENDING" && (
-                                                    <Button size="sm" onClick={() => updateStatus(order.id, "READY")}>
-                                                        Mark Ready
+                                                {order.status === "PENDING" ? (
+                                                    <Button
+                                                        size="sm"
+                                                        className="h-8 text-[11px] bg-green-600 hover:bg-green-700"
+                                                        onClick={() => convertToInvoice(order.id)}
+                                                    >
+                                                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Convert to Invoice
+                                                    </Button>
+                                                ) : (
+                                                    <Button size="sm" variant="ghost" className="h-8 text-[11px]">
+                                                        View Details <ArrowRight className="h-3.5 w-3.5 ml-1" />
                                                     </Button>
                                                 )}
                                             </TableCell>
