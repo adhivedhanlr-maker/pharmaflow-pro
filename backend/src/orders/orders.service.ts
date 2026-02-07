@@ -107,8 +107,14 @@ export class OrdersService {
         return order;
     }
 
-    async findAll() {
+    async findAll(user?: any) {
+        const where: any = {};
+        if (user && user.role === 'SALES_REP') {
+            where.repId = user.userId; // user object from JWT strategy usually has userId
+        }
+
         return this.prisma.order.findMany({
+            where,
             include: {
                 customer: true,
                 rep: true,

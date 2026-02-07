@@ -18,9 +18,9 @@ export class OrdersController {
     }
 
     @Get()
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
-    findAll() {
-        return this.ordersService.findAll();
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
+    findAll(@Request() req: any) {
+        return this.ordersService.findAll(req.user);
     }
 
     @Get(':id')

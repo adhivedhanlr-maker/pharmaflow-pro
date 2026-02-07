@@ -9,7 +9,8 @@ import {
     Package,
     Settings,
     ClipboardList,
-    LogIn
+    LogIn,
+    MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -50,9 +51,9 @@ export function MobileNav() {
                     icon: LayoutDashboard,
                 },
                 {
-                    title: "Billing",
-                    href: "/billing",
-                    icon: Receipt,
+                    title: "Visits",
+                    href: "/visits",
+                    icon: MapPin,
                 },
                 {
                     title: "Orders",
@@ -60,8 +61,8 @@ export function MobileNav() {
                     icon: ClipboardList,
                 },
                 {
-                    title: "Login",
-                    href: "/login",
+                    title: "My Day",
+                    href: "/visits/my-day",
                     icon: LogIn,
                 },
             ];
