@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Calendar as CalendarIcon, Save, Search, Plus, X, MapPin } from "lucide-react";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -28,7 +28,7 @@ interface Customer {
 
 export default function RoutePlannerPage() {
     const { token } = useAuth();
-    const { toast } = useToast();
+    // const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
     // Data
@@ -90,7 +90,7 @@ export default function RoutePlannerPage() {
 
     const saveRoute = async () => {
         if (!selectedRep || !selectedDate || routeStops.length === 0) {
-            toast({ title: "Error", description: "Please select a rep, date, and at least one stop.", variant: "destructive" });
+            alert("Error: Please select a rep, date, and at least one stop.");
             return;
         }
 
@@ -110,14 +110,14 @@ export default function RoutePlannerPage() {
             });
 
             if (res.ok) {
-                toast({ title: "Success", description: "Route created successfully!" });
+                alert("Success: Route created successfully!");
                 setRouteStops([]);
             } else {
                 const err = await res.json();
-                toast({ title: "Error", description: err.message || "Failed to create route", variant: "destructive" });
+                alert(`Error: ${err.message || "Failed to create route"}`);
             }
         } catch (error) {
-            toast({ title: "Error", description: "Network error", variant: "destructive" });
+            alert("Error: Network error");
         } finally {
             setLoading(false);
         }

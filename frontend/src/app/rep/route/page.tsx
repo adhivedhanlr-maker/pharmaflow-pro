@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, MapPin, CheckCircle, Navigation, Clock } from "lucide-react";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+
 import { Badge } from "@/components/ui/badge";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -33,7 +33,7 @@ interface Route {
 
 export default function MyRoutePage() {
     const { token, user } = useAuth();
-    const { toast } = useToast();
+    // const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [route, setRoute] = useState<Route | null>(null);
 
@@ -76,13 +76,13 @@ export default function MyRoutePage() {
             });
 
             if (res.ok) {
-                toast({ title: "Success", description: `Stop marked as ${status.toLowerCase()}` });
+                alert(`Success: Stop marked as ${status.toLowerCase()}`);
                 fetchTodayRoute(); // Refresh
             } else {
-                toast({ title: "Error", description: "Failed to update stop", variant: "destructive" });
+                alert("Error: Failed to update stop");
             }
         } catch (error) {
-            toast({ title: "Error", description: "Network error", variant: "destructive" });
+            alert("Error: Network error");
         }
     };
 
