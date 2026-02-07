@@ -67,12 +67,18 @@ export default function RoutePlannerPage() {
 
     const fetchCustomers = async () => {
         try {
-            const res = await fetch(`${API_BASE}/parties`, { // Assuming /parties endpoint returns customers
+            const res = await fetch(`${API_BASE}/parties/customers?take=100`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const data = await res.json();
-                setCustomers(data);
+                // API returns { data: [], total, hasMore }, so we need data.data
+                // or just data if the API was different, but checking PartiesController it returns paginated.
+                if (data.data && Array.isArray(data.data)) {
+                    setCustomers(data.data);
+                } else if (Array.isArray(data)) {
+                    setCustomers(data);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch customers", error);
