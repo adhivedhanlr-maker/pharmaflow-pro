@@ -137,14 +137,20 @@ export function SalesRepDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {statCards.map((stat, i) => (
-                    <Card key={i} className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className={cn("p-3 rounded-xl", stat.bg)}>
-                                <stat.icon className={cn("h-6 w-6", stat.color)} />
+                    <Card key={i} className="border-none shadow-sm bg-white hover:shadow-md transition-all duration-200 overflow-hidden relative group">
+                        <div className={cn("absolute right-0 top-0 w-24 h-24 rounded-bl-full opacity-10 transition-transform group-hover:scale-110", stat.bg.replace('bg-', 'bg-gradient-to-br from-').replace('-50', '-500 to-transparent'))} />
+                        <CardContent className="p-5 relative z-10">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className={cn("p-2.5 rounded-xl", stat.bg)}>
+                                    <stat.icon className={cn("h-5 w-5", stat.color)} />
+                                </div>
+                                {i === 1 && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Today</span>}
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                                <h3 className="text-2xl font-bold text-slate-900">{stat.value}</h3>
+                                <h3 className="text-2xl font-bold text-slate-900 truncate" title={String(stat.value)}>
+                                    {stat.value}
+                                </h3>
+                                <p className="text-xs font-medium text-muted-foreground mt-1">{stat.title}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -155,33 +161,42 @@ export function SalesRepDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Recent Orders List */}
-                <Card className="lg:col-span-2 border-slate-200 shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg">Recent Orders</CardTitle>
-                        <Link href="/orders" className="text-sm text-blue-600 hover:underline flex items-center">
-                            View All <ArrowRight className="h-4 w-4 ml-1" />
+                <Card className="lg:col-span-2 border-slate-200 shadow-sm flex flex-col">
+                    <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-slate-100">
+                        <div className="space-y-1">
+                            <CardTitle className="text-base">Recent Orders</CardTitle>
+                            <p className="text-xs text-muted-foreground">Latest transactions from your field visits.</p>
+                        </div>
+                        <Link href="/orders">
+                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                View All <ArrowRight className="h-4 w-4 ml-1" />
+                            </Button>
                         </Link>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
+                    <CardContent className="p-0 flex-1">
+                        <div className="divide-y divide-slate-100">
                             {stats.recentOrders.length > 0 ? (
                                 stats.recentOrders.map((order) => (
-                                    <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                    <div key={order.id} className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs shadow-sm ring-2 ring-white">
                                                 {order.customer.name.substring(0, 2).toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-slate-900">{order.customer.name}</p>
-                                                <p className="text-xs text-muted-foreground">{order.orderNumber} • {format(new Date(order.createdAt), "HH:mm")}</p>
+                                                <p className="text-sm font-semibold text-slate-900">{order.customer.name}</p>
+                                                <div className="flex items-center text-xs text-muted-foreground gap-2">
+                                                    <span className="font-medium text-slate-500">{order.orderNumber}</span>
+                                                    <span>•</span>
+                                                    <span>{format(new Date(order.createdAt), "hh:mm a")}</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-slate-900">₹{order.totalAmount.toLocaleString()}</p>
                                             <span className={cn(
-                                                "text-[10px] px-2 py-0.5 rounded-full font-medium",
-                                                order.status === 'PENDING' ? "bg-yellow-100 text-yellow-700" :
-                                                    order.status === 'READY' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
+                                                "text-[10px] px-2 py-0.5 rounded-full font-medium inline-block mt-1",
+                                                order.status === 'PENDING' ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
+                                                    order.status === 'READY' ? "bg-green-50 text-green-700 border border-green-100" : "bg-slate-100 text-slate-600 border border-slate-200"
                                             )}>
                                                 {order.status}
                                             </span>
@@ -189,7 +204,12 @@ export function SalesRepDashboard() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-8 text-muted-foreground text-sm">No recent orders found.</div>
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                        <ClipboardList className="h-6 w-6 text-slate-300" />
+                                    </div>
+                                    <p className="text-sm text-slate-500">No orders placed today.</p>
+                                </div>
                             )}
                         </div>
                     </CardContent>
@@ -197,47 +217,56 @@ export function SalesRepDashboard() {
 
                 {/* Quick Actions / Activity */}
                 <div className="space-y-6">
-                    <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-md">
+                    <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-lg shadow-blue-900/20 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10" />
                         <CardHeader>
-                            <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
+                            <CardTitle className="text-lg text-white font-semibold">Quick Actions</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-3">
-                            <Link href="/rep/orders/create" className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors">
-                                <ClipboardList className="h-6 w-6" />
-                                <span className="text-xs font-medium">Take Order</span>
-                            </Link>
-                            <Link href="/visits" className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors">
-                                <MapPin className="h-6 w-6" />
-                                <span className="text-xs font-medium">Log Visit</span>
-                            </Link>
-                            <Link href="/deliveries" className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors">
-                                <Package className="h-6 w-6" />
-                                <span className="text-xs font-medium">Verify Delivery</span>
-                            </Link>
-                            <Link href="/visits/my-day" className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors">
-                                <Calendar className="h-6 w-6" />
-                                <span className="text-xs font-medium">My Day</span>
-                            </Link>
+                        <CardContent className="grid grid-cols-2 gap-3 relative z-10">
+                            {[
+                                { href: "/rep/orders/create", icon: ClipboardList, label: "Take Order" },
+                                { href: "/visits", icon: MapPin, label: "Log Visit" },
+                                { href: "/deliveries", icon: Package, label: "Verify Delivery" },
+                                { href: "/visits/my-day", icon: Calendar, label: "My Day" }
+                            ].map((action, idx) => (
+                                <Link key={idx} href={action.href} className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 border border-white/5">
+                                    <action.icon className="h-6 w-6 text-blue-100" />
+                                    <span className="text-xs font-medium text-blue-50">{action.label}</span>
+                                </Link>
+                            ))}
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200">
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Performance Goal</CardTitle>
+                    <Card className="border-slate-200 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold">Daily Progress</CardTitle>
+                                <span className="text-xs font-medium text-slate-500">Target: ₹10k</span>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Daily Target</span>
-                                    <span className="font-medium">₹10,000</span>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-2xl font-bold text-slate-900">₹{stats.salesValueToday.toLocaleString()}</span>
+                                    <span className={cn("text-xs font-medium",
+                                        stats.salesValueToday >= 10000 ? "text-green-600" : "text-blue-600"
+                                    )}>
+                                        {Math.min(Math.round((stats.salesValueToday / 10000) * 100), 100)}%
+                                    </span>
                                 </div>
-                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                                     <div
-                                        className="bg-green-500 h-full rounded-full transition-all duration-500"
+                                        className={cn("h-full rounded-full transition-all duration-1000 ease-out",
+                                            stats.salesValueToday >= 10000 ? "bg-green-500" : "bg-blue-600"
+                                        )}
                                         style={{ width: `${Math.min((stats.salesValueToday / 10000) * 100, 100)}%` }}
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground text-right">{Math.round((stats.salesValueToday / 10000) * 100)}% Achieved</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {stats.salesValueToday >= 10000
+                                        ? "Great job! You hit your daily target! 🎉"
+                                        : `₹${(10000 - stats.salesValueToday).toLocaleString()} more to reach your goal.`}
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
