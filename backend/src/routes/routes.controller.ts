@@ -16,7 +16,7 @@ export class RoutesController {
     }
 
     @Get()
-    findAll(@Request() req, @Query('date') date?: string, @Query('repId') repId?: string) {
+    findAll(@Request() req: any, @Query('date') date?: string, @Query('repId') repId?: string) {
         // If admin, can filter by repId. If rep, force own id.
         const userId = req.user.role === 'ADMIN' ? (repId || undefined) : req.user.userId;
         return this.routesService.findAll(userId, date);
