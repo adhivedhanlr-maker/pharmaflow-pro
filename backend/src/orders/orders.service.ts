@@ -2,14 +2,13 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { SalesGateway } from '../sales/sales.gateway';
-import { NotificationsService } from '../notifications/notifications.service';
+
 
 @Injectable()
 export class OrdersService {
     constructor(
         private prisma: PrismaService,
-        private salesGateway: SalesGateway,
-        private notifications: NotificationsService
+        private salesGateway: SalesGateway
     ) { }
 
     async create(userId: string, dto: CreateOrderDto) {
@@ -68,10 +67,10 @@ export class OrdersService {
             createdAt: order.createdAt
         });
 
-        // Email Alert for High Value
-        if (order.totalAmount > 5000) {
-            this.notifications.notifyAdminOfHighValueOrder(order.orderNumber, order.totalAmount, order.rep.name);
-        }
+        // Email Alert for High Value - Disabled for now
+        // if (order.totalAmount > 5000) {
+        //     this.notifications.notifyAdminOfHighValueOrder(order.orderNumber, order.totalAmount, order.rep.name);
+        // }
 
         return order;
     }

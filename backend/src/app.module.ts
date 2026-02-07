@@ -21,7 +21,7 @@ import { AuditLogModule } from './audit/audit-log.module';
 import { VisitsModule } from './visits/visits.module';
 import { OrdersModule } from './orders/orders.module';
 import { RoutesModule } from './routes/routes.module';
-import { NotificationsModule } from './notifications/notifications.module';
+
 
 @Module({
   imports: [
@@ -39,7 +39,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     VisitsModule,
     OrdersModule,
     RoutesModule,
-    NotificationsModule,
+
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {
