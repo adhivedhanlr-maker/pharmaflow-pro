@@ -57,7 +57,7 @@ export function MobileNav() {
                 },
                 {
                     title: "Take Orders",
-                    href: "/orders",
+                    href: "/rep/orders/create",
                     icon: ClipboardList,
                 },
                 {

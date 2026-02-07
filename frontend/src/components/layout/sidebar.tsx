@@ -60,18 +60,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   const { showHints } = useShortcut();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const filteredMenuItems = menuItems.filter(item => {
-    if (!user || !item.roles.includes(user.role)) return false;
-
-    // For Sales Reps, hide items that are already in the bottom mobile nav
-    // Mobile Nav has: Home(Dashboard), Visits, Take Orders(/orders), My Day
-    if (user.role === "SALES_REP") {
-      const mobileNavPaths = ["/", "/visits", "/orders", "/visits/my-day", "/rep/orders/create"];
-      if (mobileNavPaths.includes(item.href)) return false;
-    }
-
-    return true;
-  });
+  const filteredMenuItems = menuItems.filter(item =>
+    user && item.roles.includes(user.role)
+  );
 
   return (
     <div className={cn(
