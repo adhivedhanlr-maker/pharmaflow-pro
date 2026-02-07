@@ -5,12 +5,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://pharmaflow-pro-one.vercel.app',
-      'https://pharmaflow-pro-git-main-adhivedhanlrs-projects.vercel.app',
-      'https://pharmaflow-pro.vercel.app'
-    ],
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
