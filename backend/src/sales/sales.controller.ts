@@ -17,7 +17,7 @@ export class SalesController {
     }
 
     @Get('invoices')
-    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     findAll() {
         return this.salesService.findAll();
     }

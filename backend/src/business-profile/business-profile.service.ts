@@ -6,9 +6,14 @@ export class BusinessProfileService {
     constructor(private prisma: PrismaService) { }
 
     async getProfile(userId: string) {
-        return this.prisma.businessProfile.findUnique({
+        const profile = await this.prisma.businessProfile.findUnique({
             where: { userId },
         });
+
+        if (profile) return profile;
+
+        // Fallback: Return the first available business profile (global/admin profile)
+        return this.prisma.businessProfile.findFirst();
     }
 
     async updateProfile(userId: string, data: any) {
