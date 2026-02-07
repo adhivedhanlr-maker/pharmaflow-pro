@@ -40,8 +40,8 @@ export default function RequirementsPage() {
         if (token) fetchOrders();
 
         const socket = io(API_BASE);
-        socket.on('new-order', (data) => {
-            console.log("New order received:", data);
+        socket.on('new-requirement', (data) => {
+            console.log("New requirement received:", data);
             fetchOrders();
         });
 

@@ -31,7 +31,8 @@ import { Badge } from "@/components/ui/badge";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"], hint: "D" },
-  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "B" },
+  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "B" },
+  { icon: ShoppingCart, label: "Take Order", href: "/rep/orders/create", roles: ["SALES_REP"], hint: "O" },
   { icon: ShoppingCart, label: "Purchases", href: "/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"], hint: "P" },
   { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
   { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
