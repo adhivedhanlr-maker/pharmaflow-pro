@@ -10,6 +10,7 @@ interface User {
     role: string;
     isOnDuty?: boolean;
     twoFactorEnabled?: boolean;
+    canGenerateInvoice?: boolean;
 }
 
 interface AuthContextType {

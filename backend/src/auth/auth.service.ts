@@ -67,6 +67,7 @@ export class AuthService {
                 username: user.username,
                 name: user.name,
                 role: user.role,
+                canGenerateInvoice: user.canGenerateInvoice,
             },
         };
     }
@@ -94,6 +95,7 @@ export class AuthService {
                 username: user.username,
                 name: user.name,
                 role: user.role,
+                canGenerateInvoice: user.canGenerateInvoice,
             },
         };
     }

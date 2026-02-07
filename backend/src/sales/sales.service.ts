@@ -14,6 +14,14 @@ export class SalesService {
         const finalUserId = userId || (await this.prisma.user.findFirst())?.id;
         if (!finalUserId) throw new BadRequestException('No default user found for invoice creation');
 
+        // Check Permissions
+        const user = await this.prisma.user.findUnique({ where: { id: finalUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        if (user.role === 'SALES_REP' && !user.canGenerateInvoice) {
+            throw new BadRequestException('You are not authorized to generate invoices. Please contact admin.');
+        }
+
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Customer
             const customer = await tx.customer.findUnique({ where: { id: customerId } });

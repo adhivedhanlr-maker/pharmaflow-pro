@@ -39,6 +39,7 @@ interface User {
     username: string;
     name: string;
     role: string;
+    canGenerateInvoice: boolean;
     createdAt: string;
 }
 
@@ -54,6 +55,7 @@ export default function UsersPage() {
         password: "",
         name: "",
         role: "BILLING_OPERATOR",
+        canGenerateInvoice: false,
     });
 
     useEffect(() => {
@@ -242,7 +244,16 @@ export default function UsersPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-slate-600">{user.username}</TableCell>
-                                            <TableCell>{getRoleBadge(user.role)}</TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col items-start gap-1">
+                                                    {getRoleBadge(user.role)}
+                                                    {user.role === "SALES_REP" && (
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${user.canGenerateInvoice ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                                                            {user.canGenerateInvoice ? "Can Invoice" : "Order Only"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-slate-500 text-xs">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </TableCell>

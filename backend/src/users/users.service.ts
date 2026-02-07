@@ -19,6 +19,7 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                canGenerateInvoice: true,
                 isOnDuty: true,
                 createdAt: true,
             },
@@ -35,6 +36,7 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                canGenerateInvoice: true,
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,
@@ -57,6 +59,7 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                canGenerateInvoice: true,
             },
         });
     }
@@ -119,6 +122,7 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                canGenerateInvoice: true,
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,

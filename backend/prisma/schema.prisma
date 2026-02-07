@@ -22,6 +22,7 @@ model User {
   password  String
   name      String
   role      Role     @default(BILLING_OPERATOR)
+  canGenerateInvoice Boolean @default(false)
   isOnDuty  Boolean  @default(false)
   twoFactorEnabled Boolean @default(false)
   twoFactorSecret  String?
