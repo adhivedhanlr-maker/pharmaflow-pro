@@ -13,11 +13,28 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                isOnDuty: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' }
         });
         return users;
+    }
+
+    async findOne(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                username: true,
+                name: true,
+                role: true,
+                isOnDuty: true,
+                createdAt: true,
+            },
+        });
+        if (!user) throw new NotFoundException('User not found');
+        return user;
     }
 
     async create(data: any) {
@@ -48,6 +65,7 @@ export class UsersService {
                 username: true,
                 name: true,
                 role: true,
+                isOnDuty: true,
             },
         });
     }

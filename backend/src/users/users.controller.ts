@@ -16,6 +16,11 @@ export class UsersController {
         return this.usersService.update(req.user.userId, { isOnDuty: body.isOnDuty });
     }
 
+    @Get('me')
+    getProfile(@Request() req: any) {
+        return this.usersService.findOne(req.user.userId);
+    }
+
     @Roles(Role.ADMIN)
     @Get()
     findAll() {
