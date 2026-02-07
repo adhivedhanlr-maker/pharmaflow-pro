@@ -134,10 +134,14 @@ export default function RouteHistoryPage() {
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Rep" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {reps.map(rep => (
-                                        <SelectItem key={rep.id} value={rep.id}>{rep.name}</SelectItem>
-                                    ))}
+                                <SelectContent className="z-[1200]">
+                                    {reps.length === 0 ? (
+                                        <div className="p-2 text-sm text-muted-foreground text-center">Loading or No Reps...</div>
+                                    ) : (
+                                        reps.map(rep => (
+                                            <SelectItem key={rep.id} value={rep.id}>{rep.name}</SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
