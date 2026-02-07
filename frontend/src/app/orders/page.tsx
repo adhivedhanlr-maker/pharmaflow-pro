@@ -22,6 +22,7 @@ import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { io } from "socket.io-client";
+import { OrderDetailsDialog } from "@/components/orders/order-details-dialog";
 
 export default function OrdersPage() {
     const { token } = useAuth();
@@ -105,8 +106,17 @@ export default function OrdersPage() {
         }
     };
 
+    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+    const handleViewDetails = (order: any) => {
+        setSelectedOrder(order);
+        setIsDetailsOpen(true);
+    };
+
     return (
         <div className="space-y-6">
+            {/* ... (keep existing header and search) */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
@@ -170,7 +180,12 @@ export default function OrdersPage() {
                                                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Convert to Invoice
                                             </Button>
                                         ) : (
-                                            <Button size="sm" variant="ghost" className="h-8 text-[11px]">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-8 text-[11px]"
+                                                onClick={() => handleViewDetails(order)}
+                                            >
                                                 View Details <ArrowRight className="h-3.5 w-3.5 ml-1" />
                                             </Button>
                                         )}
@@ -182,6 +197,12 @@ export default function OrdersPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <OrderDetailsDialog
+                order={selectedOrder}
+                open={isDetailsOpen}
+                onOpenChange={setIsDetailsOpen}
+            />
         </div>
     );
 }
