@@ -11,6 +11,7 @@ import {
   Loader2,
   RefreshCw
 } from "lucide-react";
+import { SalesRepDashboard } from "@/components/dashboard/sales-rep-dashboard";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
 import { io } from "socket.io-client";
@@ -27,6 +28,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function Dashboard() {
   const { user } = useAuth();
+
+  if (user?.role === "SALES_REP") {
+    return <SalesRepDashboard />;
+  }
+
+  // ... existing code for other roles
   const [stats, setStats] = useState<Stats>({
     salesToday: 0,
     stockItems: 0,
