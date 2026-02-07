@@ -56,7 +56,7 @@ export function MobileNav() {
                     icon: MapPin,
                 },
                 {
-                    title: "Orders",
+                    title: "Take Orders",
                     href: "/orders",
                     icon: ClipboardList,
                 },
