@@ -112,4 +112,33 @@ export class VisitsService {
             },
         });
     }
+
+    async getRoute(repId: string, date: string) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.prisma.visit.findMany({
+            where: {
+                repId: repId,
+                checkInTime: {
+                    gte: startOfDay,
+                    lte: endOfDay,
+                },
+            },
+            orderBy: {
+                checkInTime: 'asc',
+            },
+            include: {
+                customer: {
+                    select: {
+                        name: true,
+                        address: true,
+                    },
+                },
+            },
+        });
+    }
 }

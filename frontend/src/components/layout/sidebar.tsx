@@ -18,7 +18,8 @@ import {
   UserCog,
   MapPin,
   Navigation,
-  LogOut
+  LogOut,
+  Map as MapIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -35,6 +36,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Requirements", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" }, // Added O for Orders/Requirements
   { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"], hint: "V" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
+  { icon: MapIcon, label: "Route History", href: "/visits/history", roles: ["ADMIN", "SALES_REP"] },
   { icon: RefreshCw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
   { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"], hint: "U" },
 ];

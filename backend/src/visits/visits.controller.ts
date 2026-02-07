@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { VisitsService } from './visits.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -39,5 +39,16 @@ export class VisitsController {
     @Roles(Role.SALES_REP)
     syncLocation(@Body() data: { latitude: number, longitude: number }, @Request() req: any) {
         return this.visitsService.syncLocation(req.user?.userId, data.latitude, data.longitude);
+    }
+    @Get('route')
+    @Roles(Role.ADMIN, Role.SALES_REP)
+    async getRoute(
+        @Request() req: any,
+        @Query('date') date: string,
+        @Query('repId') repId?: string
+    ) {
+        // If rep, force their own ID. If admin, allow passing repId (or default to self if they want to see their own)
+        const targetRepId = req.user.role === Role.ADMIN ? (repId || req.user.userId) : req.user.userId;
+        return this.visitsService.getRoute(targetRepId, date);
     }
 }
