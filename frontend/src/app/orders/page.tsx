@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { io } from "socket.io-client";
 
 export default function RequirementsPage() {
     const { token } = useAuth();
@@ -36,6 +37,16 @@ export default function RequirementsPage() {
 
     useEffect(() => {
         if (token) fetchOrders();
+
+        const socket = io(API_BASE);
+        socket.on('new-order', (data) => {
+            console.log("New order received:", data);
+            fetchOrders();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [token]);
 
     const fetchOrders = async () => {

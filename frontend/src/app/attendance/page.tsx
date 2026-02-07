@@ -17,6 +17,7 @@ import { Loader2, Calendar, Clock, Download, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { io } from "socket.io-client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -41,6 +42,16 @@ export default function AttendancePage() {
 
     useEffect(() => {
         if (token) fetchAttendance();
+
+        const socket = io(API_BASE);
+        socket.on('attendance-update', (data) => {
+            console.log("Real-time update received:", data);
+            fetchAttendance();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [token]);
 
     const fetchAttendance = async () => {

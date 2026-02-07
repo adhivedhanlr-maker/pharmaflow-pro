@@ -38,4 +38,8 @@ export class SalesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     notifyNewOrder(orderData: any) {
         this.server.emit('new-order', orderData);
     }
+
+    notifyAttendanceUpdate(data: any) {
+        this.server.emit('attendance-update', data);
+    }
 }

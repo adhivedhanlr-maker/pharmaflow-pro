@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { SalesGateway } from '../sales/sales.gateway';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private salesGateway: SalesGateway
+    ) { }
 
     async findAll() {
         const users = await this.prisma.user.findMany({
@@ -93,6 +97,8 @@ export class UsersService {
                     });
                 }
             }
+            // Notify admin of update
+            this.salesGateway.notifyAttendanceUpdate({ userId: id, isOnDuty: data.isOnDuty });
         }
 
         return this.prisma.user.update({
