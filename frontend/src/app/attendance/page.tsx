@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Loader2, Calendar, Clock, Download, DollarSign } from "lucide-react";
+import { Loader2, Calendar, Clock, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -162,8 +162,7 @@ export default function AttendancePage() {
                                         </div>
                                         <div className="text-right">
                                             <div className="flex items-center gap-1 justify-end text-green-600 font-bold text-lg">
-                                                <DollarSign className="h-4 w-4" />
-                                                {pay.toFixed(2)}
+                                                ₹{pay.toFixed(2)}
                                             </div>
                                             <p className="text-xs text-muted-foreground">Est. Pay</p>
                                         </div>
