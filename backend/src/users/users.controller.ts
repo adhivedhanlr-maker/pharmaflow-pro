@@ -21,6 +21,12 @@ export class UsersController {
         return this.usersService.findOne(req.user.userId);
     }
 
+    @Get('attendance')
+    @Roles(Role.ADMIN)
+    getAttendance() {
+        return this.usersService.getAttendance();
+    }
+
     @Roles(Role.ADMIN)
     @Get()
     findAll() {

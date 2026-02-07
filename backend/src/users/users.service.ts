@@ -57,6 +57,44 @@ export class UsersService {
         if (data.password) {
             data.password = await bcrypt.hash(data.password, 10);
         }
+        if (data.isOnDuty !== undefined) {
+            if (data.isOnDuty === true) {
+                // Determine start of day for check
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+
+                // Create new attendance record
+                await this.prisma.attendance.create({
+                    data: {
+                        userId: id,
+                        startTime: new Date(),
+                    }
+                });
+            } else {
+                // User going off duty - Close the last open session
+                const lastSession = await this.prisma.attendance.findFirst({
+                    where: {
+                        userId: id,
+                        endTime: null
+                    },
+                    orderBy: { startTime: 'desc' }
+                });
+
+                if (lastSession) {
+                    const endTime = new Date();
+                    const duration = (endTime.getTime() - new Date(lastSession.startTime).getTime()) / (1000 * 60); // minutes
+
+                    await this.prisma.attendance.update({
+                        where: { id: lastSession.id },
+                        data: {
+                            endTime,
+                            duration
+                        }
+                    });
+                }
+            }
+        }
+
         return this.prisma.user.update({
             where: { id },
             data,
@@ -67,6 +105,20 @@ export class UsersService {
                 role: true,
                 isOnDuty: true,
             },
+        });
+    }
+
+    async getAttendance() {
+        return this.prisma.attendance.findMany({
+            orderBy: { startTime: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        role: true
+                    }
+                }
+            }
         });
     }
 
