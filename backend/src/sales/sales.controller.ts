@@ -31,4 +31,4 @@ export class SalesController {
         return this.salesService.verifyDelivery(id, body.otp, body.proofUrl, body.signatureUrl);
     }
 }
-}
+
