@@ -33,6 +33,24 @@ export class NotificationsService {
         }
     }
 
+    async sendSms(to: string, message: string) {
+        // MOCK SMS IMPLEMENTATION
+        // In production, integrate with Twilio, MSG91, etc.
+        this.logger.log(`[MOCK SMS] To: ${to}, Message: ${message}`);
+        console.log(`\n\n=== SMS OUTGOING ===\nTo: ${to}\nMessage: ${message}\n====================\n`);
+        return true;
+    }
+
+    async sendDeliveryOtp(customerName: string, phone: string, otp: string) {
+        if (!phone) {
+            this.logger.warn(`Cannot send OTP: Customer ${customerName} has no phone number.`);
+            return;
+        }
+
+        const message = `Dear ${customerName}, your delivery verification OTP is ${otp}. Please share this with the delivery agent only after receiving your items.`;
+        return this.sendSms(phone, message);
+    }
+
     async notifyAdminOfDutyStart(userName: string, time: Date) {
         const subject = `[Duty Alert] ${userName} started duty`;
         const text = `${userName} has started their duty at ${time.toLocaleString()}.`;

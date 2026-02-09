@@ -1,12 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SalesGateway } from './sales.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SalesService {
     constructor(
         private prisma: PrismaService,
-        private salesGateway: SalesGateway
+        private salesGateway: SalesGateway,
+        private notificationsService: NotificationsService
     ) { }
 
     async createInvoice(data: any, userId?: string) {
@@ -22,7 +24,7 @@ export class SalesService {
             throw new BadRequestException('You are not authorized to generate invoices. Please contact admin.');
         }
 
-        return this.prisma.$transaction(async (tx) => {
+        const result = await this.prisma.$transaction(async (tx) => {
             // 1. Verify Customer
             const customer = await tx.customer.findUnique({ where: { id: customerId } });
             if (!customer) throw new NotFoundException('Customer not found');
@@ -93,7 +95,9 @@ export class SalesService {
             // 6. Create Invoice
             const invoiceNumber = `INV-${Date.now()}`; // Simple generator for now
 
-            const result = await tx.sale.create({
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            const sale = await tx.sale.create({
                 data: {
                     invoiceNumber,
                     customerId,
@@ -104,7 +108,7 @@ export class SalesService {
                     netAmount,
                     discountAmount,
                     isCash,
-                    deliveryOtp: Math.floor(100000 + Math.random() * 900000).toString(),
+                    deliveryOtp: otp,
                     items: {
                         create: invoiceItems,
                     },
@@ -116,11 +120,21 @@ export class SalesService {
                 },
             });
 
-            // Notify real-time clients
-            this.salesGateway.notifyNewOrder(result);
-
-            return result;
+            return sale;
         });
+
+        // 7. Post-Transaction: Notifications
+        // Notify real-time clients
+        this.salesGateway.notifyNewOrder(result);
+
+        // Send OTP via SMS
+        if (result.deliveryOtp && result.customer.phone) {
+            // We don't await this to avoid blocking the response
+            this.notificationsService.sendDeliveryOtp(result.customer.name, result.customer.phone, result.deliveryOtp)
+                .catch(err => console.error('Failed to send OTP SMS:', err));
+        }
+
+        return result;
     }
 
     async findAll(user?: any) {
