@@ -38,6 +38,7 @@ model User {
   orders    Order[]
   attendance Attendance[]
   routes     Route[]
+  locationLogs LocationLog[]
   businessProfile BusinessProfile?
 }
 
@@ -385,4 +386,16 @@ enum StopStatus {
   PENDING
   COMPLETED
   SKIPPED
+}
+
+model LocationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  latitude  Float
+  longitude Float
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([timestamp])
 }

@@ -78,6 +78,16 @@ export class VisitsService {
     }
 
     async syncLocation(userId: string, lat: number, lng: number) {
+        // Log the location in history
+        await this.prisma.locationLog.create({
+            data: {
+                userId,
+                latitude: lat,
+                longitude: lng,
+            }
+        });
+
+        // Update current location (existing logic)
         return this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -138,6 +148,27 @@ export class VisitsService {
                         address: true,
                     },
                 },
+            },
+        });
+    }
+
+    async getRoutePath(repId: string, date: string) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.prisma.locationLog.findMany({
+            where: {
+                userId: repId,
+                timestamp: {
+                    gte: startOfDay,
+                    lte: endOfDay,
+                },
+            },
+            orderBy: {
+                timestamp: 'asc',
             },
         });
     }

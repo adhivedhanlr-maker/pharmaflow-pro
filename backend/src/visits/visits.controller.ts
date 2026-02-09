@@ -51,4 +51,15 @@ export class VisitsController {
         const targetRepId = req.user.role === Role.ADMIN ? (repId || req.user.userId) : req.user.userId;
         return this.visitsService.getRoute(targetRepId, date);
     }
+
+    @Get('route-path')
+    @Roles(Role.ADMIN, Role.SALES_REP)
+    async getRoutePath(
+        @Request() req: any,
+        @Query('date') date: string,
+        @Query('repId') repId?: string
+    ) {
+        const targetRepId = req.user.role === Role.ADMIN ? (repId || req.user.userId) : req.user.userId;
+        return this.visitsService.getRoutePath(targetRepId, date);
+    }
 }
