@@ -39,7 +39,7 @@ const menuItems = [
   { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
   { icon: ShoppingCart, label: "Orders", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },
   { icon: Package, label: "Deliveries", href: "/deliveries", roles: ["ADMIN", "BILLING_OPERATOR", "SALES_REP"], hint: "L" },
-  { icon: MapPin, label: "Visits", href: "/visits", roles: ["ADMIN", "SALES_REP"], hint: "V" },
+  { icon: MapPin, label: "Visits", href: "/visits", roles: ["SALES_REP"], hint: "V" },
   { icon: Calendar, label: "Route Planner", href: "/admin/routes", roles: ["ADMIN"], hint: "R" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
   { icon: MapIcon, label: "Route History", href: "/visits/history", roles: ["ADMIN", "SALES_REP"] },
