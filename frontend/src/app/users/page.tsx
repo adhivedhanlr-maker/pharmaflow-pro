@@ -263,8 +263,11 @@ export default function UsersPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8 text-slate-400 hover:text-primary transition-colors"
+                                                        asChild
                                                     >
-                                                        <Edit2 className="h-4 w-4" />
+                                                        <a href={`/users/${user.id}`}>
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </a>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"

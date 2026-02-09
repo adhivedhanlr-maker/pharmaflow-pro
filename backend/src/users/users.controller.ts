@@ -27,6 +27,18 @@ export class UsersController {
         return this.usersService.getAttendance();
     }
 
+    @Get(':id/attendance')
+    @Roles(Role.ADMIN)
+    getUserAttendance(@Param('id') id: string) {
+        return this.usersService.getUserAttendance(id);
+    }
+
+    @Get(':id')
+    @Roles(Role.ADMIN)
+    getUser(@Param('id') id: string) {
+        return this.usersService.findOne(id);
+    }
+
     @Roles(Role.ADMIN)
     @Get()
     findAll() {

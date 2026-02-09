@@ -146,6 +146,23 @@ export class UsersService {
         });
     }
 
+    async getUserAttendance(userId: string) {
+        return this.prisma.attendance.findMany({
+            where: { userId },
+            orderBy: { startTime: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        role: true,
+                        hourlyRate: true,
+                        overtimeRate: true
+                    }
+                }
+            }
+        });
+    }
+
     async remove(id: string) {
         return this.prisma.user.delete({
             where: { id },
