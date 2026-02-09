@@ -173,11 +173,52 @@ export class SalesService {
                 deliveryStatus: 'DELIVERED',
                 deliveredAt: new Date(),
                 deliveryProofUrl: proofUrl,
-                deliverySignatureUrl: signatureUrl,
-            },
+                deliverySignatureUrl: signatureUrl
+            }
         });
 
         return updatedSale;
+    }
+
+    async getSalesAnalytics(days: number = 7) {
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+
+        const sales = await this.prisma.sale.findMany({
+            where: {
+                createdAt: {
+                    gte: date
+                }
+            },
+            select: {
+                createdAt: true,
+                netAmount: true
+            }
+        });
+
+        // Group by date
+        const grouped = sales.reduce((acc, sale) => {
+            const dateStr = sale.createdAt.toISOString().split('T')[0];
+            if (!acc[dateStr]) {
+                acc[dateStr] = 0;
+            }
+            acc[dateStr] += sale.netAmount;
+            return acc;
+        }, {} as Record<string, number>);
+
+        // Fill missing dates
+        const result = [];
+        for (let i = 0; i < days; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            result.push({
+                date: dateStr,
+                total: grouped[dateStr] || 0
+            });
+        }
+
+        return result.reverse();
     }
 }
 

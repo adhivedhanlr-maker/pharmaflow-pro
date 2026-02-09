@@ -74,7 +74,7 @@ export default function SalesHistoryPage() {
     const printRef = useRef<HTMLDivElement>(null);
 
     const handlePrintRequest = useReactToPrint({
-        content: () => printRef.current,
+        contentRef: printRef,
         onAfterPrint: () => setSelectedInvoice(null), // Clear selection after print
     });
 

@@ -16,6 +16,7 @@ import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
 import { io } from "socket.io-client";
 import { cn } from "@/lib/utils";
+import { SalesChart } from "@/components/dashboard/sales-chart";
 
 interface Stats {
   salesToday: number;
@@ -173,18 +174,12 @@ export default function Dashboard() {
         ))}
       </div>
 
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
         <RoleGate allowedRoles={["ADMIN", "ACCOUNTANT", "BILLING_OPERATOR"]}>
-          <Card className="col-span-1 md:col-span-2 lg:col-span-4">
-            <CardHeader>
-              <CardTitle>Business Insights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground py-10 text-center">
-                Sales performance chart will appear here as more data is collected.
-              </div>
-            </CardContent>
-          </Card>
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <SalesChart />
+          </div>
         </RoleGate>
         <RoleGate allowedRoles={["ADMIN", "WAREHOUSE_MANAGER"]}>
           <Card className="col-span-1 md:col-span-2 lg:col-span-3">

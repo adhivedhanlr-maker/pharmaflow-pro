@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RoleGate } from "@/components/auth/role-gate";
+import { AddProductDialog } from "@/components/inventory/add-product-dialog";
 
 interface PurchaseItem {
     id: string;
@@ -307,12 +308,14 @@ export default function PurchasesPage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
+
                         <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Purchase Items</CardTitle>
-                        <div className="flex gap-2">
-                            <span className="text-xs text-muted-foreground flex items-center bg-yellow-50 px-2 py-1 rounded border border-yellow-100">
+                        <div className="flex gap-2 items-center">
+                            <span className="text-xs text-muted-foreground flex items-center bg-yellow-50 px-2 py-1 rounded border border-yellow-100 h-8">
                                 <AlertCircle className="h-3 w-3 mr-1 text-yellow-600" />
                                 Prices update batch data
                             </span>
+                            <AddProductDialog onProductAdded={fetchData} />
                             <Button size="sm" onClick={addItem}><Plus className="mr-2 h-4 w-4" /> Add Item</Button>
                         </div>
                     </CardHeader>

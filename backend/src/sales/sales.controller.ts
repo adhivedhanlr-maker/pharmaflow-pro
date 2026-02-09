@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
 import { SalesService } from './sales.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -29,6 +29,11 @@ export class SalesController {
         @Body() body: { otp: string; proofUrl?: string; signatureUrl?: string },
     ) {
         return this.salesService.verifyDelivery(id, body.otp, body.proofUrl, body.signatureUrl);
+    }
+    @Get('analytics')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    getAnalytics(@Query('days') days?: string) {
+        return this.salesService.getSalesAnalytics(days ? parseInt(days) : 7);
     }
 }
 
