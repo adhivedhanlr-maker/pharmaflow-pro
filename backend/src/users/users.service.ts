@@ -22,6 +22,8 @@ export class UsersService {
                 canGenerateInvoice: true,
                 isOnDuty: true,
                 createdAt: true,
+                paymentMethod: true,
+                monthlySalary: true,
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -40,6 +42,8 @@ export class UsersService {
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,
+                paymentMethod: true,
+                monthlySalary: true,
                 createdAt: true,
             },
         });
@@ -126,6 +130,8 @@ export class UsersService {
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,
+                paymentMethod: true,
+                monthlySalary: true,
             },
         });
     }
@@ -139,7 +145,10 @@ export class UsersService {
                         name: true,
                         role: true,
                         hourlyRate: true,
-                        overtimeRate: true
+                        overtimeRate: true,
+                        paymentMethod: true,
+                        monthlySalary: true
+
                     }
                 }
             }
@@ -156,7 +165,10 @@ export class UsersService {
                         name: true,
                         role: true,
                         hourlyRate: true,
-                        overtimeRate: true
+                        overtimeRate: true,
+                        paymentMethod: true,
+                        monthlySalary: true
+
                     }
                 }
             }

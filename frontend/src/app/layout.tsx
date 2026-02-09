@@ -48,6 +48,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { RoleSwitcher } from "@/components/dev/role-switcher";
+import { Toaster } from "@/components/ui/sonner";
 import { GlobalHooks } from "@/components/layout/global-hooks";
 
 export default function RootLayout({
@@ -66,6 +67,7 @@ export default function RootLayout({
               <PWAInstallPrompt />
               <RoleSwitcher />
               <GlobalHooks />
+              <Toaster />
             </ShortcutProvider>
           </SocketProvider>
         </AuthProvider>

@@ -17,6 +17,8 @@ import { Loader2, Calendar, Clock, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { io } from "socket.io-client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -32,6 +34,8 @@ interface AttendanceRecord {
         role: string;
         hourlyRate?: number;
         overtimeRate?: number;
+        paymentMethod?: "HOURLY" | "SALARY";
+        monthlySalary?: number;
     };
 }
 
@@ -86,7 +90,9 @@ export default function AttendancePage() {
                 overtimeMinutes: 0,
                 sessions: 0,
                 hourlyRate: curr.user.hourlyRate || 500,
-                overtimeRate: curr.user.overtimeRate || 750
+                overtimeRate: curr.user.overtimeRate || 750,
+                paymentMethod: curr.user.paymentMethod || "HOURLY",
+                monthlySalary: curr.user.monthlySalary || 0
             };
         }
 
@@ -102,7 +108,7 @@ export default function AttendancePage() {
         acc[curr.userId].overtimeMinutes += otMins;
         acc[curr.userId].sessions += 1;
         return acc;
-    }, {} as Record<string, { name: string, totalMinutes: number, overtimeMinutes: number, sessions: number, hourlyRate: number, overtimeRate: number }>);
+    }, {} as Record<string, { name: string, totalMinutes: number, overtimeMinutes: number, sessions: number, hourlyRate: number, overtimeRate: number, paymentMethod: string, monthlySalary: number }>);
 
     const formatDuration = (minutes: number) => {
         const h = Math.floor(minutes / 60);
@@ -136,39 +142,53 @@ export default function AttendancePage() {
                     {Object.entries(userTotals).map(([userId, stats]) => {
                         const regularHours = stats.totalMinutes / 60;
                         const otHours = stats.overtimeMinutes / 60;
-                        const pay = (regularHours * stats.hourlyRate) + (otHours * stats.overtimeRate);
+                        let pay = 0;
+
+                        if (stats.paymentMethod === "SALARY") {
+                            pay = stats.monthlySalary;
+                        } else {
+                            pay = (regularHours * stats.hourlyRate) + (otHours * stats.overtimeRate);
+                        }
 
                         return (
-                            <Card key={userId} className="border-slate-200">
-                                <CardHeader className="pb-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-base font-medium">{stats.name}</CardTitle>
-                                            <CardDescription>{stats.sessions} sessions in {format(new Date(filterMonth), 'MMMM yyyy')}</CardDescription>
-                                        </div>
-                                        <div className="text-right text-xs text-muted-foreground">
-                                            <div>Rate: ₹{stats.hourlyRate}/hr</div>
-                                            <div>OT: ₹{stats.overtimeRate}/hr</div>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex justify-between items-end">
-                                        <div>
-                                            <p className="text-2xl font-bold">{formatDuration(stats.totalMinutes + stats.overtimeMinutes)}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Reg: {formatDuration(stats.totalMinutes)} • OT: {formatDuration(stats.overtimeMinutes)}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="flex items-center gap-1 justify-end text-green-600 font-bold text-lg">
-                                                ₹{pay.toFixed(2)}
+                            <Link href={`/attendance/${userId}`} key={userId}>
+                                <Card className="border-slate-200 hover:border-primary/50 transition-colors cursor-pointer">
+                                    <CardHeader className="pb-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-base font-medium">{stats.name}</CardTitle>
+                                                <CardDescription>{stats.sessions} sessions in {format(new Date(filterMonth), 'MMMM yyyy')}</CardDescription>
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Est. Pay</p>
+                                            <div className="text-right text-xs text-muted-foreground">
+                                                {stats.paymentMethod === "SALARY" ? (
+                                                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">Salary: ₹{stats.monthlySalary}</Badge>
+                                                ) : (
+                                                    <>
+                                                        <div>Rate: ₹{stats.hourlyRate}/hr</div>
+                                                        <div>OT: ₹{stats.overtimeRate}/hr</div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <p className="text-2xl font-bold">{formatDuration(stats.totalMinutes + stats.overtimeMinutes)}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Reg: {formatDuration(stats.totalMinutes)} • OT: {formatDuration(stats.overtimeMinutes)}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="flex items-center gap-1 justify-end text-green-600 font-bold text-lg">
+                                                    ₹{pay.toFixed(2)}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Est. Pay</p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
                         );
                     })}
                 </div>
