@@ -11,6 +11,8 @@ interface User {
     isOnDuty?: boolean;
     twoFactorEnabled?: boolean;
     canGenerateInvoice?: boolean;
+    lastLat?: number;
+    lastLng?: number;
 }
 
 interface AuthContextType {

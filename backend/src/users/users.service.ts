@@ -24,6 +24,8 @@ export class UsersService {
                 createdAt: true,
                 paymentMethod: true,
                 monthlySalary: true,
+                lastLat: true,
+                lastLng: true,
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -45,6 +47,8 @@ export class UsersService {
                 paymentMethod: true,
                 monthlySalary: true,
                 createdAt: true,
+                lastLat: true,
+                lastLng: true,
             },
         });
         if (!user) throw new NotFoundException('User not found');

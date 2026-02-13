@@ -44,6 +44,8 @@ interface LocationLog {
 interface Rep {
     id: string;
     name: string;
+    lastLat?: number;
+    lastLng?: number;
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -158,11 +160,15 @@ export default function RouteHistoryPage() {
     const polylinePositions = routePath.map(log => [log.latitude, log.longitude]);
 
     // Fallback center
+    const selectedRepData = user?.role === 'ADMIN' ? reps.find(r => r.id === selectedRepId) : user;
+
     const center: [number, number] = routePath.length > 0
         ? [routePath[0].latitude, routePath[0].longitude]
         : visits.length > 0
             ? [visits[0].latitude, visits[0].longitude]
-            : [12.9716, 77.5946];
+            : (selectedRepData?.lastLat && selectedRepData?.lastLng)
+                ? [selectedRepData.lastLat, selectedRepData.lastLng]
+                : [12.9716, 77.5946];
 
     return (
         <div className="space-y-6">

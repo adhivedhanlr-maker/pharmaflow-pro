@@ -7,6 +7,9 @@ export const setAuthToken = (token: string | null) => {
     authToken = token;
 };
 
+export const getAuthToken = () => authToken;
+
+
 export const apiCall = async (endpoint: string, options: any = {}) => {
     const url = `${API_BASE}${endpoint}`;
 

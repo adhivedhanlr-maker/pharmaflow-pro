@@ -17,7 +17,8 @@ import {
   Linking
 } from 'react-native';
 import { login, getProducts, getCustomers, recordVisit, createOrder, createCustomer, createRequirement } from './src/utils/api';
-import { getCurrentLocation, calculateDistance, validateVisit } from './src/utils/location';
+import { getCurrentLocation, calculateDistance, validateVisit, startBackgroundTracking, stopBackgroundTracking } from './src/utils/location';
+
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -150,6 +151,13 @@ export default function App() {
     }
   };
 
+  const handleLogout = async () => {
+    await stopBackgroundTracking();
+    setScreen('login');
+    setUser('');
+    setPassword('');
+  };
+
   const handleLogin = async () => {
     if (!user || !password) {
       Alert.alert('Error', 'Please enter your credentials');
@@ -159,6 +167,7 @@ export default function App() {
     setLoading(true);
     try {
       await login(user, password);
+      await startBackgroundTracking();
       setScreen('visits');
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Invalid credentials');
@@ -330,7 +339,7 @@ export default function App() {
           <Text style={styles.headerWelcome}>Field Force</Text>
           <Text style={styles.headerMainTitle}>Customer Visits</Text>
         </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setScreen('login')}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
       </View>

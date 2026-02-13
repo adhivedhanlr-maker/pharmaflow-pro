@@ -1,10 +1,83 @@
 import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
 import { Alert } from 'react-native';
+import { apiCall, getAuthToken } from './api';
+
+const LOCATION_TASK_NAME = 'background-location-task';
 
 export interface Coordinates {
     latitude: number;
     longitude: number;
 }
+
+// Define the background task
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
+    if (error) {
+        console.error("Location task error:", error);
+        return;
+    }
+    if (data) {
+        const { locations } = data;
+        const token = getAuthToken();
+        if (!token) return; // Stop if no user logged in
+
+        // Process locations (array of updates)
+        const lastLoc = locations[locations.length - 1];
+        if (lastLoc) {
+            try {
+                await apiCall('/visits/sync-location', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        latitude: lastLoc.coords.latitude,
+                        longitude: lastLoc.coords.longitude
+                    })
+                });
+            } catch (e) {
+                // silently fail in background to avoid spam
+                console.log("Background sync failed", e);
+            }
+        }
+    }
+});
+
+export const startBackgroundTracking = async () => {
+    try {
+        const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+        if (fgStatus !== 'granted') return;
+
+        const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+        if (bgStatus !== 'granted') {
+            console.log("Background permission denied");
+            return;
+        }
+
+        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: 60 * 1000, // 1 minute (more frequent for "actual path" feel)
+            distanceInterval: 100, // 100 meters
+            deferredUpdatesInterval: 60 * 1000,
+            deferredUpdatesDistance: 100,
+            foregroundService: {
+                notificationTitle: "PharmaFlow Tracking",
+                notificationBody: "Tracking your route actively.",
+                notificationColor: "#2563eb"
+            }
+        });
+    } catch (error) {
+        console.error("Failed to start tracking:", error);
+    }
+};
+
+export const stopBackgroundTracking = async () => {
+    try {
+        const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+        if (hasStarted) {
+            await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+        }
+    } catch (error) {
+        console.error("Failed to stop tracking:", error);
+    }
+};
 
 export const getCurrentLocation = async (): Promise<Coordinates | null> => {
     try {
