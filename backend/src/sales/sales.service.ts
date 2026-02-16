@@ -137,6 +137,17 @@ export class SalesService {
         return result;
     }
 
+    async assignRep(id: string, repId: string) {
+        const sale = await this.prisma.sale.findUnique({ where: { id } });
+        if (!sale) throw new NotFoundException('Invoice not found');
+
+        return this.prisma.sale.update({
+            where: { id },
+            data: { repId },
+            include: { rep: { select: { name: true } } }
+        });
+    }
+
     async findAll(user?: any) {
         const where: any = {};
         if (user && user.role === 'SALES_REP') {

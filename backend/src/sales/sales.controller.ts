@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request, Param, Query, Res } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, Request, Param, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { SalesService } from './sales.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -45,6 +45,12 @@ export class SalesController {
             body.deliveryLongitude,
             body.deliveryInfo
         );
+    }
+
+    @Patch(':id/assign-rep')
+    @Roles(Role.ADMIN)
+    assignRep(@Param('id') id: string, @Body('repId') repId: string) {
+        return this.salesService.assignRep(id, repId);
     }
     @Get('analytics')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)

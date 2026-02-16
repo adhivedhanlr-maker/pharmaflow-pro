@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+import { CustomerDialog } from "@/components/billing/customer-dialog";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -24,10 +27,28 @@ export default function VisitsPage() {
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [checkingIn, setCheckingIn] = useState<string | null>(null);
+    const [nearbyMode, setNearbyMode] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
 
     useEffect(() => {
         if (token) fetchCustomers();
     }, [token]);
+
+    const toggleNearby = () => {
+        if (!nearbyMode) {
+            if (!navigator.geolocation) {
+                alert("Geolocation not supported");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition((pos) => {
+                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                setNearbyMode(true);
+            }, (err) => alert("Failed to get location: " + err.message));
+        } else {
+            setNearbyMode(false);
+            setUserLocation(null);
+        }
+    };
 
     const fetchCustomers = async () => {
         setLoading(true);
@@ -125,10 +146,25 @@ export default function VisitsPage() {
         });
     };
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.address?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const getProcessedCustomers = () => {
+        let items = customers.filter(c =>
+            c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.address?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        if (nearbyMode && userLocation) {
+            return items.map(c => ({
+                ...c,
+                distance: (c.latitude && c.longitude)
+                    ? calculateDistance(userLocation.lat, userLocation.lng, c.latitude, c.longitude)
+                    : Infinity
+            })).sort((a, b) => a.distance - b.distance);
+        }
+
+        return items;
+    };
+
+    const filteredCustomers = getProcessedCustomers();
 
     return (
         <div className="space-y-6">
@@ -140,7 +176,19 @@ export default function VisitsPage() {
                         Verify your location and start shop visits.
                     </p>
                 </div>
-                <div className="relative w-full md:w-96">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Button
+                        variant={nearbyMode ? "default" : "outline"}
+                        size="sm"
+                        onClick={toggleNearby}
+                        className={cn(nearbyMode && "bg-blue-600")}
+                    >
+                        <Navigation className={cn("h-4 w-4 mr-2", nearbyMode && "animate-pulse")} />
+                        {nearbyMode ? "Nearby Only" : "Show Nearby"}
+                    </Button>
+                    <CustomerDialog type="customer" onSuccess={fetchCustomers} />
+                </div>
+                <div className="relative w-full md:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search pharmacies..."
@@ -172,9 +220,16 @@ export default function VisitsPage() {
                                     <Store className="h-5 w-5" />
                                 </div>
                                 {customer.latitude && customer.longitude ? (
-                                    <Badge variant="outline" className="text-[10px] text-green-600 border-green-200">
-                                        GPS Mapped
-                                    </Badge>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <Badge variant="outline" className="text-[10px] text-green-600 border-green-200">
+                                            GPS Mapped
+                                        </Badge>
+                                        {nearbyMode && customer.distance !== Infinity && (
+                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                {customer.distance > 1000 ? `${(customer.distance / 1000).toFixed(1)} km` : `${Math.round(customer.distance)} m`} away
+                                            </span>
+                                        )}
+                                    </div>
                                 ) : (
                                     <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200">
                                         No Coords
