@@ -194,7 +194,7 @@ export default function DeliveriesPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {filteredDeliveries.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8">No deliveries found.</TableCell></TableRow>}
+                            {filteredDeliveries.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8">No deliveries found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </CardContent>
