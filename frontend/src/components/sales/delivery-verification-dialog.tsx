@@ -154,19 +154,11 @@ export function DeliveryVerificationDialog({
 
                     <div className="space-y-2">
                         <Label>Photo Proof (Required)</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 border-slate-300 transition-colors">
+                        <div className="flex flex-col gap-2">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-blue-50 border-blue-300 bg-blue-50/30 transition-colors">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                                    <p className="text-xs text-slate-500 text-center">Upload from<br />Gallery</p>
-                                </div>
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => setProofFile(e.target.files?.[0] || null)} />
-                            </label>
-
-                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-blue-50 border-blue-300 bg-blue-50/30 transition-colors">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Camera className="w-6 h-6 text-blue-500 mb-2" />
-                                    <p className="text-xs text-blue-600 font-medium text-center">Take Photo<br />(Camera)</p>
+                                    <Camera className="w-8 h-8 text-blue-500 mb-2" />
+                                    <p className="text-sm text-blue-600 font-medium text-center">Take Photo<br />(Camera)</p>
                                 </div>
                                 <input
                                     type="file"
@@ -192,8 +184,8 @@ export function DeliveryVerificationDialog({
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2 col-span-2">
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
                             <Label>Delivery Notes / Info (Optional)</Label>
                             <Textarea
                                 placeholder="Add any additional details about the delivery..."
@@ -201,18 +193,6 @@ export function DeliveryVerificationDialog({
                                 onChange={(e) => setDeliveryInfo(e.target.value)}
                                 className="resize-none h-20"
                             />
-                        </div>
-
-                        <div className="space-y-2 col-span-2">
-                            <Label>Signature (Optional)</Label>
-                            <label className="flex items-center justify-center w-full h-16 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                                <div className="flex items-center gap-2 text-slate-500">
-                                    <Upload className="w-4 h-4" />
-                                    <span className="text-sm">{signatureFile ? "Change Signature" : "Upload Signature Image"}</span>
-                                </div>
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => setSignatureFile(e.target.files?.[0] || null)} />
-                            </label>
-                            {signatureFile && <p className="text-[10px] text-green-600 truncate px-1">{signatureFile.name}</p>}
                         </div>
                     </div>
                 </div>
