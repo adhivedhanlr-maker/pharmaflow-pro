@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Building2, User, MapPin, Search, Map as MapIcon } from "lucide-react";
-// Removed Google Maps imports
+import { Loader2, Plus, Building2, User, MapPin, Search, Map as MapIcon, LocateFixed } from "lucide-react";
+import PharmacyMapPicker from "./pharmacy-map-picker";
 
 interface CustomerDialogProps {
     type: "customer" | "supplier";
@@ -26,6 +26,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
     const { token } = useAuth();
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [mapPickerOpen, setMapPickerOpen] = useState(false);
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
     // Simple form state (in a real app, use react-hook-form + zod)
@@ -74,6 +75,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
             longitude: parseFloat(place.lon)
         });
         setSearchResults([]);
+        setMapPickerOpen(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -132,7 +134,18 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Name</label>
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-medium">Name</label>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-[10px] text-blue-600 hover:text-blue-700 p-0"
+                                onClick={() => setMapPickerOpen(true)}
+                            >
+                                <MapIcon className="h-3 w-3 mr-1" /> Search on Map
+                            </Button>
+                        </div>
                         <div className="relative">
                             <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -260,6 +273,15 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                     </div>
                 </form>
             </DialogContent>
+
+            <Dialog open={mapPickerOpen} onOpenChange={setMapPickerOpen}>
+                <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden border-none shadow-2xl">
+                    <PharmacyMapPicker
+                        initialSearch={formData.name}
+                        onSelect={selectPharmacy}
+                    />
+                </DialogContent>
+            </Dialog>
         </Dialog>
     );
 }

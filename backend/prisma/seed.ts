@@ -58,26 +58,21 @@ const PRODUCTS = [
 ];
 
 const CUSTOMERS = [
-    { name: 'City Medical Store', gstin: '27AABCU9603R1ZM', phone: '9876543210', address: 'Shop 12, MG Road, Mumbai' },
-    { name: 'HealthCare Pharmacy', gstin: '29AABCU9603R1ZN', phone: '9876543211', address: '45, Brigade Road, Bangalore' },
-    { name: 'Apollo Pharmacy', gstin: '33AABCU9603R1ZO', phone: '9876543212', address: '78, Anna Salai, Chennai' },
-    { name: 'MedPlus', gstin: '36AABCU9603R1ZP', phone: '9876543213', address: '23, Banjara Hills, Hyderabad' },
-    { name: 'Wellness Forever', gstin: '27AABCU9603R1ZQ', phone: '9876543214', address: '56, Andheri West, Mumbai' },
-    { name: 'Guardian Pharmacy', gstin: '07AABCU9603R1ZR', phone: '9876543215', address: '89, Connaught Place, Delhi' },
-    { name: 'Netmeds Retail', gstin: '33AABCU9603R1ZS', phone: '9876543216', address: '34, T Nagar, Chennai' },
-    { name: 'PharmEasy Store', gstin: '27AABCU9603R1ZT', phone: '9876543217', address: '67, Powai, Mumbai' },
-    { name: 'Cure Plus', gstin: '24AABCU9603R1ZU', phone: '9876543218', address: '12, Satellite, Ahmedabad' },
-    { name: 'Medico Pharmacy', gstin: '19AABCU9603R1ZV', phone: '9876543219', address: '45, Park Street, Kolkata' },
-    { name: 'Life Care Chemist', gstin: '29AABCU9603R1ZW', phone: '9876543220', address: '23, Indiranagar, Bangalore' },
-    { name: 'Sai Medical', gstin: '27AABCU9603R1ZX', phone: '9876543221', address: '78, Thane West, Mumbai' },
-    { name: 'Sunrise Pharmacy', gstin: '09AABCU9603R1ZY', phone: '9876543222', address: '56, Sector 18, Noida' },
-    { name: 'Green Cross', gstin: '32AABCU9603R1ZZ', phone: '9876543223', address: '34, Ernakulam, Kochi' },
-    { name: 'Remedy Pharmacy', gstin: '23AABCU9603R2ZA', phone: '9876543224', address: '89, Bhopal' },
-    { name: 'Quick Heal Medical', gstin: '27AABCU9603R2ZB', phone: '9876543225', address: '12, Pune' },
-    { name: 'Trust Pharmacy', gstin: '36AABCU9603R2ZC', phone: '9876543226', address: '45, Secunderabad' },
-    { name: 'Care & Cure', gstin: '33AABCU9603R2ZD', phone: '9876543227', address: '67, Coimbatore' },
-    { name: 'Medico Plus', gstin: '29AABCU9603R2ZE', phone: '9876543228', address: '23, Mysore' },
-    { name: 'Health First', gstin: '07AABCU9603R2ZF', phone: '9876543229', address: '78, Gurgaon' },
+    { name: 'JAS Medical Store', gstin: '32AABCJ9603R1ZM', phone: '04672280321', address: 'Nileshwar, Kasaragod', lat: 12.2530, lng: 75.1340 },
+    { name: 'Sudhakar Pharmacy', gstin: '32AABS9603R1ZN', phone: '04672280111', address: 'Near Village Office, Nileshwar', lat: 12.2510, lng: 75.1310 },
+    { name: 'Jan Aushadhi Kendra', gstin: '32AABJ9603R1ZO', phone: '04672230555', address: 'Market Road, Nileshwar', lat: 12.2550, lng: 75.1350 },
+    { name: 'Malabar Medicals', gstin: '32AABM9603R1ZP', phone: '04672200222', address: 'Kanhangad, Kasaragod', lat: 12.3150, lng: 75.0850 },
+    { name: 'Karunya Community Pharmacy', gstin: '32AABK9603R1ZQ', phone: '04672211333', address: 'GH Road, Kanhangad', lat: 12.3180, lng: 75.0820 },
+    { name: 'Neethi Medical Store', gstin: '32AABN9603R1ZR', phone: '04672200444', address: 'Main Road, Kanhangad', lat: 12.3200, lng: 75.0800 },
+    { name: 'Maveli Medical Store', gstin: '32AABV9603R1ZS', phone: '04994220111', address: 'Old Bus Stand, Kasaragod', lat: 12.5100, lng: 74.9900 },
+    { name: 'Bharat Medicals', gstin: '32AABH9603R1ZT', phone: '04994220222', address: 'Fort Road, Kasaragod', lat: 12.5120, lng: 74.9850 },
+    { name: 'Victory Medicals', gstin: '32AABW9603R1ZU', phone: '04994220333', address: 'MG Road, Kasaragod', lat: 12.5150, lng: 74.9850 },
+    { name: 'Saji Medical', gstin: '32AABX9603R1ZV', phone: '04994220444', address: 'Bank Road, Kasaragod', lat: 12.5080, lng: 74.9920 },
+    { name: 'Life Care Medicals', gstin: '32AABL9603R1ZW', phone: '04672280777', address: 'Puthiyakotta, Kanhangad', lat: 12.3160, lng: 75.0840 },
+    { name: 'Maithri Millennium Medicals', gstin: '32AABT9603R1ZX', phone: '04672280555', address: 'Tattachery, Nileshwar', lat: 12.2450, lng: 75.1380 },
+    { name: 'Aswas Community Pharmacy', gstin: '32AABA9603R1ZY', phone: '04994220888', address: 'Chakkara Bazaar, Kasaragod', lat: 12.5110, lng: 74.9880 },
+    { name: 'Kripa Medicals', gstin: '32AABI9603R1ZZ', phone: '04672200999', address: 'Hosdurg, Kanhangad', lat: 12.3100, lng: 75.0900 },
+    { name: 'Damodar Pharmacy', gstin: '32AABD9603R2ZA', phone: '04672200111', address: 'Main Bazar, Kanhangad', lat: 12.3140, lng: 75.0860 },
 ];
 
 const SUPPLIERS = [
@@ -118,6 +113,14 @@ async function seed() {
 
     // Clear existing data
     console.log('🗑️  Clearing existing data...');
+    await prisma.attendance.deleteMany();
+    await prisma.locationLog.deleteMany();
+    await prisma.visit.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.routeStop.deleteMany();
+    await prisma.route.deleteMany();
+    await prisma.deliveryProof.deleteMany();
     await prisma.saleReturnItem.deleteMany();
     await prisma.saleReturn.deleteMany();
     await prisma.purchaseReturnItem.deleteMany();
@@ -130,6 +133,7 @@ async function seed() {
     await prisma.product.deleteMany();
     await prisma.customer.deleteMany();
     await prisma.supplier.deleteMany();
+    await prisma.notification.deleteMany();
     await prisma.businessProfile.deleteMany();
     await prisma.auditLog.deleteMany();
     await prisma.user.deleteMany();
@@ -209,6 +213,8 @@ async function seed() {
                 gstin: cust.gstin,
                 phone: cust.phone,
                 address: cust.address,
+                latitude: (cust as any).lat,
+                longitude: (cust as any).lng,
                 currentBalance: 0,
             },
         });
