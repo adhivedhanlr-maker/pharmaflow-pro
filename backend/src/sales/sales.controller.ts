@@ -53,7 +53,7 @@ export class SalesController {
     }
 
     @Get(':id/delivery-proof')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.SALES_REP)
     async getDeliveryProof(@Param('id') id: string, @Res() res: Response) {
         const photo = await this.salesService.getDeliveryProof(id);
         if (!photo || !photo.proofUrl) {

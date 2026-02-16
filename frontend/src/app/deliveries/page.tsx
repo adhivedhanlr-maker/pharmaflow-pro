@@ -93,16 +93,26 @@ export default function DeliveriesPage() {
             const res = await fetch(`${API_BASE}/sales/${id}/delivery-proof`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            if (res.status === 401 || res.status === 403) {
+                alert("Permission denied. You might need to log in again.");
+                return;
+            }
+
             if (res.ok) {
                 const blob = await res.blob();
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = () => {
-                    setPreviewUrl(reader.result as string);
-                };
+                if (blob.size === 0) {
+                    alert("The photo file is empty or missing.");
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                setPreviewUrl(url);
+            } else {
+                alert("Could not load photo. It might have been deleted or not uploaded correctly.");
             }
         } catch (err) {
             console.error("Failed to view photo:", err);
+            alert("Connection error. Please check your internet.");
         } finally {
             setPreviewLoading(false);
         }
@@ -219,7 +229,12 @@ export default function DeliveriesPage() {
                 />
             )}
 
-            <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+            <Dialog open={!!previewUrl} onOpenChange={(open) => {
+                if (!open && previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                }
+            }}>
                 <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black/90 border-none">
                     <DialogHeader className="p-4 bg-white/10 text-white border-b border-white/10">
                         <DialogTitle>Delivery Proof</DialogTitle>
