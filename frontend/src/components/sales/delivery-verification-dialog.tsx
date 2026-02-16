@@ -31,8 +31,8 @@ export function DeliveryVerificationDialog({
     const [deliveryInfo, setDeliveryInfo] = useState("");
     const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-    // Helper to compress and convert file to base64
-    const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    // Helper to compress, watermark and convert file to base64
+    const toBase64 = (file: File, lat?: number, lng?: number) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (event) => {
@@ -40,8 +40,9 @@ export function DeliveryVerificationDialog({
             img.src = event.target?.result as string;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1024;
-                const MAX_HEIGHT = 1024;
+                // Reduced resolution for faster upload
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
                 let width = img.width;
                 let height = img.height;
 
@@ -60,9 +61,34 @@ export function DeliveryVerificationDialog({
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG with 0.7 quality
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                if (!ctx) return reject(new Error("Could not get canvas context"));
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Add Watermark
+                const now = new Date();
+                const timestamp = now.toLocaleString();
+                const locationStr = lat && lng ? `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : '';
+
+                const padding = 10;
+                const fontSize = Math.max(12, Math.floor(width / 40));
+                ctx.font = `${fontSize}px sans-serif`;
+
+                // Draw background for watermark
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                const rectHeight = fontSize * (locationStr ? 2.5 : 1.5);
+                ctx.fillRect(0, height - rectHeight, width, rectHeight);
+
+                // Draw text
+                ctx.fillStyle = 'white';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(timestamp, padding, height - (locationStr ? fontSize + padding : padding));
+                if (locationStr) {
+                    ctx.fillText(locationStr, padding, height - padding);
+                }
+
+                // Compress to JPEG with 0.6 quality for speed
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                 resolve(dataUrl);
             };
             img.onerror = (error) => reject(error);
@@ -114,11 +140,11 @@ export function DeliveryVerificationDialog({
             let signatureUrl = undefined;
 
             if (proofFile) {
-                proofUrl = await toBase64(proofFile);
+                proofUrl = await toBase64(proofFile, location?.lat, location?.lng);
             }
 
             if (signatureFile) {
-                signatureUrl = await toBase64(signatureFile);
+                signatureUrl = await toBase64(signatureFile, location?.lat, location?.lng);
             }
 
             const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
