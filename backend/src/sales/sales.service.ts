@@ -155,7 +155,15 @@ export class SalesService {
         });
     }
 
-    async verifyDelivery(invoiceId: string, otp: string, proofUrl?: string, signatureUrl?: string) {
+    async verifyDelivery(
+        invoiceId: string,
+        otp: string,
+        proofUrl?: string,
+        signatureUrl?: string,
+        deliveryLatitude?: number,
+        deliveryLongitude?: number,
+        deliveryInfo?: string
+    ) {
         const sale = await this.prisma.sale.findUnique({ where: { id: invoiceId } });
         if (!sale) throw new NotFoundException('Invoice not found');
 
@@ -173,12 +181,16 @@ export class SalesService {
                 deliveryStatus: 'DELIVERED',
                 deliveredAt: new Date(),
                 deliveryProofUrl: proofUrl,
-                deliverySignatureUrl: signatureUrl
+                deliverySignatureUrl: signatureUrl,
+                deliveryLatitude,
+                deliveryLongitude,
+                deliveryInfo
             }
         });
 
         return updatedSale;
     }
+    // Updated delivery verification logic with location support
 
     async getSalesAnalytics(days: number = 7) {
         const date = new Date();

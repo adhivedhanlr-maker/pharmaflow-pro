@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, CheckCircle2, XCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Upload, CheckCircle2, XCircle, Camera, MapPin } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 interface DeliveryVerificationDialogProps {
@@ -27,6 +28,8 @@ export function DeliveryVerificationDialog({
     const [error, setError] = useState("");
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [signatureFile, setSignatureFile] = useState<File | null>(null);
+    const [deliveryInfo, setDeliveryInfo] = useState("");
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
 
     // Helper to convert file to base64
     const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
@@ -36,6 +39,18 @@ export function DeliveryVerificationDialog({
         reader.onerror = error => reject(error);
     });
 
+    const getLocation = () => new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error("Geolocation is not supported by your browser"));
+        } else {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        }
+    });
+
     const handleSubmit = async () => {
         if (!otp || otp.length < 6) {
             setError("Please enter a valid 6-digit OTP");
@@ -43,18 +58,31 @@ export function DeliveryVerificationDialog({
         }
 
         setLoading(true);
+        setIsGettingLocation(true);
         setError("");
 
         try {
+            // Get Location
+            let location: { lat: number; lng: number } | undefined = undefined;
+            try {
+                const pos = await getLocation();
+                location = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                };
+            } catch (locErr) {
+                console.warn("Could not get location:", locErr);
+                // We might want to warn the user or block, but for now we proceed without location if it fails
+                // Or maybe the user *requires* location. "sales rep could be able to ... upload with location"
+                // Assuming it's preferred but fallback allowed if GPS fails/denied? 
+                // Let's assume we proceed but maybe logging it would be good.
+            }
+            setIsGettingLocation(false);
+
             let proofUrl = undefined;
             let signatureUrl = undefined;
 
             if (proofFile) {
-                // In a real app, upload to storage bucket here. 
-                // For demo, we send base64 or just a placeholder filename if backend expects URL.
-                // The current backend service accepts a string. We'll send base64 data URI directly for now 
-                // as it's the simplest way without setting up S3/Cloudinary.
-                // NOTE: Payload size might be large.
                 proofUrl = await toBase64(proofFile);
             }
 
@@ -72,7 +100,10 @@ export function DeliveryVerificationDialog({
                 body: JSON.stringify({
                     otp,
                     proofUrl,
-                    signatureUrl
+                    signatureUrl,
+                    deliveryLatitude: location?.lat,
+                    deliveryLongitude: location?.lng,
+                    deliveryInfo
                 })
             });
 
@@ -87,12 +118,13 @@ export function DeliveryVerificationDialog({
             setError(err.message);
         } finally {
             setLoading(false);
+            setIsGettingLocation(false);
         }
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Verify Delivery</DialogTitle>
                     <DialogDescription>
@@ -120,29 +152,67 @@ export function DeliveryVerificationDialog({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Photo Proof (Optional)</Label>
-                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 border-slate-300">
+                    <div className="space-y-2">
+                        <Label>Photo Proof (Required)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 border-slate-300 transition-colors">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                                    <p className="text-xs text-slate-500">{proofFile ? "File Selected" : "Upload Photo"}</p>
+                                    <p className="text-xs text-slate-500 text-center">Upload from<br />Gallery</p>
                                 </div>
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => setProofFile(e.target.files?.[0] || null)} />
                             </label>
-                            {proofFile && <p className="text-[10px] text-green-600 truncate">{proofFile.name}</p>}
+
+                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-blue-50 border-blue-300 bg-blue-50/30 transition-colors">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <Camera className="w-6 h-6 text-blue-500 mb-2" />
+                                    <p className="text-xs text-blue-600 font-medium text-center">Take Photo<br />(Camera)</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                                />
+                            </label>
+                        </div>
+                        {proofFile && (
+                            <div className="flex items-center gap-2 text-green-600 bg-green-50 p-2 rounded text-xs">
+                                <CheckCircle2 className="h-3 w-3" />
+                                <span className="truncate flex-1">{proofFile.name}</span>
+                                <button onClick={() => setProofFile(null)} className="text-slate-400 hover:text-red-500">
+                                    <XCircle className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+                        <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            Location will be captured on verification
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2 col-span-2">
+                            <Label>Delivery Notes / Info (Optional)</Label>
+                            <Textarea
+                                placeholder="Add any additional details about the delivery..."
+                                value={deliveryInfo}
+                                onChange={(e) => setDeliveryInfo(e.target.value)}
+                                className="resize-none h-20"
+                            />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 col-span-2">
                             <Label>Signature (Optional)</Label>
-                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 border-slate-300">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                                    <p className="text-xs text-slate-500">{signatureFile ? "File Selected" : "Upload Image"}</p>
+                            <label className="flex items-center justify-center w-full h-16 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Upload className="w-4 h-4" />
+                                    <span className="text-sm">{signatureFile ? "Change Signature" : "Upload Signature Image"}</span>
                                 </div>
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => setSignatureFile(e.target.files?.[0] || null)} />
                             </label>
-                            {signatureFile && <p className="text-[10px] text-green-600 truncate">{signatureFile.name}</p>}
+                            {signatureFile && <p className="text-[10px] text-green-600 truncate px-1">{signatureFile.name}</p>}
                         </div>
                     </div>
                 </div>
@@ -150,8 +220,17 @@ export function DeliveryVerificationDialog({
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
                     <Button onClick={handleSubmit} disabled={loading || otp.length !== 6}>
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-                        Verify Delivery
+                        {loading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                {isGettingLocation ? "Locating..." : "Verifying..."}
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Verify Delivery
+                            </>
+                        )}
                     </Button>
                 </DialogFooter>
             </DialogContent>

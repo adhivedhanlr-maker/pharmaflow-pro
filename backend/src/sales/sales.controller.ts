@@ -26,9 +26,24 @@ export class SalesController {
     @Roles(Role.ADMIN, Role.SALES_REP)
     async verifyDelivery(
         @Param('id') id: string,
-        @Body() body: { otp: string; proofUrl?: string; signatureUrl?: string },
+        @Body() body: {
+            otp: string;
+            proofUrl?: string;
+            signatureUrl?: string,
+            deliveryLatitude?: number,
+            deliveryLongitude?: number,
+            deliveryInfo?: string
+        },
     ) {
-        return this.salesService.verifyDelivery(id, body.otp, body.proofUrl, body.signatureUrl);
+        return this.salesService.verifyDelivery(
+            id,
+            body.otp,
+            body.proofUrl,
+            body.signatureUrl,
+            body.deliveryLatitude,
+            body.deliveryLongitude,
+            body.deliveryInfo
+        );
     }
     @Get('analytics')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)

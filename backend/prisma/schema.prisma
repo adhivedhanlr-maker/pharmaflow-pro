@@ -165,6 +165,9 @@ model Sale {
   deliveredAt    DateTime?
   deliveryProofUrl String?
   deliverySignatureUrl String?
+  deliveryLatitude  Float?
+  deliveryLongitude Float?
+  deliveryInfo      String?
 }
 
 enum DeliveryStatus {
