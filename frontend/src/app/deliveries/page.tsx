@@ -25,6 +25,9 @@ interface DeliveryItem {
     customer: { name: string };
     totalAmount: number;
     deliveryStatus: string;
+    deliveryProofUrl?: string;
+    deliveryLatitude?: number;
+    deliveryLongitude?: number;
     createdAt: string;
 }
 
