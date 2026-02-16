@@ -25,9 +25,13 @@ interface DeliveryItem {
     customer: { name: string };
     totalAmount: number;
     deliveryStatus: string;
-    deliveryProofUrl?: string;
-    deliveryLatitude?: number;
-    deliveryLongitude?: number;
+    deliveryProof?: {
+        id: string;
+        proofUrl?: string;
+        latitude?: number;
+        longitude?: number;
+        info?: string;
+    };
     createdAt: string;
 }
 
@@ -78,6 +82,21 @@ export default function DeliveriesPage() {
 
     const onVerificationSuccess = () => {
         fetchDeliveries();
+    };
+
+    const viewPhoto = async (id: string) => {
+        try {
+            const res = await fetch(`${API_BASE}/sales/${id}/delivery-proof`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+            }
+        } catch (err) {
+            console.error("Failed to view photo:", err);
+        }
     };
 
     const filteredDeliveries = deliveries.filter(d =>
@@ -145,16 +164,19 @@ export default function DeliveriesPage() {
                                     <TableCell>₹{invoice.totalAmount}</TableCell>
                                     <TableCell>{getStatusBadge(invoice.deliveryStatus || 'PENDING')}</TableCell>
                                     <TableCell>
-                                        {invoice?.deliveryProofUrl ? (
-                                            <a href={invoice.deliveryProofUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
+                                        {invoice?.deliveryProof?.id ? (
+                                            <button
+                                                onClick={() => viewPhoto(invoice.id)}
+                                                className="text-blue-600 hover:underline text-xs"
+                                            >
                                                 View Photo
-                                            </a>
+                                            </button>
                                         ) : <span className="text-slate-400 text-xs">-</span>}
                                     </TableCell>
                                     <TableCell>
-                                        {(invoice?.deliveryLatitude && invoice?.deliveryLongitude) ? (
+                                        {(invoice?.deliveryProof?.latitude && invoice?.deliveryProof?.longitude) ? (
                                             <a
-                                                href={`https://www.google.com/maps?q=${invoice.deliveryLatitude},${invoice.deliveryLongitude}`}
+                                                href={`https://www.google.com/maps?q=${invoice.deliveryProof.latitude},${invoice.deliveryProof.longitude}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-blue-600 hover:underline text-xs flex items-center gap-1"

@@ -149,7 +149,10 @@ export class SalesService {
                 customer: true,
                 items: { include: { product: true, batch: true } },
                 user: { select: { name: true, role: true } },
-                rep: { select: { name: true } }
+                rep: { select: { name: true } },
+                deliveryProof: {
+                    select: { id: true, latitude: true, longitude: true }
+                }
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -181,16 +184,27 @@ export class SalesService {
             data: {
                 deliveryStatus: 'DELIVERED',
                 deliveredAt: new Date(),
-                deliveryProofUrl: proofUrl,
-                deliverySignatureUrl: signatureUrl,
-                deliveryLatitude,
-                deliveryLongitude,
-                deliveryInfo
-            }
+                deliveryProof: {
+                    create: {
+                        proofUrl,
+                        signatureUrl,
+                        latitude: deliveryLatitude,
+                        longitude: deliveryLongitude,
+                        info: deliveryInfo
+                    }
+                }
+            },
+            include: { deliveryProof: true }
         });
 
         return updatedSale;
     }
+    async getDeliveryProof(saleId: string) {
+        return this.prisma.deliveryProof.findUnique({
+            where: { saleId }
+        });
+    }
+
     // Updated delivery verification logic with location support
 
     async getSalesAnalytics(days: number = 7) {

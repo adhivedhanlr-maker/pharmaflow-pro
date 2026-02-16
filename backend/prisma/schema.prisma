@@ -163,11 +163,19 @@ model Sale {
   deliveryStatus DeliveryStatus @default(PENDING)
   deliveryOtp    String?
   deliveredAt    DateTime?
-  deliveryProofUrl String?
-  deliverySignatureUrl String?
-  deliveryLatitude  Float?
-  deliveryLongitude Float?
-  deliveryInfo      String?
+  deliveryProof  DeliveryProof?
+}
+
+model DeliveryProof {
+  id               String   @id @default(cuid())
+  saleId           String   @unique
+  sale             Sale     @relation(fields: [saleId], references: [id])
+  proofUrl         String?  // Base64 or URL
+  signatureUrl     String?  // Base64 or URL
+  latitude         Float?
+  longitude        Float?
+  info             String?
+  createdAt        DateTime @default(now())
 }
 
 enum DeliveryStatus {
