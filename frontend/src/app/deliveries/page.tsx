@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw, MapPin, Eye, Loader2 } from "lucide-react";
+import { Search, RefreshCw, MapPin, Eye, Loader2, X } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -235,10 +235,23 @@ export default function DeliveriesPage() {
                     setPreviewUrl(null);
                 }
             }}>
-                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black/90 border-none">
-                    <DialogHeader className="p-4 bg-white/10 text-white border-b border-white/10">
-                        <DialogTitle>Delivery Proof</DialogTitle>
-                        <DialogDescription className="text-white/60">Verification photo with timestamp and location.</DialogDescription>
+                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black/98 border-none shadow-2xl">
+                    <DialogHeader className="p-4 bg-slate-900 text-white border-b border-white/10 flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                            <DialogTitle className="text-white">Delivery Proof</DialogTitle>
+                            <DialogDescription className="text-slate-400">Verification photo with timestamp and location.</DialogDescription>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                if (previewUrl) URL.revokeObjectURL(previewUrl);
+                                setPreviewUrl(null);
+                            }}
+                            className="text-white hover:bg-white/10"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
                     </DialogHeader>
                     <div className="relative aspect-auto min-h-[300px] flex items-center justify-center p-2">
                         {previewUrl && (
