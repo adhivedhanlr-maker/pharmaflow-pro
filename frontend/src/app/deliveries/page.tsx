@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw, MapPin, Eye } from "lucide-react";
+import { Search, RefreshCw, MapPin, Eye, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,8 @@ export default function DeliveriesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [verificationOpen, setVerificationOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<{ id: string; customerName: string } | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -85,21 +88,27 @@ export default function DeliveriesPage() {
     };
 
     const viewPhoto = async (id: string) => {
+        setPreviewLoading(true);
         try {
             const res = await fetch(`${API_BASE}/sales/${id}/delivery-proof`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    setPreviewUrl(reader.result as string);
+                };
             }
         } catch (err) {
             console.error("Failed to view photo:", err);
+        } finally {
+            setPreviewLoading(false);
         }
     };
 
-    const filteredDeliveries = deliveries.filter(d =>
+    const filteredDeliveries = deliveries.filter((d: DeliveryItem) =>
         d.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         d.customer.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -156,7 +165,7 @@ export default function DeliveriesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredDeliveries.map((invoice) => (
+                            {filteredDeliveries.map((invoice: DeliveryItem) => (
                                 <TableRow key={invoice.id}>
                                     <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                                     <TableCell>{invoice.customer.name}</TableCell>
@@ -208,6 +217,33 @@ export default function DeliveriesPage() {
                     onOpenChange={setVerificationOpen}
                     onSuccess={onVerificationSuccess}
                 />
+            )}
+
+            <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black/90 border-none">
+                    <DialogHeader className="p-4 bg-white/10 text-white border-b border-white/10">
+                        <DialogTitle>Delivery Proof</DialogTitle>
+                        <DialogDescription className="text-white/60">Verification photo with timestamp and location.</DialogDescription>
+                    </DialogHeader>
+                    <div className="relative aspect-auto min-h-[300px] flex items-center justify-center p-2">
+                        {previewUrl && (
+                            <img
+                                src={previewUrl}
+                                alt="Delivery Proof"
+                                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {previewLoading && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white p-4 rounded-xl shadow-xl flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                        <span className="text-sm font-medium">Loading photo...</span>
+                    </div>
+                </div>
             )}
         </div>
     );
