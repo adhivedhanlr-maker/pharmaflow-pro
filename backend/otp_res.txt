@@ -1,0 +1,187 @@
+﻿
+====== ALL PENDING DELIVERIES ======
+Invoice: INV-1770637296067 | Customer: Care Chemist
+Rep: Amit Singh | Amount: 567.23912 | OTP: 963066
+-----------------------------------
+Invoice: INV-1770637294242 | Customer: Care Chemist
+Rep: Amit Singh | Amount: 567.23912 | OTP: 637042
+-----------------------------------
+Invoice: INV-1770634612536 | Customer: Ajmal P S
+Rep: System Administrator | Amount: 696.7654399999999 | OTP: 332877
+-----------------------------------
+Invoice: INV-1770474838367 | Customer: City Medical Store
+Rep: Amit Singh | Amount: 369.27744 | OTP: 957733
+-----------------------------------
+Invoice: INV-1770474836768 | Customer: City Medical Store
+Rep: Amit Singh | Amount: 369.27744 | OTP: 976262
+-----------------------------------
+Invoice: INV-1770473335086 | Customer: MedPlus
+Rep: System Administrator | Amount: 951.5663360000001 | OTP: 782560
+-----------------------------------
+Invoice: INV-1770473133311 | Customer: Cure Plus
+Rep: Amit Singh | Amount: 108.972864 | OTP: 527435
+-----------------------------------
+Invoice: INV-1770472623983 | Customer: City Pharmacy
+Rep: Amit Singh | Amount: 749.978208 | OTP: 534871
+-----------------------------------
+Invoice: INV-1770472622833 | Customer: City Pharmacy
+Rep: Amit Singh | Amount: 749.978208 | OTP: 235568
+-----------------------------------
+Invoice: INV-1770472621840 | Customer: City Pharmacy
+Rep: Amit Singh | Amount: 749.978208 | OTP: 931628
+-----------------------------------
+Invoice: INV-1770472594349 | Customer: Remedy Pharmacy
+Rep: Amit Singh | Amount: 995.971424 | OTP: 418404
+-----------------------------------
+Invoice: PF-1769867515647-28 | Customer: Wellness Forever
+Rep: Unassigned | Amount: 32014.922576 | OTP: null
+-----------------------------------
+Invoice: PF-1769867478481-20 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 65858.643088 | OTP: null
+-----------------------------------
+Invoice: PF-1769867458012-15 | Customer: Medico Plus
+Rep: Unassigned | Amount: 16419.04992 | OTP: null
+-----------------------------------
+Invoice: PF-1769867503360-26 | Customer: Health First
+Rep: Unassigned | Amount: 68858.541248 | OTP: null
+-----------------------------------
+Invoice: PF-1769867408331-3 | Customer: Apollo Pharmacy
+Rep: Unassigned | Amount: 33689.208448 | OTP: null
+-----------------------------------
+Invoice: PF-1769867551986-39 | Customer: Sai Medical
+Rep: Unassigned | Amount: 25249.00952 | OTP: null
+-----------------------------------
+Invoice: PF-1769867554848-40 | Customer: Medico Plus
+Rep: Unassigned | Amount: 30776.8328 | OTP: null
+-----------------------------------
+Invoice: PF-1769867463526-16 | Customer: HealthCare Pharmacy
+Rep: Unassigned | Amount: 69293.828016 | OTP: null
+-----------------------------------
+Invoice: PF-1769867588796-49 | Customer: Quick Heal Medical
+Rep: Unassigned | Amount: 65202.500944 | OTP: null
+-----------------------------------
+Invoice: PF-1769867455333-14 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 27395.329696 | OTP: null
+-----------------------------------
+Invoice: PF-1769867543077-36 | Customer: Guardian Pharmacy
+Rep: Unassigned | Amount: 27179.307792 | OTP: null
+-----------------------------------
+Invoice: PF-1769867576157-46 | Customer: Wellness Forever
+Rep: Unassigned | Amount: 3218.192208 | OTP: null
+-----------------------------------
+Invoice: PF-1769867540838-35 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 37330.25139200001 | OTP: null
+-----------------------------------
+Invoice: PF-1769867472843-19 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 19467.50736 | OTP: null
+-----------------------------------
+Invoice: PF-1769867424511-7 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 124478.85128 | OTP: null
+-----------------------------------
+Invoice: PF-1769867573713-45 | Customer: Guardian Pharmacy
+Rep: Unassigned | Amount: 87332.23721600001 | OTP: null
+-----------------------------------
+Invoice: PF-1769867537766-34 | Customer: Care & Cure
+Rep: Unassigned | Amount: 24042.394432 | OTP: null
+-----------------------------------
+Invoice: PF-1769867511013-27 | Customer: Medico Plus
+Rep: Unassigned | Amount: 61029.48913599999 | OTP: null
+-----------------------------------
+Invoice: PF-1769867564594-43 | Customer: Apollo Pharmacy
+Rep: Unassigned | Amount: 2691.974656 | OTP: null
+-----------------------------------
+Invoice: PF-1769867410987-4 | Customer: Life Care Chemist
+Rep: Unassigned | Amount: 20329.91408 | OTP: null
+-----------------------------------
+Invoice: PF-1769867526082-31 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 31738.44688 | OTP: null
+-----------------------------------
+Invoice: PF-1769867493519-24 | Customer: Medico Pharmacy
+Rep: Unassigned | Amount: 33308.838752 | OTP: null
+-----------------------------------
+Invoice: PF-1769867522405-30 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 542.820768 | OTP: null
+-----------------------------------
+Invoice: PF-1769867498035-25 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 70842.1252 | OTP: null
+-----------------------------------
+Invoice: PF-1769867485135-22 | Customer: Trust Pharmacy
+Rep: Unassigned | Amount: 32762.765728 | OTP: null
+-----------------------------------
+Invoice: PF-1769867528961-32 | Customer: Cure Plus
+Rep: Unassigned | Amount: 6978.875904 | OTP: null
+-----------------------------------
+Invoice: PF-1769867393178-0 | Customer: Quick Heal Medical
+Rep: Unassigned | Amount: 86377.43923199999 | OTP: null
+-----------------------------------
+Invoice: PF-1769867450886-13 | Customer: MedPlus
+Rep: Unassigned | Amount: 43458.488416 | OTP: null
+-----------------------------------
+Invoice: PF-1769867548313-38 | Customer: Guardian Pharmacy
+Rep: Unassigned | Amount: 13769.150304 | OTP: null
+-----------------------------------
+Invoice: PF-1769867445202-12 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 73466.56352 | OTP: null
+-----------------------------------
+Invoice: PF-1769867440488-11 | Customer: Medico Pharmacy
+Rep: Unassigned | Amount: 24917.758544 | OTP: null
+-----------------------------------
+Invoice: PF-1769867433419-9 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 79812.18806399999 | OTP: null
+-----------------------------------
+Invoice: PF-1769867437513-10 | Customer: Quick Heal Medical
+Rep: Unassigned | Amount: 63931.69944 | OTP: null
+-----------------------------------
+Invoice: PF-1769867404155-2 | Customer: Medico Pharmacy
+Rep: Unassigned | Amount: 38173.438352 | OTP: null
+-----------------------------------
+Invoice: PF-1769867580978-47 | Customer: HealthCare Pharmacy
+Rep: Unassigned | Amount: 37847.007856 | OTP: null
+-----------------------------------
+Invoice: PF-1769867482115-21 | Customer: Life Care Chemist
+Rep: Unassigned | Amount: 41836.504864 | OTP: null
+-----------------------------------
+Invoice: PF-1769867545138-37 | Customer: Cure Plus
+Rep: Unassigned | Amount: 6653.2032 | OTP: null
+-----------------------------------
+Invoice: PF-1769867419187-6 | Customer: Guardian Pharmacy
+Rep: Unassigned | Amount: 5907.307392000001 | OTP: null
+-----------------------------------
+Invoice: PF-1769867567665-44 | Customer: Medico Pharmacy
+Rep: Unassigned | Amount: 22891.081248 | OTP: null
+-----------------------------------
+Invoice: PF-1769867467316-17 | Customer: Care & Cure
+Rep: Unassigned | Amount: 17124.713536 | OTP: null
+-----------------------------------
+Invoice: PF-1769867584256-48 | Customer: Sunrise Pharmacy
+Rep: Unassigned | Amount: 13115.527936 | OTP: null
+-----------------------------------
+Invoice: PF-1769867399628-1 | Customer: Green Cross
+Rep: Unassigned | Amount: 81570.34883199999 | OTP: null
+-----------------------------------
+Invoice: PF-1769867470385-18 | Customer: Trust Pharmacy
+Rep: Unassigned | Amount: 12199.202512 | OTP: null
+-----------------------------------
+Invoice: PF-1769867557942-41 | Customer: Netmeds Retail
+Rep: Unassigned | Amount: 36481.27616 | OTP: null
+-----------------------------------
+Invoice: PF-1769867533771-33 | Customer: Health First
+Rep: Unassigned | Amount: 72212.95547199997 | OTP: null
+-----------------------------------
+Invoice: PF-1769867561129-42 | Customer: Wellness Forever
+Rep: Unassigned | Amount: 9820.870303999998 | OTP: null
+-----------------------------------
+Invoice: PF-1769867519948-29 | Customer: HealthCare Pharmacy
+Rep: Unassigned | Amount: 63788.165504 | OTP: null
+-----------------------------------
+Invoice: PF-1769867427393-8 | Customer: Cure Plus
+Rep: Unassigned | Amount: 6878.44864 | OTP: null
+-----------------------------------
+Invoice: PF-1769867489334-23 | Customer: Medico Plus
+Rep: Unassigned | Amount: 40567.72932799999 | OTP: null
+-----------------------------------
+Invoice: PF-1769867415806-5 | Customer: PharmEasy Store
+Rep: Unassigned | Amount: 36213.531088 | OTP: null
+-----------------------------------
+===================================
+
