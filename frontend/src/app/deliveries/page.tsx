@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, MapPin, Eye } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -128,6 +128,8 @@ export default function DeliveriesPage() {
                                 <TableHead>Date</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Proof</TableHead>
+                                <TableHead>Location</TableHead>
                                 <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -139,6 +141,25 @@ export default function DeliveriesPage() {
                                     <TableCell>{format(new Date(invoice.createdAt), "dd MMM yyyy")}</TableCell>
                                     <TableCell>₹{invoice.totalAmount}</TableCell>
                                     <TableCell>{getStatusBadge(invoice.deliveryStatus || 'PENDING')}</TableCell>
+                                    <TableCell>
+                                        {invoice?.deliveryProofUrl ? (
+                                            <a href={invoice.deliveryProofUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
+                                                View Photo
+                                            </a>
+                                        ) : <span className="text-slate-400 text-xs">-</span>}
+                                    </TableCell>
+                                    <TableCell>
+                                        {(invoice?.deliveryLatitude && invoice?.deliveryLongitude) ? (
+                                            <a
+                                                href={`https://www.google.com/maps?q=${invoice.deliveryLatitude},${invoice.deliveryLongitude}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:underline text-xs flex items-center gap-1"
+                                            >
+                                                <MapPin className="h-3 w-3" /> Map
+                                            </a>
+                                        ) : <span className="text-slate-400 text-xs">-</span>}
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         {(!invoice.deliveryStatus || invoice.deliveryStatus === 'PENDING') && (
                                             <Button size="sm" onClick={() => handleVerifyClick(invoice)}>
