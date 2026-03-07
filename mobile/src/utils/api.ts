@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const API_BASE = 'https://pharmaflow-pro-backend.onrender.com';
+const API_BASE = 'https://pharmaflow-pro.onrender.com';
 let authToken: string | null = null;
 
 export const setAuthToken = (token: string | null) => {
