@@ -12,7 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Plus, Building2, User, MapPin, Search, Map as MapIcon, LocateFixed } from "lucide-react";
-import PharmacyMapPicker from "./pharmacy-map-picker";
+import dynamic from "next/dynamic";
+const PharmacyMapPicker = dynamic(() => import("./pharmacy-map-picker"), {
+    ssr: false,
+    loading: () => <div className="h-[400px] flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>
+});
 
 interface CustomerDialogProps {
     type: "customer" | "supplier";

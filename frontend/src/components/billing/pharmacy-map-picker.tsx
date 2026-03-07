@@ -1,18 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Loader2, Search, MapPin, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 // Dynamic import for Leaflet components to avoid SSR errors
-const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import("react-leaflet").then(mod => mod.Popup), { ssr: false });
-const useMap = dynamic(() => import("react-leaflet").then(mod => mod.useMap), { ssr: false });
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
 // Helper to fix Leaflet icon issue in Next.js
 import L from "leaflet";
@@ -34,7 +29,7 @@ interface PharmacyMapPickerProps {
 }
 
 function MapUpdater({ center }: { center: [number, number] }) {
-    const map = (useMap as any)();
+    const map = useMap();
     useEffect(() => {
         if (center) {
             map.setView(center, map.getZoom());
