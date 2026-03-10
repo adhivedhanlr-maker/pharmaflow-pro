@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
-import { TenantBrandingController } from './tenant-branding.controller';
+import { TenantBrandingAdminController, TenantBrandingController } from './tenant-branding.controller';
 import { TenantBrandingService } from './tenant-branding.service';
 
 @Module({
     imports: [PrismaModule],
-    controllers: [TenantBrandingController],
+    controllers: [TenantBrandingController, TenantBrandingAdminController],
     providers: [TenantBrandingService],
     exports: [TenantBrandingService],
 })

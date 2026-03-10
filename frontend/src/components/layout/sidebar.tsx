@@ -22,7 +22,8 @@ import {
   Map as MapIcon,
   Clock,
   FileSpreadsheet,
-  Calendar
+  Calendar,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -48,6 +49,7 @@ const menuItems = [
   { icon: FileSpreadsheet, label: "Attendance", href: "/attendance", roles: ["ADMIN"], hint: "A" },
   { icon: RefreshCw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
   { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"], hint: "U" },
+  { icon: Building2, label: "Client Tenants", href: "/admin/tenants", roles: ["ADMIN"] },
 ];
 
 interface SidebarProps {

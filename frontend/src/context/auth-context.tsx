@@ -8,6 +8,7 @@ interface User {
     username: string;
     name: string;
     role: string;
+    tenantId?: string | null;
     isOnDuty?: boolean;
     twoFactorEnabled?: boolean;
     canGenerateInvoice?: boolean;
