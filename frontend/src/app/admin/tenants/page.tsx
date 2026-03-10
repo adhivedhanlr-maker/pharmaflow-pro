@@ -54,21 +54,29 @@ export default function TenantManagementPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
-    const [isPlatformHost, setIsPlatformHost] = useState(false);
+    const [isPlatformHost, setIsPlatformHost] = useState<boolean | null>(null);
 
     useEffect(() => {
         setIsPlatformHost(PLATFORM_HOSTS.has(window.location.hostname));
     }, []);
 
     useEffect(() => {
+        if (isPlatformHost === null) {
+            return;
+        }
+
         if (token && user?.role === "ADMIN" && isPlatformHost) {
             fetchTenants();
-        } else if (!isPlatformHost && !loading) {
+        } else if (!isPlatformHost) {
             router.replace("/");
         }
-    }, [token, user, isPlatformHost, loading, router]);
+    }, [token, user, isPlatformHost, router]);
 
     useEffect(() => {
+        if (isPlatformHost === null) {
+            return;
+        }
+
         if (user && (!isPlatformHost || user.role !== "ADMIN")) {
             router.replace("/");
         }
@@ -195,7 +203,7 @@ export default function TenantManagementPage() {
                 </div>
             }
         >
-            {!isPlatformHost ? null : (
+            {isPlatformHost !== true ? null : (
             <div className="space-y-6">
                 <div className="flex items-start justify-between gap-4">
                     <div>
