@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -145,5 +145,59 @@ export class InventoryService {
         }
 
         throw new NotFoundException(`No product or batch found with barcode: ${code}`);
+    }
+    async deleteProduct(id: string) {
+        const product = await this.prisma.product.findUnique({
+            where: { id },
+            include: {
+                saleItems: { take: 1 },
+                purchaseItems: true,
+                orderItems: { take: 1 },
+                batches: true
+            }
+        });
+
+        if (!product) throw new NotFoundException('Product not found');
+
+        // Block if sold (or in order)
+        if (product.saleItems.length > 0 || product.orderItems.length > 0) {
+            throw new BadRequestException('Cannot delete product with existing sales or orders. Consider deactivating it.');
+        }
+
+        // If it has purchase items but no sales, we can delete it but must handle relations
+        return this.prisma.$transaction(async (tx) => {
+            // Delete purchase items first
+            if (product.purchaseItems.length > 0) {
+                await tx.purchaseItem.deleteMany({ where: { productId: id } });
+            }
+            // Delete batches
+            await tx.batch.deleteMany({ where: { productId: id } });
+            // Finally delete product
+            return tx.product.delete({ where: { id } });
+        });
+    }
+
+    async deleteBatch(id: string) {
+        const batch = await this.prisma.batch.findUnique({
+            where: { id },
+            include: {
+                saleItems: { take: 1 },
+                purchaseItems: true
+            }
+        });
+
+        if (!batch) throw new NotFoundException('Batch not found');
+
+        if (batch.saleItems.length > 0) {
+            throw new BadRequestException('Cannot delete batch that has existing sales.');
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            // Delete purchase items for this batch
+            if (batch.purchaseItems.length > 0) {
+                await tx.purchaseItem.deleteMany({ where: { batchId: id } });
+            }
+            return tx.batch.delete({ where: { id } });
+        });
     }
 }

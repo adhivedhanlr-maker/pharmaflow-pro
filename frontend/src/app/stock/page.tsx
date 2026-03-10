@@ -23,10 +23,12 @@ import {
     AlertTriangle,
     Loader2,
     Edit2,
+    Trash2,
     ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RoleGate } from "@/components/auth/role-gate";
+import { toast } from "sonner";
 
 interface Product {
     id: string;
@@ -78,16 +80,19 @@ export default function StockPage() {
 
     const allBatches = useMemo(() => {
         if (!Array.isArray(products)) return [];
-        return products.flatMap(p =>
+        const flat = products.flatMap(p =>
             p.batches.map(b => ({
                 ...b,
                 productName: p.name,
-                id: b.id // ensure we have unique id
+                id: b.id
             }))
         ).filter(b =>
             b.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             b.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
         );
+
+        // Sort case-insensitively by product name
+        return flat.sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: 'base' }));
     }, [products, searchQuery]);
 
     const getStatusBadge = (stock: number, expiry: string) => {
@@ -100,6 +105,30 @@ export default function StockPage() {
         if (stock <= 10) return <Badge variant="destructive">Low Stock</Badge>;
         if (expDate < threeMonths) return <Badge variant="outline" className="text-orange-600 border-orange-200">Expiring Soon</Badge>;
         return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Healthy</Badge>;
+    };
+
+    const handleDeleteBatch = async (batchId: string, batchNumber: string) => {
+        if (!window.confirm(`Are you sure you want to delete Batch ${batchNumber}? this action cannot be undone.`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/inventory/batches/${batchId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+
+            if (response.ok) {
+                toast.success("Batch deleted successfully");
+                fetchStock();
+            } else {
+                const error = await response.json();
+                toast.error(error.message || "Failed to delete batch");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("Failed to connect to server");
+        }
     };
 
     return (
@@ -182,17 +211,25 @@ export default function StockPage() {
                                         <TableCell className="text-center">
                                             {getStatusBadge(b.currentStock, b.expiryDate)}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="flex gap-1 justify-end items-center">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8"
+                                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                 onClick={() => {
                                                     setEditingBatch(b);
                                                     setEditDialogOpen(true);
                                                 }}
                                             >
                                                 <Edit2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={() => handleDeleteBatch(b.id, b.batchNumber)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>

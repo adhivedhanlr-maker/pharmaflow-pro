@@ -178,59 +178,61 @@ export function AddStockDialog({ onSuccess }: AddStockDialogProps) {
                     <div className="space-y-2">
                         <Label>Select Product *</Label>
                         <div className="flex gap-2">
-                            <Popover open={isProductPopoverOpen} onOpenChange={setIsProductPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={isProductPopoverOpen}
-                                        className="w-full justify-between"
-                                    >
-                                        <span className="truncate">
-                                            {selectedProduct ? selectedProduct.name : "Search product..."}
-                                        </span>
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[450px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput
-                                            placeholder="Type product name..."
-                                            value={productSearch}
-                                            onValueChange={setProductSearch}
-                                        />
-                                        <CommandList>
-                                            <CommandEmpty>
-                                                {loadingProducts ? "Searching..." : "No product found."}
-                                            </CommandEmpty>
-                                            <CommandGroup className="max-h-60 overflow-y-auto">
-                                                {products.map((product) => (
-                                                    <CommandItem
-                                                        key={product.id}
-                                                        value={product.name}
-                                                        onSelect={() => {
-                                                            setSelectedProduct(product);
-                                                            setFormData(prev => ({ ...prev, mrp: product.mrp.toString() }));
-                                                            setIsProductPopoverOpen(false);
-                                                        }}
-                                                    >
-                                                        <Check
-                                                            className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
-                                                            )}
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{product.name}</span>
-                                                            <span className="text-xs text-muted-foreground">{product.company} | MRP: ₹{product.mrp}</span>
-                                                        </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
+                            <div className="flex-1">
+                                <Popover open={isProductPopoverOpen} onOpenChange={setIsProductPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={isProductPopoverOpen}
+                                            className="w-full justify-between"
+                                        >
+                                            <span className="truncate">
+                                                {selectedProduct ? selectedProduct.name : "Search product..."}
+                                            </span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[450px] p-0" align="start">
+                                        <Command>
+                                            <CommandInput
+                                                placeholder="Type product name..."
+                                                value={productSearch}
+                                                onValueChange={setProductSearch}
+                                            />
+                                            <CommandList>
+                                                <CommandEmpty>
+                                                    {loadingProducts ? "Searching..." : "No product found."}
+                                                </CommandEmpty>
+                                                <CommandGroup className="max-h-60 overflow-y-auto">
+                                                    {products.map((product) => (
+                                                        <CommandItem
+                                                            key={product.id}
+                                                            value={product.name}
+                                                            onSelect={() => {
+                                                                setSelectedProduct(product);
+                                                                setFormData(prev => ({ ...prev, mrp: product.mrp.toString() }));
+                                                                setIsProductPopoverOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{product.name}</span>
+                                                                <span className="text-xs text-muted-foreground">{product.company} | MRP: ₹{product.mrp}</span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                             <AddProductDialog onProductAdded={() => {
                                 // Trigger refresh of products
                                 setProductSearch("");

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // I need to create this
 import { RolesGuard } from '../auth/roles.guard';
@@ -6,9 +6,21 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('inventory')
-//@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class InventoryController {
     constructor(private readonly inventoryService: InventoryService) { }
+
+    @Delete('products/:id')
+    @Roles(Role.ADMIN)
+    deleteProduct(@Param('id') id: string) {
+        return this.inventoryService.deleteProduct(id);
+    }
+
+    @Delete('batches/:id')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    deleteBatch(@Param('id') id: string) {
+        return this.inventoryService.deleteBatch(id);
+    }
 
     @Get('products')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
