@@ -212,8 +212,7 @@ export default function LoginPage() {
                     <div className="flex justify-center mb-6">
                         <div className="bg-white/95 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/70 flex items-center gap-3">
                             <div
-                                className="p-2 rounded-lg flex h-12 w-12 items-center justify-center overflow-hidden"
-                                style={{ backgroundColor: branding.primaryColor }}
+                                className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-transparent"
                             >
                                 {branding.logoUrl ? (
                                     // eslint-disable-next-line @next/next/no-img-element
@@ -223,7 +222,7 @@ export default function LoginPage() {
                                         className="h-full w-full object-contain"
                                     />
                                 ) : (
-                                    <Building2 className="text-white h-6 w-6" />
+                                    <Building2 className="text-slate-700 h-6 w-6" />
                                 )}
                             </div>
                             <div className="text-left">
