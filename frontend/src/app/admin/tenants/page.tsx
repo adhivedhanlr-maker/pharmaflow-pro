@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Building2, Loader2, Plus, ShieldAlert } from "lucide-react";
 
@@ -282,15 +281,18 @@ export default function TenantManagementPage() {
                                         <p><span className="font-medium text-slate-700">Created:</span> {new Date(tenant.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <Label htmlFor={`tenant-${tenant.id}`} className="text-sm">
+                                        <Label className="text-sm">
                                             {tenant.isActive ? "Active" : "Disabled"}
                                         </Label>
-                                        <Switch
-                                            id={`tenant-${tenant.id}`}
-                                            checked={tenant.isActive}
-                                            onCheckedChange={() => toggleTenantStatus(tenant)}
+                                        <Button
+                                            type="button"
+                                            variant={tenant.isActive ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => toggleTenantStatus(tenant)}
                                             disabled={tenant.isDefault}
-                                        />
+                                        >
+                                            {tenant.isActive ? "Disable" : "Enable"}
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
