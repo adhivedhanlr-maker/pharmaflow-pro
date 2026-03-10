@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { TwoFactorService } from './two-factor.service';
 import { AuditLogService, AuditAction } from '../audit/audit-log.service';
+import { resolveTenantHostFromRequest } from './tenant-request.util';
 
 @Controller('auth')
 export class AuthController {
@@ -14,7 +15,7 @@ export class AuthController {
 
     @Post('register')
     async register(@Body() registerDto: any, @Req() req: any) {
-        const user = await this.authService.register(registerDto, req.headers.host);
+        const user = await this.authService.register(registerDto, resolveTenantHostFromRequest(req));
         await this.auditLogService.log({
             userId: user.id,
             tenantId: user.tenantId ?? undefined,
@@ -30,7 +31,11 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: any, @Req() req: any) {
-        const result = await this.authService.login(loginDto.username, loginDto.password, req.headers.host);
+        const result = await this.authService.login(
+            loginDto.username,
+            loginDto.password,
+            resolveTenantHostFromRequest(req),
+        );
         if (!result.requires2FA && result.user) {
             await this.auditLogService.log({
                 userId: result.user.id,
@@ -73,6 +78,10 @@ export class AuthController {
     @Post('2fa/verify')
     @HttpCode(HttpStatus.OK)
     async verify2FA(@Body() body: { username: string; token: string }, @Req() req: any) {
-        return this.authService.verify2FAAndLogin(body.username, body.token, req.headers.host);
+        return this.authService.verify2FAAndLogin(
+            body.username,
+            body.token,
+            resolveTenantHostFromRequest(req),
+        );
     }
 }
