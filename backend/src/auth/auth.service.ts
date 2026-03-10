@@ -135,4 +135,58 @@ export class AuthService {
             },
         };
     }
+
+    async bootstrapAdmin(data: any, host?: string) {
+        const tenant = await this.tenantBrandingService.resolveTenant(host);
+        if (!tenant) {
+            throw new BadRequestException('Unknown tenant');
+        }
+
+        const existingUsers = await this.prisma.user.count({
+            where: { tenantId: tenant.id },
+        });
+
+        if (existingUsers > 0) {
+            throw new ConflictException('Tenant has already been initialized');
+        }
+
+        const validation = PasswordValidator.validate(data.password);
+        if (!validation.isValid) {
+            throw new BadRequestException({
+                message: 'Password does not meet requirements',
+                errors: validation.errors,
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = await this.prisma.user.create({
+            data: {
+                username: data.username,
+                password: hashedPassword,
+                name: data.name,
+                role: Role.ADMIN,
+                tenantId: tenant.id,
+                canGenerateInvoice: true,
+            },
+        });
+
+        const payload = {
+            sub: user.id,
+            username: user.username,
+            role: user.role,
+            tenantId: user.tenantId,
+        };
+
+        return {
+            access_token: await this.jwtService.signAsync(payload),
+            user: {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                role: user.role,
+                canGenerateInvoice: user.canGenerateInvoice,
+                tenantId: user.tenantId,
+            },
+        };
+    }
 }

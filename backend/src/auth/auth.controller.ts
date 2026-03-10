@@ -28,6 +28,22 @@ export class AuthController {
         return user;
     }
 
+    @Post('bootstrap-admin')
+    @HttpCode(HttpStatus.OK)
+    async bootstrapAdmin(@Body() body: { username: string; password: string; name: string }, @Req() req: any) {
+        const result = await this.authService.bootstrapAdmin(body, resolveTenantHostFromRequest(req));
+        await this.auditLogService.log({
+            userId: result.user.id,
+            tenantId: result.user.tenantId ?? undefined,
+            action: AuditAction.REGISTER,
+            entity: 'User',
+            entityId: result.user.id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
+    }
+
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: any, @Req() req: any) {

@@ -19,6 +19,7 @@ type TenantBranding = {
     loginTitle: string;
     loginSubtitle: string;
     faviconUrl: string | null;
+    requiresSetup: boolean;
 };
 
 const DEFAULT_BRANDING: TenantBranding = {
@@ -30,9 +31,11 @@ const DEFAULT_BRANDING: TenantBranding = {
     loginTitle: "Welcome Back",
     loginSubtitle: "Sign in to manage your pharmaceutical distribution",
     faviconUrl: null,
+    requiresSetup: false,
 };
 
 export default function LoginPage() {
+    const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -68,7 +71,9 @@ export default function LoginPage() {
     }, []);
 
     useEffect(() => {
-        document.title = `${branding.companyName} Login`;
+        document.title = branding.requiresSetup
+            ? `${branding.companyName} Setup`
+            : `${branding.companyName} Login`;
 
         if (!branding.faviconUrl) {
             return;
@@ -105,6 +110,32 @@ export default function LoginPage() {
                 setError(data.message || "Quick login failed");
             }
         } catch (err) {
+            setError("Network error. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBootstrapAdmin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/bootstrap-admin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, username, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                login(data.access_token, data.user);
+            } else {
+                setError(data.message || "Failed to create the first admin account");
+            }
+        } catch {
             setError("Network error. Please check your connection.");
         } finally {
             setLoading(false);
@@ -173,7 +204,7 @@ export default function LoginPage() {
         <div
             className="min-h-screen flex items-center justify-center p-6"
             style={{
-                background: `linear-gradient(135deg, ${branding.accentColor} 0%, ${branding.primaryColor} 100%)`,
+                backgroundColor: "#f8fafc",
             }}
         >
             <div className="w-full max-w-md space-y-8">
@@ -205,17 +236,88 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white">{branding.loginTitle}</h1>
-                    <p className="text-white/80 text-sm">{branding.loginSubtitle}</p>
+                    <h1 className="text-3xl font-bold text-slate-900">
+                        {branding.requiresSetup ? "Set Up Your Portal" : branding.loginTitle}
+                    </h1>
+                    <p className="text-slate-500 text-sm">
+                        {branding.requiresSetup
+                            ? `Create the first administrator for ${branding.companyName}.`
+                            : branding.loginSubtitle}
+                    </p>
                 </div>
 
                 <Card className="border-white/50 bg-white/95 backdrop-blur shadow-2xl shadow-slate-900/20">
                     <CardHeader>
-                        <CardTitle className="text-lg">Staff Login</CardTitle>
-                        <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+                        <CardTitle className="text-lg">
+                            {branding.requiresSetup ? "First Admin Setup" : "Staff Login"}
+                        </CardTitle>
+                        <CardDescription>
+                            {branding.requiresSetup
+                                ? "This tenant has no users yet. Create the admin account that will manage users and credentials."
+                                : "Enter your credentials to access the dashboard"}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {!requires2FA ? (
+                        {branding.requiresSetup ? (
+                            <form onSubmit={handleBootstrapAdmin} className="space-y-4">
+                                {error && (
+                                    <Alert variant="destructive" className="py-2 text-xs">
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Administrator Name</label>
+                                    <Input
+                                        placeholder="Enter full name"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Username</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            className="pl-10"
+                                            placeholder="Choose admin username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Password</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            type="password"
+                                            className="pl-10"
+                                            placeholder="Create a strong password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500">
+                                        Use at least 8 characters with uppercase, lowercase, number, and special character.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full h-11 text-sm font-semibold"
+                                    style={{ backgroundColor: branding.primaryColor }}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Create Admin Account"
+                                    )}
+                                </Button>
+                            </form>
+                        ) : !requires2FA ? (
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {error && (
                                     <Alert variant="destructive" className="py-2 text-xs">
@@ -313,6 +415,7 @@ export default function LoginPage() {
                     </CardContent>
                 </Card>
 
+                {!branding.requiresSetup && (
                 <div className="pt-4">
                     <div className="relative mb-8">
                         <div className="absolute inset-0 flex items-center">
@@ -371,8 +474,9 @@ export default function LoginPage() {
                         </Button>
                     </div>
                 </div>
+                )}
 
-                <p className="text-center text-xs text-white/70">
+                <p className="text-center text-xs text-slate-400">
                     &copy; {new Date().getFullYear()} {branding.companyName}. Powered by PharmaFlow Pro.
                 </p>
             </div>

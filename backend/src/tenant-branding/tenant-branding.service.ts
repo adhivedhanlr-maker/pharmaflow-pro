@@ -11,6 +11,7 @@ type BrandingResponse = {
     loginTitle: string;
     loginSubtitle: string;
     faviconUrl: string | null;
+    requiresSetup: boolean;
 };
 
 @Injectable()
@@ -32,7 +33,10 @@ export class TenantBrandingService {
             loginSubtitle:
                 tenant?.loginSubtitle ??
                 'Sign in to manage your pharmaceutical distribution',
-            faviconUrl: tenant?.faviconUrl ?? tenant?.logoUrl ?? null,
+            faviconUrl: tenant?.logoUrl ?? tenant?.faviconUrl ?? null,
+            requiresSetup: tenant ? (await this.prisma.user.count({
+                where: { tenantId: tenant.id },
+            })) === 0 : false,
         };
     }
 
