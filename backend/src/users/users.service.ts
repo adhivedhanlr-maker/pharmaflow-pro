@@ -12,8 +12,9 @@ export class UsersService {
         private notifications: NotificationsService
     ) { }
 
-    async findAll() {
+    async findAll(tenantId?: string) {
         const users = await this.prisma.user.findMany({
+            where: tenantId ? { tenantId } : undefined,
             select: {
                 id: true,
                 username: true,
@@ -32,9 +33,12 @@ export class UsersService {
         return users;
     }
 
-    async findOne(id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id },
+    async findOne(id: string, tenantId?: string) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                id,
+                ...(tenantId ? { tenantId } : {}),
+            },
             select: {
                 id: true,
                 username: true,
@@ -55,12 +59,13 @@ export class UsersService {
         return user;
     }
 
-    async create(data: any) {
+    async create(data: any, tenantId?: string) {
         const hashedPassword = await bcrypt.hash(data.password, 10);
         return this.prisma.user.create({
             data: {
                 ...data,
                 password: hashedPassword,
+                tenantId,
             },
             select: {
                 id: true,
@@ -72,10 +77,14 @@ export class UsersService {
         });
     }
 
-    async update(id: string, data: any) {
+    async update(id: string, data: any, tenantId?: string) {
         if (data.password) {
             data.password = await bcrypt.hash(data.password, 10);
         }
+        const userWhere = {
+            id,
+            ...(tenantId ? { tenantId } : {}),
+        };
         if (data.isOnDuty !== undefined) {
             if (data.isOnDuty === true) {
                 // Determine start of day for check
@@ -86,12 +95,13 @@ export class UsersService {
                 await this.prisma.attendance.create({
                     data: {
                         userId: id,
+                        tenantId,
                         startTime: new Date(),
                     }
                 });
 
                 // Email Notification
-                const user = await this.prisma.user.findUnique({ where: { id } });
+                const user = await this.prisma.user.findFirst({ where: userWhere });
                 if (user) {
                     this.notifications.notifyAdminOfDutyStart(user.name, new Date());
                 }
@@ -100,6 +110,7 @@ export class UsersService {
                 const lastSession = await this.prisma.attendance.findFirst({
                     where: {
                         userId: id,
+                        ...(tenantId ? { tenantId } : {}),
                         endTime: null
                     },
                     orderBy: { startTime: 'desc' }
@@ -140,8 +151,9 @@ export class UsersService {
         });
     }
 
-    async getAttendance() {
+    async getAttendance(tenantId?: string) {
         return this.prisma.attendance.findMany({
+            where: tenantId ? { tenantId } : undefined,
             orderBy: { startTime: 'desc' },
             include: {
                 user: {
@@ -159,9 +171,9 @@ export class UsersService {
         });
     }
 
-    async getUserAttendance(userId: string) {
+    async getUserAttendance(userId: string, tenantId?: string) {
         return this.prisma.attendance.findMany({
-            where: { userId },
+            where: { userId, ...(tenantId ? { tenantId } : {}) },
             orderBy: { startTime: 'desc' },
             include: {
                 user: {
@@ -179,9 +191,20 @@ export class UsersService {
         });
     }
 
-    async remove(id: string) {
+    async remove(id: string, tenantId?: string) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                id,
+                ...(tenantId ? { tenantId } : {}),
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
         return this.prisma.user.delete({
-            where: { id },
+            where: { id: user.id },
         });
     }
 }

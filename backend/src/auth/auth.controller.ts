@@ -14,9 +14,10 @@ export class AuthController {
 
     @Post('register')
     async register(@Body() registerDto: any, @Req() req: any) {
-        const user = await this.authService.register(registerDto);
+        const user = await this.authService.register(registerDto, req.headers.host);
         await this.auditLogService.log({
             userId: user.id,
+            tenantId: user.tenantId ?? undefined,
             action: AuditAction.REGISTER,
             entity: 'User',
             entityId: user.id,
@@ -29,10 +30,11 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: any, @Req() req: any) {
-        const result = await this.authService.login(loginDto.username, loginDto.password);
+        const result = await this.authService.login(loginDto.username, loginDto.password, req.headers.host);
         if (!result.requires2FA && result.user) {
             await this.auditLogService.log({
                 userId: result.user.id,
+                tenantId: result.user.tenantId ?? undefined,
                 action: AuditAction.LOGIN,
                 ipAddress: req.ip,
                 userAgent: req.headers['user-agent'],
@@ -70,7 +72,7 @@ export class AuthController {
 
     @Post('2fa/verify')
     @HttpCode(HttpStatus.OK)
-    async verify2FA(@Body() body: { username: string; token: string }) {
-        return this.authService.verify2FAAndLogin(body.username, body.token);
+    async verify2FA(@Body() body: { username: string; token: string }, @Req() req: any) {
+        return this.authService.verify2FAAndLogin(body.username, body.token, req.headers.host);
     }
 }

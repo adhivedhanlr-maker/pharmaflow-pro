@@ -6,7 +6,7 @@ import { RouteStatus, StopStatus } from '@prisma/client';
 export class RoutesService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: { repId: string; date: string; stops: string[] }) {
+    async create(data: { repId: string; date: string; stops: string[] }, tenantId?: string) {
         // Check if route already exists for this rep and date
         const date = new Date(data.date);
 
@@ -16,6 +16,7 @@ export class RoutesService {
         const existing = await this.prisma.route.findFirst({
             where: {
                 repId: data.repId,
+                ...(tenantId ? { tenantId } : {}),
                 date: date
             }
         });
@@ -27,11 +28,13 @@ export class RoutesService {
         return this.prisma.route.create({
             data: {
                 repId: data.repId,
+                tenantId,
                 date: date,
                 status: RouteStatus.DRAFT,
                 stops: {
                     create: data.stops.map((customerId, index) => ({
                         customerId,
+                        tenantId,
                         stopOrder: index + 1,
                         status: StopStatus.PENDING
                     }))
@@ -45,8 +48,8 @@ export class RoutesService {
         });
     }
 
-    async findAll(repId?: string, dateStr?: string) {
-        const where: any = {};
+    async findAll(repId?: string, tenantId?: string, dateStr?: string) {
+        const where: any = tenantId ? { tenantId } : {};
         if (repId) where.repId = repId;
         if (dateStr) {
             // Simple date filtering - might need range if timezones match poorly
@@ -67,9 +70,9 @@ export class RoutesService {
         });
     }
 
-    async findOne(id: string) {
-        const route = await this.prisma.route.findUnique({
-            where: { id },
+    async findOne(id: string, tenantId?: string) {
+        const route = await this.prisma.route.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
             include: {
                 rep: { select: { name: true } },
                 stops: {
@@ -82,9 +85,16 @@ export class RoutesService {
         return route;
     }
 
-    async updateStopStatus(routeId: string, stopId: string, status: StopStatus, notes?: string) {
+    async updateStopStatus(routeId: string, stopId: string, status: StopStatus, notes?: string, tenantId?: string) {
+        const stop = await this.prisma.routeStop.findFirst({
+            where: { id: stopId, routeId, ...(tenantId ? { tenantId } : {}) },
+        });
+        if (!stop) {
+            throw new NotFoundException('Route stop not found');
+        }
+
         return this.prisma.routeStop.update({
-            where: { id: stopId },
+            where: { id: stop.id },
             data: { status, notes, visitedAt: status === 'COMPLETED' ? new Date() : null }
         });
     }

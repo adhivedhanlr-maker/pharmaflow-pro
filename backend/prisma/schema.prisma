@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -22,149 +22,174 @@ enum PaymentMethod {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
-  role      Role     @default(BILLING_OPERATOR)
-  canGenerateInvoice Boolean @default(false)
-  isOnDuty  Boolean  @default(false)
-  twoFactorEnabled Boolean @default(false)
+  id               String          @id @default(cuid())
+  username         String
+  password         String
+  name             String
+  role             Role            @default(BILLING_OPERATOR)
+  tenantId         String?
+  tenant           TenantBranding? @relation(fields: [tenantId], references: [id])
+  canGenerateInvoice Boolean       @default(false)
+  isOnDuty         Boolean         @default(false)
+  twoFactorEnabled Boolean         @default(false)
   twoFactorSecret  String?
   lastLat          Float?
   lastLng          Float?
-  paymentMethod    PaymentMethod @default(HOURLY)
-  monthlySalary    Float    @default(0)
-  hourlyRate       Float    @default(500)
-  overtimeRate     Float    @default(750) // Default 1.5x of 500
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Sales     Sale[]   @relation("SaleUser")
-  RepSales  Sale[]   @relation("SaleRep")
-  visits    Visit[]
-  orders    Order[]
-  attendance Attendance[]
-  routes     Route[]
-  locationLogs LocationLog[]
-  businessProfile BusinessProfile?
+  paymentMethod    PaymentMethod   @default(HOURLY)
+  monthlySalary    Float           @default(0)
+  hourlyRate       Float           @default(500)
+  overtimeRate     Float           @default(750)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  Sales            Sale[]          @relation("SaleUser")
+  RepSales         Sale[]          @relation("SaleRep")
+  visits           Visit[]
+  orders           Order[]
+  attendance       Attendance[]
+  routes           Route[]
+  locationLogs     LocationLog[]
+  businessProfile  BusinessProfile?
+
+  @@unique([tenantId, username])
+  @@index([tenantId])
 }
 
 model Attendance {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  date      DateTime @default(now())
-  startTime DateTime @default(now())
+  tenantId  String?
+  user      User            @relation(fields: [userId], references: [id])
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  date      DateTime        @default(now())
+  startTime DateTime        @default(now())
   endTime   DateTime?
-  duration  Float?   // in minutes
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  duration  Float?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([tenantId])
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  hsnCode     String?
-  gstRate     Float    @default(0)
-  mrp         Float
-  company     String?
-  reorderLevel Int     @default(10)
-  barcode     String?  @unique
-  barcodeType String?  // "EAN13", "UPC", "CODE128", etc.
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  batches     Batch[]
-  saleItems   SaleItem[]
+  id            String          @id @default(cuid())
+  name          String
+  tenantId      String?
+  tenant        TenantBranding? @relation(fields: [tenantId], references: [id])
+  hsnCode       String?
+  gstRate       Float           @default(0)
+  mrp           Float
+  company       String?
+  reorderLevel  Int             @default(10)
+  barcode       String?
+  barcodeType   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  batches       Batch[]
+  saleItems     SaleItem[]
   purchaseItems PurchaseItem[]
   orderItems    OrderItem[]
 
+  @@index([tenantId])
   @@index([name])
   @@index([company])
   @@index([barcode])
 }
 
 model Batch {
-  id          String   @id @default(cuid())
-  batchNumber String
-  batchBarcode String?  @unique
-  expiryDate  DateTime
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  currentStock Int     @default(0)
-  mrp         Float?
+  id            String          @id @default(cuid())
+  batchNumber   String
+  tenantId      String?
+  tenant        TenantBranding? @relation(fields: [tenantId], references: [id])
+  batchBarcode  String?
+  expiryDate    DateTime
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id])
+  currentStock  Int             @default(0)
+  mrp           Float?
   purchasePrice Float
-  salePrice   Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  saleItems   SaleItem[]
+  salePrice     Float
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  saleItems     SaleItem[]
   purchaseItems PurchaseItem[]
 
   @@unique([productId, batchNumber])
+  @@index([tenantId])
   @@index([currentStock])
   @@index([expiryDate])
   @@index([batchBarcode])
 }
 
 model Customer {
-  id           String   @id @default(cuid())
-  name         String
-  gstin        String?
-  address      String?
-  phone        String?
-  latitude     Float?
-  longitude    Float?
-  creditLimit  Float    @default(0)
-  currentBalance Float  @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  sales        Sale[]
-  visits       Visit[]
-  orders       Order[]
-  routeStops   RouteStop[]
+  id             String          @id @default(cuid())
+  name           String
+  tenantId       String?
+  tenant         TenantBranding? @relation(fields: [tenantId], references: [id])
+  gstin          String?
+  address        String?
+  phone          String?
+  latitude       Float?
+  longitude      Float?
+  creditLimit    Float           @default(0)
+  currentBalance Float           @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sales          Sale[]
+  visits         Visit[]
+  orders         Order[]
+  routeStops     RouteStop[]
 
+  @@index([tenantId])
   @@index([name])
   @@index([phone])
 }
 
 model Supplier {
-  id           String   @id @default(cuid())
-  name         String
-  gstin        String?
-  address      String?
-  phone        String?
-  currentBalance Float  @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  purchases    Purchase[]
+  id             String          @id @default(cuid())
+  name           String
+  tenantId       String?
+  tenant         TenantBranding? @relation(fields: [tenantId], references: [id])
+  gstin          String?
+  address        String?
+  phone          String?
+  currentBalance Float           @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchases      Purchase[]
 
+  @@index([tenantId])
   @@index([name])
   @@index([phone])
 }
 
 model Sale {
-  id            String   @id @default(cuid())
-  invoiceNumber String   @unique
-  date          DateTime @default(now())
-  customerId    String
-  customer      Customer @relation(fields: [customerId], references: [id])
-  userId        String?
-  user          User?    @relation("SaleUser", fields: [userId], references: [id])
-  repId         String?  // Field for assigned Sales Rep (Delivery)
-  rep           User?    @relation("SaleRep", fields: [repId], references: [id])
-  totalAmount   Float
-  gstAmount     Float
-  netAmount     Float
-  discountAmount Float   @default(0)
-  isCash        Boolean  @default(true) // Deprecated: keeping for compatibility
-  paymentMethod SalePaymentMethod @default(CASH)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  items         SaleItem[]
-  returns       SaleReturn[]
-  deliveryStatus DeliveryStatus @default(PENDING)
+  id             String            @id @default(cuid())
+  invoiceNumber  String            @unique
+  tenantId       String?
+  tenant         TenantBranding?   @relation(fields: [tenantId], references: [id])
+  date           DateTime          @default(now())
+  customerId     String
+  customer       Customer          @relation(fields: [customerId], references: [id])
+  userId         String?
+  user           User?             @relation("SaleUser", fields: [userId], references: [id])
+  repId          String?
+  rep            User?             @relation("SaleRep", fields: [repId], references: [id])
+  totalAmount    Float
+  gstAmount      Float
+  netAmount      Float
+  discountAmount Float             @default(0)
+  isCash         Boolean           @default(true)
+  paymentMethod  SalePaymentMethod @default(CASH)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  items          SaleItem[]
+  returns        SaleReturn[]
+  deliveryStatus DeliveryStatus    @default(PENDING)
   deliveryOtp    String?
   deliveredAt    DateTime?
   deliveryProof  DeliveryProof?
+
+  @@index([tenantId])
 }
 
 enum SalePaymentMethod {
@@ -176,15 +201,19 @@ enum SalePaymentMethod {
 }
 
 model DeliveryProof {
-  id               String   @id @default(cuid())
-  saleId           String   @unique
-  sale             Sale     @relation(fields: [saleId], references: [id])
-  proofUrl         String?  // Base64 or URL
-  signatureUrl     String?  // Base64 or URL
-  latitude         Float?
-  longitude        Float?
-  info             String?
-  createdAt        DateTime @default(now())
+  id           String          @id @default(cuid())
+  saleId       String          @unique
+  tenantId     String?
+  tenant       TenantBranding? @relation(fields: [tenantId], references: [id])
+  sale         Sale            @relation(fields: [saleId], references: [id])
+  proofUrl     String?
+  signatureUrl String?
+  latitude     Float?
+  longitude    Float?
+  info         String?
+  createdAt    DateTime        @default(now())
+
+  @@index([tenantId])
 }
 
 enum DeliveryStatus {
@@ -194,126 +223,162 @@ enum DeliveryStatus {
 }
 
 model SaleItem {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   saleId      String
-  sale        Sale     @relation(fields: [saleId], references: [id])
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  sale        Sale            @relation(fields: [saleId], references: [id])
   productId   String
-  product     Product  @relation(fields: [productId], references: [id])
+  product     Product         @relation(fields: [productId], references: [id])
   batchId     String
-  batch       Batch    @relation(fields: [batchId], references: [id])
+  batch       Batch           @relation(fields: [batchId], references: [id])
   quantity    Int
   unitPrice   Float
   gstRate     Float
   gstAmount   Float
   totalAmount Float
   returns     SaleReturnItem[]
+
+  @@index([tenantId])
 }
 
 model Purchase {
-  id            String   @id @default(cuid())
-  billNumber    String
-  date          DateTime @default(now())
-  supplierId    String
-  supplier      Supplier @relation(fields: [supplierId], references: [id])
-  totalAmount   Float
-  gstAmount     Float
-  netAmount     Float
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  items         PurchaseItem[]
-  returns       PurchaseReturn[]
+  id          String          @id @default(cuid())
+  billNumber  String
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  date        DateTime        @default(now())
+  supplierId  String
+  supplier    Supplier        @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  gstAmount   Float
+  netAmount   Float
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       PurchaseItem[]
+  returns     PurchaseReturn[]
+
+  @@index([tenantId])
 }
 
 model PurchaseItem {
-  id          String   @id @default(cuid())
-  purchaseId  String
-  purchase    Purchase @relation(fields: [purchaseId], references: [id])
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  batchId     String
-  batch       Batch    @relation(fields: [batchId], references: [id])
-  quantity    Int
+  id            String          @id @default(cuid())
+  purchaseId    String
+  tenantId      String?
+  tenant        TenantBranding? @relation(fields: [tenantId], references: [id])
+  purchase      Purchase        @relation(fields: [purchaseId], references: [id])
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id])
+  batchId       String
+  batch         Batch           @relation(fields: [batchId], references: [id])
+  quantity      Int
   purchasePrice Float
-  gstRate     Float
-  gstAmount   Float
-  totalAmount Float
-  returns     PurchaseReturnItem[]
+  gstRate       Float
+  gstAmount     Float
+  totalAmount   Float
+  returns       PurchaseReturnItem[]
+
+  @@index([tenantId])
 }
 
 model SaleReturn {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   saleId      String
-  sale        Sale     @relation(fields: [saleId], references: [id])
-  date        DateTime @default(now())
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  sale        Sale            @relation(fields: [saleId], references: [id])
+  date        DateTime        @default(now())
   totalAmount Float
   items       SaleReturnItem[]
+
+  @@index([tenantId])
 }
 
 model SaleReturnItem {
-  id          String     @id @default(cuid())
+  id           String          @id @default(cuid())
   saleReturnId String
-  saleReturn  SaleReturn @relation(fields: [saleReturnId], references: [id])
-  saleItemId  String
-  saleItem    SaleItem   @relation(fields: [saleItemId], references: [id])
-  quantity    Int
-  reason      String?
+  tenantId     String?
+  tenant       TenantBranding? @relation(fields: [tenantId], references: [id])
+  saleReturn   SaleReturn      @relation(fields: [saleReturnId], references: [id])
+  saleItemId   String
+  saleItem     SaleItem        @relation(fields: [saleItemId], references: [id])
+  quantity     Int
+  reason       String?
+
+  @@index([tenantId])
 }
 
 model PurchaseReturn {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   purchaseId  String
-  purchase    Purchase @relation(fields: [purchaseId], references: [id])
-  date        DateTime @default(now())
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  purchase    Purchase        @relation(fields: [purchaseId], references: [id])
+  date        DateTime        @default(now())
   totalAmount Float
   items       PurchaseReturnItem[]
+
+  @@index([tenantId])
 }
 
 model PurchaseReturnItem {
-  id                String         @id @default(cuid())
-  purchaseReturnId  String
-  purchaseReturn    PurchaseReturn @relation(fields: [purchaseReturnId], references: [id])
-  purchaseItemId    String
-  purchaseItem      PurchaseItem   @relation(fields: [purchaseItemId], references: [id])
-  quantity          Int
-  reason            String?
+  id               String          @id @default(cuid())
+  purchaseReturnId String
+  tenantId         String?
+  tenant           TenantBranding? @relation(fields: [tenantId], references: [id])
+  purchaseReturn   PurchaseReturn  @relation(fields: [purchaseReturnId], references: [id])
+  purchaseItemId   String
+  purchaseItem     PurchaseItem    @relation(fields: [purchaseItemId], references: [id])
+  quantity         Int
+  reason           String?
+
+  @@index([tenantId])
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  type      String   // LOW_STOCK, EXPIRY, SYSTEM
+  id        String          @id @default(cuid())
+  type      String
   message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  tenantId  String?
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  isRead    Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([tenantId])
 }
 
-
-
-
 model BusinessProfile {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String   @unique
+  id          String          @id @default(cuid())
+  user        User            @relation(fields: [userId], references: [id])
+  userId      String          @unique
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
   companyName String
   gstin       String?
   email       String?
   phone       String?
   address     String?
-  logoUrl     String?  // Path to uploaded logo file
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  logoUrl     String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([tenantId])
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   userId    String
-  action    String   // e.g., "LOGIN", "CREATE_SALE", "DELETE_USER"
-  entity    String?  // e.g., "Sale", "User", "Product"
-  entityId  String?  // ID of the affected entity
-  details   Json?    // Additional metadata
+  tenantId  String?
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  details   Json?
   ipAddress String?
   userAgent String?
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
 
+  @@index([tenantId])
   @@index([userId])
   @@index([action])
   @@index([createdAt])
@@ -321,49 +386,60 @@ model AuditLog {
 }
 
 model Visit {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   repId       String
-  rep         User     @relation(fields: [repId], references: [id])
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  rep         User            @relation(fields: [repId], references: [id])
   customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
-  checkInTime DateTime @default(now())
+  customer    Customer        @relation(fields: [customerId], references: [id])
+  checkInTime DateTime        @default(now())
   latitude    Float
   longitude   Float
-  distance    Float?   // Distance from shop in meters
-  status      String   // "VERIFIED" or "MISMATCH"
-  createdAt   DateTime @default(now())
+  distance    Float?
+  status      String
+  createdAt   DateTime        @default(now())
 
+  @@index([tenantId])
   @@index([repId])
   @@index([customerId])
   @@index([createdAt])
 }
-model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique
-  customerId    String
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  repId         String
-  rep           User        @relation(fields: [repId], references: [id])
-  status        OrderStatus @default(PENDING)
-  totalAmount   Float
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         OrderItem[]
 
+model Order {
+  id          String          @id @default(cuid())
+  orderNumber String          @unique
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  customerId  String
+  customer    Customer        @relation(fields: [customerId], references: [id])
+  repId       String
+  rep         User            @relation(fields: [repId], references: [id])
+  status      OrderStatus     @default(PENDING)
+  totalAmount Float
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       OrderItem[]
+
+  @@index([tenantId])
   @@index([customerId])
   @@index([repId])
   @@index([status])
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
+  tenantId    String?
+  tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
+  order       Order           @relation(fields: [orderId], references: [id])
   productId   String
-  product     Product  @relation(fields: [productId], references: [id])
+  product     Product         @relation(fields: [productId], references: [id])
   quantity    Int
   price       Float
-  isBackorder Boolean  @default(false)
+  isBackorder Boolean         @default(false)
+
+  @@index([tenantId])
 }
 
 enum OrderStatus {
@@ -374,31 +450,37 @@ enum OrderStatus {
 }
 
 model Route {
-  id        String      @id @default(cuid())
+  id        String          @id @default(cuid())
   repId     String
-  rep       User        @relation(fields: [repId], references: [id])
+  tenantId  String?
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  rep       User            @relation(fields: [repId], references: [id])
   date      DateTime
-  status    RouteStatus @default(DRAFT)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  status    RouteStatus     @default(DRAFT)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   stops     RouteStop[]
 
   @@unique([repId, date])
+  @@index([tenantId])
   @@index([repId])
   @@index([date])
 }
 
 model RouteStop {
-  id         String     @id @default(cuid())
+  id         String          @id @default(cuid())
   routeId    String
-  route      Route      @relation(fields: [routeId], references: [id])
+  tenantId   String?
+  tenant     TenantBranding? @relation(fields: [tenantId], references: [id])
+  route      Route           @relation(fields: [routeId], references: [id])
   customerId String
-  customer   Customer   @relation(fields: [customerId], references: [id])
+  customer   Customer        @relation(fields: [customerId], references: [id])
   stopOrder  Int
-  status     StopStatus @default(PENDING)
+  status     StopStatus      @default(PENDING)
   notes      String?
   visitedAt  DateTime?
 
+  @@index([tenantId])
   @@index([routeId])
   @@index([customerId])
 }
@@ -416,32 +498,59 @@ enum StopStatus {
 }
 
 model LocationLog {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  tenantId  String?
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
   latitude  Float
   longitude Float
-  timestamp DateTime @default(now())
+  timestamp DateTime        @default(now())
 
+  @@index([tenantId])
   @@index([userId])
   @@index([timestamp])
 }
 
 model TenantBranding {
-  id             String   @id @default(cuid())
-  slug           String   @unique
-  companyName    String
-  customDomain   String?  @unique
-  logoUrl        String?
-  primaryColor   String?  @default("#2563eb")
-  accentColor    String?  @default("#0f172a")
-  loginTitle     String?
-  loginSubtitle  String?
-  faviconUrl     String?
-  isDefault      Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                  String              @id @default(cuid())
+  slug                String              @unique
+  companyName         String
+  customDomain        String?             @unique
+  logoUrl             String?
+  primaryColor        String?             @default("#2563eb")
+  accentColor         String?             @default("#0f172a")
+  loginTitle          String?
+  loginSubtitle       String?
+  faviconUrl          String?
+  isDefault           Boolean             @default(false)
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  users               User[]
+  attendances         Attendance[]
+  products            Product[]
+  batches             Batch[]
+  customers           Customer[]
+  suppliers           Supplier[]
+  sales               Sale[]
+  deliveryProofs      DeliveryProof[]
+  saleItems           SaleItem[]
+  purchases           Purchase[]
+  purchaseItems       PurchaseItem[]
+  saleReturns         SaleReturn[]
+  saleReturnItems     SaleReturnItem[]
+  purchaseReturns     PurchaseReturn[]
+  purchaseReturnItems PurchaseReturnItem[]
+  notifications       Notification[]
+  businessProfiles    BusinessProfile[]
+  auditLogs           AuditLog[]
+  visits              Visit[]
+  orders              Order[]
+  orderItems          OrderItem[]
+  routes              Route[]
+  routeStops          RouteStop[]
+  locationLogs        LocationLog[]
 
   @@index([slug])
   @@index([customDomain])

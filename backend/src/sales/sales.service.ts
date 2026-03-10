@@ -11,13 +11,13 @@ export class SalesService {
         private notificationsService: NotificationsService
     ) { }
 
-    async createInvoice(data: any, userId?: string) {
+    async createInvoice(data: any, userId?: string, tenantId?: string) {
         const { customerId, items, isCash, discountAmount = 0 } = data;
-        const finalUserId = userId || (await this.prisma.user.findFirst())?.id;
+        const finalUserId = userId || (await this.prisma.user.findFirst({ where: tenantId ? { tenantId } : undefined }))?.id;
         if (!finalUserId) throw new BadRequestException('No default user found for invoice creation');
 
         // Check Permissions
-        const user = await this.prisma.user.findUnique({ where: { id: finalUserId } });
+        const user = await this.prisma.user.findFirst({ where: { id: finalUserId, ...(tenantId ? { tenantId } : {}) } });
         if (!user) throw new NotFoundException('User not found');
 
         if (user.role === 'SALES_REP' && !user.canGenerateInvoice) {
@@ -26,7 +26,7 @@ export class SalesService {
 
         const result = await this.prisma.$transaction(async (tx) => {
             // 1. Verify Customer
-            const customer = await tx.customer.findUnique({ where: { id: customerId } });
+            const customer = await tx.customer.findFirst({ where: { id: customerId, ...(tenantId ? { tenantId } : {}) } });
             if (!customer) throw new NotFoundException('Customer not found');
 
             let totalAmount = 0;
@@ -35,18 +35,19 @@ export class SalesService {
             const invoiceItems = [];
 
             for (const item of items) {
-                const product = await tx.product.findUnique({ where: { id: item.productId } });
+                const product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
                 if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
                 // 2. Batch Selection (FEFO if not specified)
                 let batch;
                 if (item.batchId) {
-                    batch = await tx.batch.findUnique({ where: { id: item.batchId } });
+                    batch = await tx.batch.findFirst({ where: { id: item.batchId, ...(tenantId ? { tenantId } : {}) } });
                 } else {
                     // Auto-select batch with earliest expiry that has stock
                     batch = await tx.batch.findFirst({
                         where: {
                             productId: item.productId,
+                            ...(tenantId ? { tenantId } : {}),
                             currentStock: { gte: item.quantity },
                             expiryDate: { gt: new Date() },
                         },
@@ -73,6 +74,7 @@ export class SalesService {
 
                 invoiceItems.push({
                     productId: product.id,
+                    tenantId,
                     batchId: batch.id,
                     quantity: item.quantity,
                     unitPrice: batch.salePrice,
@@ -99,6 +101,7 @@ export class SalesService {
 
             const sale = await tx.sale.create({
                 data: {
+                    tenantId,
                     invoiceNumber,
                     customerId,
                     userId: finalUserId,
@@ -137,8 +140,8 @@ export class SalesService {
         return result;
     }
 
-    async assignRep(id: string, repId: string) {
-        const sale = await this.prisma.sale.findUnique({ where: { id } });
+    async assignRep(id: string, repId: string, tenantId?: string) {
+        const sale = await this.prisma.sale.findFirst({ where: { id, ...(tenantId ? { tenantId } : {}) } });
         if (!sale) throw new NotFoundException('Invoice not found');
 
         return this.prisma.sale.update({
@@ -176,9 +179,10 @@ export class SalesService {
         signatureUrl?: string,
         deliveryLatitude?: number,
         deliveryLongitude?: number,
-        deliveryInfo?: string
+        deliveryInfo?: string,
+        tenantId?: string
     ) {
-        const sale = await this.prisma.sale.findUnique({ where: { id: invoiceId } });
+        const sale = await this.prisma.sale.findFirst({ where: { id: invoiceId, ...(tenantId ? { tenantId } : {}) } });
         if (!sale) throw new NotFoundException('Invoice not found');
 
         if (sale.deliveryStatus === 'DELIVERED') {
@@ -197,6 +201,7 @@ export class SalesService {
                 deliveredAt: new Date(),
                 deliveryProof: {
                     create: {
+                        tenantId,
                         proofUrl,
                         signatureUrl,
                         latitude: deliveryLatitude,
@@ -210,20 +215,21 @@ export class SalesService {
 
         return updatedSale;
     }
-    async getDeliveryProof(saleId: string) {
-        return this.prisma.deliveryProof.findUnique({
-            where: { saleId }
+    async getDeliveryProof(saleId: string, tenantId?: string) {
+        return this.prisma.deliveryProof.findFirst({
+            where: { saleId, ...(tenantId ? { tenantId } : {}) }
         });
     }
 
     // Updated delivery verification logic with location support
 
-    async getSalesAnalytics(days: number = 7) {
+    async getSalesAnalytics(tenantId?: string, days: number = 7) {
         const date = new Date();
         date.setDate(date.getDate() - days);
 
         const sales = await this.prisma.sale.findMany({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 createdAt: {
                     gte: date
                 }

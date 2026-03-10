@@ -14,7 +14,7 @@ export class SalesController {
     @Post('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
     createInvoice(@Body() data: any, @Request() req: any) {
-        return this.salesService.createInvoice(data, req.user?.userId);
+        return this.salesService.createInvoice(data, req.user?.userId, req.user?.tenantId);
     }
 
     @Get('invoices')
@@ -35,6 +35,7 @@ export class SalesController {
             deliveryLongitude?: number,
             deliveryInfo?: string
         },
+        @Request() req: any,
     ) {
         return this.salesService.verifyDelivery(
             id,
@@ -43,25 +44,26 @@ export class SalesController {
             body.signatureUrl,
             body.deliveryLatitude,
             body.deliveryLongitude,
-            body.deliveryInfo
+            body.deliveryInfo,
+            req.user?.tenantId
         );
     }
 
     @Patch(':id/assign-rep')
     @Roles(Role.ADMIN)
-    assignRep(@Param('id') id: string, @Body('repId') repId: string) {
-        return this.salesService.assignRep(id, repId);
+    assignRep(@Param('id') id: string, @Body('repId') repId: string, @Request() req: any) {
+        return this.salesService.assignRep(id, repId, req.user?.tenantId);
     }
     @Get('analytics')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    getAnalytics(@Query('days') days?: string) {
-        return this.salesService.getSalesAnalytics(days ? parseInt(days) : 7);
+    getAnalytics(@Request() req: any, @Query('days') days?: string) {
+        return this.salesService.getSalesAnalytics(req.user?.tenantId, days ? parseInt(days) : 7);
     }
 
     @Get(':id/delivery-proof')
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.SALES_REP)
-    async getDeliveryProof(@Param('id') id: string, @Res() res: Response) {
-        const photo = await this.salesService.getDeliveryProof(id);
+    async getDeliveryProof(@Param('id') id: string, @Res() res: Response, @Request() req: any) {
+        const photo = await this.salesService.getDeliveryProof(id, req.user?.tenantId);
         if (!photo || !photo.proofUrl) {
             return res.status(404).send('Photo not found');
         }

@@ -12,7 +12,7 @@ export class InventoryService {
         search?: string;
         includeBatches?: boolean;
         onlyWithStock?: boolean;
-    }) {
+    }, tenantId?: string) {
         const {
             skip = 0,
             take = 100,
@@ -21,15 +21,18 @@ export class InventoryService {
             onlyWithStock = false,
         } = params || {};
 
-        const where = search
-            ? {
+        const where = {
+            ...(tenantId ? { tenantId } : {}),
+            ...(search
+                ? {
                 OR: [
                     { name: { contains: search, mode: 'insensitive' as const } },
                     { hsnCode: { contains: search, mode: 'insensitive' as const } },
                     { company: { contains: search, mode: 'insensitive' as const } },
                 ],
             }
-            : {};
+                : {}),
+        };
 
         const [products, total] = await Promise.all([
             this.prisma.product.findMany({
@@ -58,23 +61,26 @@ export class InventoryService {
         };
     }
 
-    async findProductById(id: string) {
-        const product = await this.prisma.product.findUnique({
-            where: { id },
+    async findProductById(id: string, tenantId?: string) {
+        const product = await this.prisma.product.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
             include: { batches: true },
         });
         if (!product) throw new NotFoundException('Product not found');
         return product;
     }
 
-    async createProduct(data: any) {
+    async createProduct(data: any, tenantId?: string) {
         return this.prisma.product.create({
-            data,
+            data: {
+                ...data,
+                tenantId,
+            },
         });
     }
 
-    async updateProduct(id: string, data: any) {
-        const product = await this.prisma.product.findUnique({ where: { id } });
+    async updateProduct(id: string, data: any, tenantId?: string) {
+        const product = await this.prisma.product.findFirst({ where: { id, ...(tenantId ? { tenantId } : {}) } });
         if (!product) throw new NotFoundException('Product not found');
 
         return this.prisma.product.update({
@@ -89,17 +95,21 @@ export class InventoryService {
     }
 
     // Batch Methods
-    async createBatch(data: any) {
+    async createBatch(data: any, tenantId?: string) {
         return this.prisma.batch.create({
-            data,
+            data: {
+                ...data,
+                tenantId,
+            },
         });
     }
 
-    async getExpiringSoon(days: number = 30) {
+    async getExpiringSoon(tenantId?: string, days: number = 30) {
         const date = new Date();
         date.setDate(date.getDate() + days);
         return this.prisma.batch.findMany({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 expiryDate: {
                     lte: date,
                     gte: new Date(),
@@ -109,9 +119,10 @@ export class InventoryService {
         });
     }
 
-    async getLowStock() {
+    async getLowStock(tenantId?: string) {
         return this.prisma.product.findMany({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 batches: {
                     some: {
                         currentStock: {
@@ -124,10 +135,10 @@ export class InventoryService {
         });
     }
 
-    async findByBarcode(code: string) {
+    async findByBarcode(code: string, tenantId?: string) {
         // Try to find product by barcode
-        const product = await this.prisma.product.findUnique({
-            where: { barcode: code },
+        const product = await this.prisma.product.findFirst({
+            where: { barcode: code, ...(tenantId ? { tenantId } : {}) },
             include: {
                 batches: {
                     where: { currentStock: { gt: 0 } },
@@ -141,8 +152,8 @@ export class InventoryService {
         }
 
         // Try to find batch by batch barcode
-        const batch = await this.prisma.batch.findUnique({
-            where: { batchBarcode: code },
+        const batch = await this.prisma.batch.findFirst({
+            where: { batchBarcode: code, ...(tenantId ? { tenantId } : {}) },
             include: {
                 product: {
                     include: {
@@ -161,9 +172,9 @@ export class InventoryService {
 
         throw new NotFoundException(`No product or batch found with barcode: ${code}`);
     }
-    async deleteProduct(id: string) {
-        const product = await this.prisma.product.findUnique({
-            where: { id },
+    async deleteProduct(id: string, tenantId?: string) {
+        const product = await this.prisma.product.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
             include: {
                 saleItems: { take: 1 },
                 purchaseItems: true,
@@ -183,18 +194,18 @@ export class InventoryService {
         return this.prisma.$transaction(async (tx) => {
             // Delete purchase items first
             if (product.purchaseItems.length > 0) {
-                await tx.purchaseItem.deleteMany({ where: { productId: id } });
+                await tx.purchaseItem.deleteMany({ where: { productId: id, ...(tenantId ? { tenantId } : {}) } });
             }
             // Delete batches
-            await tx.batch.deleteMany({ where: { productId: id } });
+            await tx.batch.deleteMany({ where: { productId: id, ...(tenantId ? { tenantId } : {}) } });
             // Finally delete product
             return tx.product.delete({ where: { id } });
         });
     }
 
-    async deleteBatch(id: string) {
-        const batch = await this.prisma.batch.findUnique({
-            where: { id },
+    async deleteBatch(id: string, tenantId?: string) {
+        const batch = await this.prisma.batch.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
             include: {
                 saleItems: { take: 1 },
                 purchaseItems: true
@@ -210,7 +221,7 @@ export class InventoryService {
         return this.prisma.$transaction(async (tx) => {
             // Delete purchase items for this batch
             if (batch.purchaseItems.length > 0) {
-                await tx.purchaseItem.deleteMany({ where: { batchId: id } });
+                await tx.purchaseItem.deleteMany({ where: { batchId: id, ...(tenantId ? { tenantId } : {}) } });
             }
             return tx.batch.delete({ where: { id } });
         });

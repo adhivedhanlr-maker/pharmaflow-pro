@@ -5,10 +5,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { TwoFactorService } from './two-factor.service';
+import { TenantBrandingModule } from '../tenant-branding/tenant-branding.module';
 
 @Module({
     imports: [
         PassportModule,
+        TenantBrandingModule,
         JwtModule.register({
             secret: process.env.JWT_SECRET || 'secretKey',
             signOptions: { expiresIn: '1d' },

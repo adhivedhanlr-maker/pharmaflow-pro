@@ -11,20 +11,20 @@ export class RoutesController {
 
     @Post()
     @Roles('ADMIN')
-    create(@Body() createRouteDto: any) {
-        return this.routesService.create(createRouteDto);
+    create(@Body() createRouteDto: any, @Request() req: any) {
+        return this.routesService.create(createRouteDto, req.user.tenantId);
     }
 
     @Get()
     findAll(@Request() req: any, @Query('date') date?: string, @Query('repId') repId?: string) {
         // If admin, can filter by repId. If rep, force own id.
         const userId = req.user.role === 'ADMIN' ? (repId || undefined) : req.user.userId;
-        return this.routesService.findAll(userId, date);
+        return this.routesService.findAll(userId, req.user.tenantId, date);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.routesService.findOne(id);
+    findOne(@Param('id') id: string, @Request() req: any) {
+        return this.routesService.findOne(id, req.user.tenantId);
     }
 
     @Patch(':id/stops/:stopId')
@@ -33,7 +33,8 @@ export class RoutesController {
         @Param('stopId') stopId: string,
         @Body('status') status: 'PENDING' | 'COMPLETED' | 'SKIPPED',
         @Body('notes') notes?: string,
+        @Request() req?: any,
     ) {
-        return this.routesService.updateStopStatus(id, stopId, status, notes);
+        return this.routesService.updateStopStatus(id, stopId, status, notes, req?.user?.tenantId);
     }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards, Request } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // I need to create this
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,19 +12,20 @@ export class InventoryController {
 
     @Delete('products/:id')
     @Roles(Role.ADMIN)
-    deleteProduct(@Param('id') id: string) {
-        return this.inventoryService.deleteProduct(id);
+    deleteProduct(@Param('id') id: string, @Request() req: any) {
+        return this.inventoryService.deleteProduct(id, req.user.tenantId);
     }
 
     @Delete('batches/:id')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    deleteBatch(@Param('id') id: string) {
-        return this.inventoryService.deleteBatch(id);
+    deleteBatch(@Param('id') id: string, @Request() req: any) {
+        return this.inventoryService.deleteBatch(id, req.user.tenantId);
     }
 
     @Get('products')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
     findAllProducts(
+        @Request() req: any,
         @Query('skip') skip?: string,
         @Query('take') take?: string,
         @Query('search') search?: string,
@@ -37,48 +38,48 @@ export class InventoryController {
             search,
             includeBatches: includeBatches === 'false' ? false : true,
             onlyWithStock: onlyWithStock === 'true',
-        });
+        }, req.user.tenantId);
     }
 
     @Get('products/:id')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
-    findProductById(@Param('id') id: string) {
-        return this.inventoryService.findProductById(id);
+    findProductById(@Param('id') id: string, @Request() req: any) {
+        return this.inventoryService.findProductById(id, req.user.tenantId);
     }
 
     @Post('products')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    createProduct(@Body() data: any) {
-        return this.inventoryService.createProduct(data);
+    createProduct(@Body() data: any, @Request() req: any) {
+        return this.inventoryService.createProduct(data, req.user.tenantId);
     }
 
     @Put('products/:id')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    updateProduct(@Param('id') id: string, @Body() data: any) {
-        return this.inventoryService.updateProduct(id, data);
+    updateProduct(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        return this.inventoryService.updateProduct(id, data, req.user.tenantId);
     }
 
     @Post('batches')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    createBatch(@Body() data: any) {
-        return this.inventoryService.createBatch(data);
+    createBatch(@Body() data: any, @Request() req: any) {
+        return this.inventoryService.createBatch(data, req.user.tenantId);
     }
 
     @Get('alerts/expiring')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    getExpiringSoon() {
-        return this.inventoryService.getExpiringSoon();
+    getExpiringSoon(@Request() req: any) {
+        return this.inventoryService.getExpiringSoon(req.user.tenantId);
     }
 
     @Get('alerts/low-stock')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    getLowStock() {
-        return this.inventoryService.getLowStock();
+    getLowStock(@Request() req: any) {
+        return this.inventoryService.getLowStock(req.user.tenantId);
     }
 
     @Get('products/barcode/:code')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.SALES_REP)
-    findByBarcode(@Param('code') code: string) {
-        return this.inventoryService.findByBarcode(code);
+    findByBarcode(@Param('code') code: string, @Request() req: any) {
+        return this.inventoryService.findByBarcode(code, req.user.tenantId);
     }
 }

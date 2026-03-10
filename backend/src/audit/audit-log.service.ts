@@ -50,6 +50,7 @@ export class AuditLogService {
 
     async log(params: {
         userId: string;
+        tenantId?: string;
         action: AuditAction | string;
         entity?: string;
         entityId?: string;
@@ -61,6 +62,7 @@ export class AuditLogService {
             await this.prisma.auditLog.create({
                 data: {
                     userId: params.userId,
+                    tenantId: params.tenantId,
                     action: params.action,
                     entity: params.entity,
                     entityId: params.entityId,
@@ -77,6 +79,7 @@ export class AuditLogService {
 
     async getLogs(params: {
         userId?: string;
+        tenantId?: string;
         action?: string;
         startDate?: Date;
         endDate?: Date;
@@ -86,6 +89,7 @@ export class AuditLogService {
         const where: any = {};
 
         if (params.userId) where.userId = params.userId;
+        if (params.tenantId) where.tenantId = params.tenantId;
         if (params.action) where.action = params.action;
         if (params.startDate || params.endDate) {
             where.createdAt = {};
@@ -106,9 +110,9 @@ export class AuditLogService {
         return { logs, total };
     }
 
-    async getRecentActivity(userId: string, limit: number = 10) {
+    async getRecentActivity(userId: string, tenantId?: string, limit: number = 10) {
         return this.prisma.auditLog.findMany({
-            where: { userId },
+            where: { userId, ...(tenantId ? { tenantId } : {}) },
             orderBy: { createdAt: 'desc' },
             take: limit,
         });

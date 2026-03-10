@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 type BrandingResponse = {
+    id?: string;
     slug: string;
     companyName: string;
     logoUrl: string | null;
@@ -21,6 +22,7 @@ export class TenantBrandingService {
         const tenant = await this.findTenant(normalizedHost);
 
         return {
+            id: tenant?.id,
             slug: tenant?.slug ?? 'default',
             companyName: tenant?.companyName ?? 'PharmaFlow Pro',
             logoUrl: tenant?.logoUrl ?? null,
@@ -32,6 +34,17 @@ export class TenantBrandingService {
                 'Sign in to manage your pharmaceutical distribution',
             faviconUrl: tenant?.faviconUrl ?? tenant?.logoUrl ?? null,
         };
+    }
+
+    async resolveTenant(host?: string | null) {
+        const normalizedHost = this.normalizeHost(host);
+        return this.findTenant(normalizedHost);
+    }
+
+    async getTenantById(id: string) {
+        return this.prisma.tenantBranding.findUnique({
+            where: { id },
+        });
     }
 
     private async findTenant(host?: string | null) {

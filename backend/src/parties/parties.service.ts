@@ -10,18 +10,21 @@ export class PartiesService {
         skip?: number;
         take?: number;
         search?: string;
-    }) {
+    }, tenantId?: string) {
         const { skip = 0, take = 100, search } = params || {};
 
-        const where = search
-            ? {
+        const where = {
+            ...(tenantId ? { tenantId } : {}),
+            ...(search
+                ? {
                 OR: [
                     { name: { contains: search, mode: 'insensitive' as const } },
                     { gstin: { contains: search, mode: 'insensitive' as const } },
                     { phone: { contains: search, mode: 'insensitive' as const } },
                 ],
             }
-            : {};
+                : {}),
+        };
 
         const [customers, total] = await Promise.all([
             this.prisma.customer.findMany({
@@ -40,18 +43,19 @@ export class PartiesService {
         };
     }
 
-    async findCustomerById(id: string) {
-        const customer = await this.prisma.customer.findUnique({ where: { id } });
+    async findCustomerById(id: string, tenantId?: string) {
+        const customer = await this.prisma.customer.findFirst({ where: { id, ...(tenantId ? { tenantId } : {}) } });
         if (!customer) throw new NotFoundException('Customer not found');
         return customer;
     }
 
-    async createCustomer(data: any) {
-        return this.prisma.customer.create({ data });
+    async createCustomer(data: any, tenantId?: string) {
+        return this.prisma.customer.create({ data: { ...data, tenantId } });
     }
 
-    async updateCustomer(id: string, data: any) {
-        return this.prisma.customer.update({ where: { id }, data });
+    async updateCustomer(id: string, data: any, tenantId?: string) {
+        const customer = await this.findCustomerById(id, tenantId);
+        return this.prisma.customer.update({ where: { id: customer.id }, data });
     }
 
     // Supplier Methods
@@ -59,18 +63,21 @@ export class PartiesService {
         skip?: number;
         take?: number;
         search?: string;
-    }) {
+    }, tenantId?: string) {
         const { skip = 0, take = 100, search } = params || {};
 
-        const where = search
-            ? {
+        const where = {
+            ...(tenantId ? { tenantId } : {}),
+            ...(search
+                ? {
                 OR: [
                     { name: { contains: search, mode: 'insensitive' as const } },
                     { gstin: { contains: search, mode: 'insensitive' as const } },
                     { phone: { contains: search, mode: 'insensitive' as const } },
                 ],
             }
-            : {};
+                : {}),
+        };
 
         const [suppliers, total] = await Promise.all([
             this.prisma.supplier.findMany({
@@ -89,42 +96,46 @@ export class PartiesService {
         };
     }
 
-    async findSupplierById(id: string) {
-        const supplier = await this.prisma.supplier.findUnique({ where: { id } });
+    async findSupplierById(id: string, tenantId?: string) {
+        const supplier = await this.prisma.supplier.findFirst({ where: { id, ...(tenantId ? { tenantId } : {}) } });
         if (!supplier) throw new NotFoundException('Supplier not found');
         return supplier;
     }
 
-    async createSupplier(data: any) {
-        return this.prisma.supplier.create({ data });
+    async createSupplier(data: any, tenantId?: string) {
+        return this.prisma.supplier.create({ data: { ...data, tenantId } });
     }
 
-    async updateSupplier(id: string, data: any) {
-        return this.prisma.supplier.update({ where: { id }, data });
+    async updateSupplier(id: string, data: any, tenantId?: string) {
+        const supplier = await this.findSupplierById(id, tenantId);
+        return this.prisma.supplier.update({ where: { id: supplier.id }, data });
     }
 
-    async deleteCustomer(id: string) {
+    async deleteCustomer(id: string, tenantId?: string) {
         // Check if customer has any sales
-        const salesCount = await this.prisma.sale.count({ where: { customerId: id } });
+        const customer = await this.findCustomerById(id, tenantId);
+        const salesCount = await this.prisma.sale.count({ where: { customerId: customer.id, ...(tenantId ? { tenantId } : {}) } });
         if (salesCount > 0) {
             throw new Error('Cannot delete customer with existing sales transactions');
         }
-        return this.prisma.customer.delete({ where: { id } });
+        return this.prisma.customer.delete({ where: { id: customer.id } });
     }
 
-    async deleteSupplier(id: string) {
+    async deleteSupplier(id: string, tenantId?: string) {
         // Check if supplier has any purchases
-        const purchasesCount = await this.prisma.purchase.count({ where: { supplierId: id } });
+        const supplier = await this.findSupplierById(id, tenantId);
+        const purchasesCount = await this.prisma.purchase.count({ where: { supplierId: supplier.id, ...(tenantId ? { tenantId } : {}) } });
         if (purchasesCount > 0) {
             throw new Error('Cannot delete supplier with existing purchase transactions');
         }
-        return this.prisma.supplier.delete({ where: { id } });
+        return this.prisma.supplier.delete({ where: { id: supplier.id } });
     }
 
     // Search/Autocomplete for Billing
-    async searchCustomers(query: string) {
+    async searchCustomers(query: string, tenantId?: string) {
         return this.prisma.customer.findMany({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 OR: [
                     { name: { contains: query } },
                     { gstin: { contains: query } },

@@ -18,45 +18,45 @@ export class UsersController {
 
     @Get('me')
     getProfile(@Request() req: any) {
-        return this.usersService.findOne(req.user.userId);
+        return this.usersService.findOne(req.user.userId, req.user.tenantId);
     }
 
     @Get('attendance')
     @Roles(Role.ADMIN)
-    getAttendance() {
-        return this.usersService.getAttendance();
+    getAttendance(@Request() req: any) {
+        return this.usersService.getAttendance(req.user.tenantId);
     }
 
     @Get(':id/attendance')
     @Roles(Role.ADMIN)
-    getUserAttendance(@Param('id') id: string) {
-        return this.usersService.getUserAttendance(id);
+    getUserAttendance(@Param('id') id: string, @Request() req: any) {
+        return this.usersService.getUserAttendance(id, req.user.tenantId);
     }
 
     @Get(':id')
     @Roles(Role.ADMIN)
-    getUser(@Param('id') id: string) {
-        return this.usersService.findOne(id);
+    getUser(@Param('id') id: string, @Request() req: any) {
+        return this.usersService.findOne(id, req.user.tenantId);
     }
 
     @Roles(Role.ADMIN)
     @Get()
-    findAll() {
-        return this.usersService.findAll();
+    findAll(@Request() req: any) {
+        return this.usersService.findAll(req.user.tenantId);
     }
 
     @Post()
-    create(@Body() data: any) {
-        return this.usersService.create(data);
+    create(@Body() data: any, @Request() req: any) {
+        return this.usersService.create(data, req.user.tenantId);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() data: any) {
-        return this.usersService.update(id, data);
+    update(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        return this.usersService.update(id, data, req.user.tenantId);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.usersService.remove(id);
+    remove(@Param('id') id: string, @Request() req: any) {
+        return this.usersService.remove(id, req.user.tenantId);
     }
 }

@@ -57,10 +57,11 @@ export class AlertsService {
         }
     }
 
-    private async createNotification(type: string, message: string) {
+    private async createNotification(type: string, message: string, tenantId?: string) {
         // Check if a similar unread notification already exists to avoid spam
         const existing = await this.prisma.notification.findFirst({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 type,
                 message,
                 isRead: false,
@@ -69,7 +70,7 @@ export class AlertsService {
 
         if (!existing) {
             await this.prisma.notification.create({
-                data: { type, message },
+                data: { type, message, tenantId },
             });
 
             this.logger.warn(`Alert Generated: ${message}`);
@@ -90,16 +91,23 @@ export class AlertsService {
         }
     }
 
-    async getNotifications() {
+    async getNotifications(tenantId?: string) {
         return this.prisma.notification.findMany({
+            where: tenantId ? { tenantId } : undefined,
             orderBy: { createdAt: 'desc' },
             take: 20,
         });
     }
 
-    async markAsRead(id: string) {
+    async markAsRead(id: string, tenantId?: string) {
+        const notification = await this.prisma.notification.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
+        });
+        if (!notification) {
+            throw new Error('Notification not found');
+        }
         return this.prisma.notification.update({
-            where: { id },
+            where: { id: notification.id },
             data: { isRead: true },
         });
     }

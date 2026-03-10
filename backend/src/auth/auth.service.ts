@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { PasswordValidator } from './password-validator';
 import { TwoFactorService } from './two-factor.service';
+import { TenantBrandingService } from '../tenant-branding/tenant-branding.service';
 
 @Injectable()
 export class AuthService {
@@ -12,9 +13,10 @@ export class AuthService {
         private prisma: PrismaService,
         private jwtService: JwtService,
         private twoFactorService: TwoFactorService,
+        private tenantBrandingService: TenantBrandingService,
     ) { }
 
-    async register(data: any) {
+    async register(data: any, host?: string) {
         // Validate password strength
         const validation = PasswordValidator.validate(data.password);
         if (!validation.isValid) {
@@ -25,11 +27,17 @@ export class AuthService {
         }
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
+        const tenant = await this.tenantBrandingService.resolveTenant(host);
+        if (!tenant) {
+            throw new BadRequestException('Unknown tenant');
+        }
+
         try {
             const user = await this.prisma.user.create({
                 data: {
                     ...data,
                     password: hashedPassword,
+                    tenantId: tenant.id,
                 },
             });
             delete (user as any).password;
@@ -42,9 +50,17 @@ export class AuthService {
         }
     }
 
-    async login(username: string, pass: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { username },
+    async login(username: string, pass: string, host?: string) {
+        const tenant = await this.tenantBrandingService.resolveTenant(host);
+        if (!tenant) {
+            throw new UnauthorizedException('Unknown tenant');
+        }
+
+        const user = await this.prisma.user.findFirst({
+            where: {
+                username,
+                tenantId: tenant.id,
+            },
         });
 
         if (!user || !(await bcrypt.compare(pass, user.password))) {
@@ -59,7 +75,12 @@ export class AuthService {
             };
         }
 
-        const payload = { sub: user.id, username: user.username, role: user.role };
+        const payload = {
+            sub: user.id,
+            username: user.username,
+            role: user.role,
+            tenantId: user.tenantId,
+        };
         return {
             access_token: await this.jwtService.signAsync(payload),
             user: {
@@ -68,13 +89,22 @@ export class AuthService {
                 name: user.name,
                 role: user.role,
                 canGenerateInvoice: user.canGenerateInvoice,
+                tenantId: user.tenantId,
             },
         };
     }
 
-    async verify2FAAndLogin(username: string, token: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { username },
+    async verify2FAAndLogin(username: string, token: string, host?: string) {
+        const tenant = await this.tenantBrandingService.resolveTenant(host);
+        if (!tenant) {
+            throw new UnauthorizedException('Unknown tenant');
+        }
+
+        const user = await this.prisma.user.findFirst({
+            where: {
+                username,
+                tenantId: tenant.id,
+            },
         });
 
         if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
@@ -87,7 +117,12 @@ export class AuthService {
             throw new UnauthorizedException('Invalid 2FA code');
         }
 
-        const payload = { sub: user.id, username: user.username, role: user.role };
+        const payload = {
+            sub: user.id,
+            username: user.username,
+            role: user.role,
+            tenantId: user.tenantId,
+        };
         return {
             access_token: await this.jwtService.signAsync(payload),
             user: {
@@ -96,6 +131,7 @@ export class AuthService {
                 name: user.name,
                 role: user.role,
                 canGenerateInvoice: user.canGenerateInvoice,
+                tenantId: user.tenantId,
             },
         };
     }

@@ -5,12 +5,12 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PurchasesService {
     constructor(private prisma: PrismaService) { }
 
-    async createPurchase(data: any) {
+    async createPurchase(data: any, tenantId?: string) {
         const { supplierId, billNumber, items } = data;
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Supplier
-            const supplier = await tx.supplier.findUnique({ where: { id: supplierId } });
+            const supplier = await tx.supplier.findFirst({ where: { id: supplierId, ...(tenantId ? { tenantId } : {}) } });
             if (!supplier) throw new NotFoundException('Supplier not found');
 
             let totalAmount = 0;
@@ -20,16 +20,15 @@ export class PurchasesService {
 
             for (const item of items) {
                 // 2. Upsert Product/Batch
-                let product = await tx.product.findUnique({ where: { id: item.productId } });
+                let product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
                 if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
                 // Check if batch exists or create new
-                let batch = await tx.batch.findUnique({
+                let batch = await tx.batch.findFirst({
                     where: {
-                        productId_batchNumber: {
-                            productId: item.productId,
-                            batchNumber: item.batchNumber,
-                        },
+                        productId: item.productId,
+                        batchNumber: item.batchNumber,
+                        ...(tenantId ? { tenantId } : {}),
                     },
                 });
 
@@ -48,6 +47,7 @@ export class PurchasesService {
                     // Create new batch
                     batch = await tx.batch.create({
                         data: {
+                            tenantId,
                             productId: item.productId,
                             batchNumber: item.batchNumber,
                             expiryDate: new Date(item.expiryDate),
@@ -66,6 +66,7 @@ export class PurchasesService {
 
                 purchaseItems.push({
                     productId: product.id,
+                    tenantId,
                     batchId: batch.id,
                     quantity: item.quantity,
                     purchasePrice: item.purchasePrice,
@@ -86,6 +87,7 @@ export class PurchasesService {
             // 4. Create Purchase Record
             return tx.purchase.create({
                 data: {
+                    tenantId,
                     billNumber,
                     supplierId,
                     totalAmount,
@@ -103,8 +105,9 @@ export class PurchasesService {
         });
     }
 
-    async findAll() {
+    async findAll(tenantId?: string) {
         return this.prisma.purchase.findMany({
+            where: tenantId ? { tenantId } : undefined,
             include: { supplier: true, items: { include: { product: true, batch: true } } },
             orderBy: { createdAt: 'desc' },
         });

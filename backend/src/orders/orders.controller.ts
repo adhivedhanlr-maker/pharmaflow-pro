@@ -14,7 +14,7 @@ export class OrdersController {
     @Post()
     @Roles(Role.SALES_REP, Role.ADMIN)
     create(@Body() createOrderDto: CreateOrderDto, @Request() req: any) {
-        return this.ordersService.create(req.user.userId, createOrderDto);
+        return this.ordersService.create(req.user.userId, req.user.tenantId, createOrderDto);
     }
 
     @Get()
@@ -24,18 +24,18 @@ export class OrdersController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.ordersService.findOne(id);
+    findOne(@Param('id') id: string, @Request() req: any) {
+        return this.ordersService.findOne(id, req.user.tenantId);
     }
 
     @Patch(':id/status')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
-    updateStatus(@Param('id') id: string, @Body('status') status: string) {
-        return this.ordersService.updateStatus(id, status);
+    updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req: any) {
+        return this.ordersService.updateStatus(id, status, req.user.tenantId);
     }
     @Post(':id/convert')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
     convert(@Param('id') id: string, @Request() req: any) {
-        return this.ordersService.convert(id, req.user.userId);
+        return this.ordersService.convert(id, req.user.userId, req.user.tenantId);
     }
 }

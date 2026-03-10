@@ -14,9 +14,9 @@ export class OrdersService {
         private salesService: SalesService
     ) { }
 
-    async convert(orderId: string, userId: string) {
-        const order = await this.prisma.order.findUnique({
-            where: { id: orderId },
+    async convert(orderId: string, userId: string, tenantId?: string) {
+        const order = await this.prisma.order.findFirst({
+            where: { id: orderId, ...(tenantId ? { tenantId } : {}) },
             include: { items: true }
         });
 
@@ -33,7 +33,7 @@ export class OrdersService {
             isCash: false, // Default to Credit for rep orders
             discountAmount: 0,
             repId: order.repId // Pass the sales rep ID to the invoice
-        }, userId);
+        }, userId, tenantId);
 
         // Update Order Status
         await this.prisma.order.update({
@@ -44,11 +44,11 @@ export class OrdersService {
         return invoice;
     }
 
-    async create(userId: string, dto: CreateOrderDto) {
+    async create(userId: string, tenantId: string | undefined, dto: CreateOrderDto) {
         // ... (transaction logic remains same until notification) ...
         const order = await this.prisma.$transaction(async (tx) => {
             // 1. Generate Order Number
-            const count = await tx.order.count();
+            const count = await tx.order.count({ where: tenantId ? { tenantId } : undefined });
             const orderNumber = `ORD-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
 
             // 2. Prepare Items
@@ -56,7 +56,7 @@ export class OrdersService {
                 dto.items.map(async (item) => {
                     const totalStock = await tx.batch.aggregate({
                         _sum: { currentStock: true },
-                        where: { productId: item.productId }
+                        where: { productId: item.productId, ...(tenantId ? { tenantId } : {}) }
                     });
                     const isBackorder = (totalStock._sum.currentStock || 0) < item.quantity;
                     return {
@@ -71,6 +71,7 @@ export class OrdersService {
             // 3. Create Order
             const order = await tx.order.create({
                 data: {
+                    tenantId,
                     orderNumber,
                     customerId: dto.customerId,
                     repId: userId,
@@ -109,7 +110,7 @@ export class OrdersService {
     }
 
     async findAll(user?: any) {
-        const where: any = {};
+        const where: any = user?.tenantId ? { tenantId: user.tenantId } : {};
         if (user && user.role === 'SALES_REP') {
             where.repId = user.userId; // user object from JWT strategy usually has userId
         }
@@ -129,9 +130,9 @@ export class OrdersService {
         });
     }
 
-    async findOne(id: string) {
-        return this.prisma.order.findUnique({
-            where: { id },
+    async findOne(id: string, tenantId?: string) {
+        return this.prisma.order.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
             include: {
                 customer: true,
                 rep: true,
@@ -144,9 +145,16 @@ export class OrdersService {
         });
     }
 
-    async updateStatus(id: string, status: any) {
+    async updateStatus(id: string, status: any, tenantId?: string) {
+        const order = await this.prisma.order.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
+        });
+        if (!order) {
+            throw new BadRequestException('Order not found');
+        }
+
         return this.prisma.order.update({
-            where: { id },
+            where: { id: order.id },
             data: { status }
         });
     }

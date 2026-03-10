@@ -21,14 +21,14 @@ export class BusinessProfileController {
 
     @Get()
     async getProfile(@Request() req: any) {
-        return this.businessProfileService.getProfile(req.user.userId);
+        return this.businessProfileService.getProfile(req.user.userId, req.user.tenantId);
     }
 
     @Put()
     async updateProfile(@Request() req: any, @Body() data: any) {
         console.log('Update Profile Request:', { userId: req.user.userId, data });
         try {
-            const result = await this.businessProfileService.updateProfile(req.user.userId, data);
+            const result = await this.businessProfileService.updateProfile(req.user.userId, req.user.tenantId, data);
             console.log('Update Result:', result);
             return result;
         } catch (error) {
@@ -47,6 +47,6 @@ export class BusinessProfileController {
         // Convert buffer to base64 data URI
         const base64Image = file.buffer.toString('base64');
         const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
-        return this.businessProfileService.updateLogo(req.user.userId, logoUrl);
+        return this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
     }
 }

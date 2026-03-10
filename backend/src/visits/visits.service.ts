@@ -6,7 +6,7 @@ import { CheckInDto } from './dto/check-in.dto';
 export class VisitsService {
     constructor(private prisma: PrismaService) { }
 
-    async checkIn(userId: string, dto: CheckInDto) {
+    async checkIn(userId: string, tenantId: string | undefined, dto: CheckInDto) {
         return this.prisma.$transaction(async (tx) => {
             // Update rep's last known location
             await tx.user.update({
@@ -20,6 +20,7 @@ export class VisitsService {
             return tx.visit.create({
                 data: {
                     repId: userId,
+                    tenantId,
                     customerId: dto.customerId,
                     latitude: dto.latitude,
                     longitude: dto.longitude,
@@ -40,8 +41,9 @@ export class VisitsService {
         });
     }
 
-    async getReports() {
+    async getReports(tenantId?: string) {
         return this.prisma.visit.findMany({
+            where: tenantId ? { tenantId } : undefined,
             orderBy: {
                 checkInTime: 'desc',
             },
@@ -61,9 +63,9 @@ export class VisitsService {
         });
     }
 
-    async getRepVisits(repId: string) {
+    async getRepVisits(repId: string, tenantId?: string) {
         return this.prisma.visit.findMany({
-            where: { repId },
+            where: { repId, ...(tenantId ? { tenantId } : {}) },
             orderBy: {
                 checkInTime: 'desc',
             },
@@ -77,11 +79,12 @@ export class VisitsService {
         });
     }
 
-    async syncLocation(userId: string, lat: number, lng: number) {
+    async syncLocation(userId: string, tenantId: string | undefined, lat: number, lng: number) {
         // Log the location in history
         await this.prisma.locationLog.create({
             data: {
                 userId,
+                tenantId,
                 latitude: lat,
                 longitude: lng,
             }
@@ -104,9 +107,10 @@ export class VisitsService {
         });
     }
 
-    async getActiveRepLocations() {
+    async getActiveRepLocations(tenantId?: string) {
         return this.prisma.user.findMany({
             where: {
+                ...(tenantId ? { tenantId } : {}),
                 role: 'SALES_REP',
                 NOT: {
                     lastLat: null,
@@ -123,7 +127,7 @@ export class VisitsService {
         });
     }
 
-    async getRoute(repId: string, date: string) {
+    async getRoute(repId: string, tenantId: string | undefined, date: string) {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
 
@@ -133,6 +137,7 @@ export class VisitsService {
         return this.prisma.visit.findMany({
             where: {
                 repId: repId,
+                ...(tenantId ? { tenantId } : {}),
                 checkInTime: {
                     gte: startOfDay,
                     lte: endOfDay,
@@ -152,7 +157,7 @@ export class VisitsService {
         });
     }
 
-    async getRoutePath(repId: string, date: string) {
+    async getRoutePath(repId: string, tenantId: string | undefined, date: string) {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
 
@@ -162,6 +167,7 @@ export class VisitsService {
         return this.prisma.locationLog.findMany({
             where: {
                 userId: repId,
+                ...(tenantId ? { tenantId } : {}),
                 timestamp: {
                     gte: startOfDay,
                     lte: endOfDay,

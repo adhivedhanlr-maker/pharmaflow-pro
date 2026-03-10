@@ -32,7 +32,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 return {
                     userId: testUser.id,
                     username: testUser.username,
-                    role: testUser.role
+                    role: testUser.role,
+                    tenantId: testUser.tenantId,
                 };
             } catch (error) {
                 throw new UnauthorizedException('Invalid test token');
@@ -40,6 +41,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
 
         // Normal JWT validation
-        return { userId: payload.sub, username: payload.username, role: payload.role };
+        return {
+            userId: payload.sub,
+            username: payload.username,
+            role: payload.role,
+            tenantId: payload.tenantId,
+        };
     }
 }
