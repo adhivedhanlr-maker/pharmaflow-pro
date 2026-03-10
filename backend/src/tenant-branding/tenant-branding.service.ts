@@ -130,6 +130,40 @@ export class TenantBrandingService {
         });
     }
 
+    async deleteTenant(id: string) {
+        const tenant = await this.prisma.tenantBranding.findUnique({
+            where: { id },
+        });
+
+        if (!tenant) {
+            throw new ForbiddenException('Tenant not found');
+        }
+
+        if (tenant.isDefault) {
+            throw new ForbiddenException('Default/platform tenant cannot be deleted');
+        }
+
+        const relatedCounts = await Promise.all([
+            this.prisma.user.count({ where: { tenantId: id } }),
+            this.prisma.customer.count({ where: { tenantId: id } }),
+            this.prisma.supplier.count({ where: { tenantId: id } }),
+            this.prisma.product.count({ where: { tenantId: id } }),
+            this.prisma.sale.count({ where: { tenantId: id } }),
+            this.prisma.purchase.count({ where: { tenantId: id } }),
+            this.prisma.order.count({ where: { tenantId: id } }),
+            this.prisma.visit.count({ where: { tenantId: id } }),
+            this.prisma.route.count({ where: { tenantId: id } }),
+        ]);
+
+        if (relatedCounts.some((count) => count > 0)) {
+            throw new ForbiddenException('Tenant cannot be deleted while data exists');
+        }
+
+        return this.prisma.tenantBranding.delete({
+            where: { id },
+        });
+    }
+
     async assertPlatformAdmin(user: { tenantId?: string; role?: string }) {
         if (!user?.tenantId || user.role !== 'ADMIN') {
             throw new ForbiddenException('Platform admin access required');

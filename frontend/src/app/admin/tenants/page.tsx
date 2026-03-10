@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Building2, Loader2, Plus, ShieldAlert } from "lucide-react";
+import { Building2, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -131,6 +131,30 @@ export default function TenantManagementPage() {
             await fetchTenants();
         } catch {
             setError(`Failed to update ${tenant.companyName}.`);
+        }
+    };
+
+    const deleteTenant = async (tenant: Tenant) => {
+        if (!confirm(`Delete tenant "${tenant.companyName}"? This only works if it has no data.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/tenant-branding/admin/${tenant.id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error(data?.message || "Failed to delete tenant");
+            }
+
+            await fetchTenants();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to delete tenant");
         }
     };
 
@@ -281,6 +305,18 @@ export default function TenantManagementPage() {
                                         <p><span className="font-medium text-slate-700">Created:</span> {new Date(tenant.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
+                                        {!tenant.isDefault && tenant.userCount === 0 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => deleteTenant(tenant)}
+                                                className="gap-2"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Delete
+                                            </Button>
+                                        )}
                                         <Label className="text-sm">
                                             {tenant.isActive ? "Active" : "Disabled"}
                                         </Label>

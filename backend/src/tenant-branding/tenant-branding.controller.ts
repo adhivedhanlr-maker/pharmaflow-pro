@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { TenantBrandingService } from './tenant-branding.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -59,5 +59,11 @@ export class TenantBrandingAdminController {
     ) {
         await this.tenantBrandingService.assertPlatformAdmin(req.user);
         return this.tenantBrandingService.updateTenant(id, body);
+    }
+
+    @Delete(':id')
+    async deleteTenant(@Req() req: any, @Param('id') id: string) {
+        await this.tenantBrandingService.assertPlatformAdmin(req.user);
+        return this.tenantBrandingService.deleteTenant(id);
     }
 }
