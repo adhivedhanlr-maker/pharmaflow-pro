@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -17,41 +17,77 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+type ShellBranding = {
+    companyName?: string | null;
+    logoUrl?: string | null;
+    faviconUrl?: string | null;
+};
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { user, logout, isLoading } = useAuth();
+    const { logout, isLoading } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const router = useRouter();
+    const [branding, setBranding] = useState<ShellBranding | null>(null);
 
-    // Enable session timeout tracking
     useSessionTimeout();
 
     const isLoginPage = pathname === "/login";
 
-    // While checking for existing session, show a clean state
+    useEffect(() => {
+        const loadBranding = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                setBranding(data);
+
+                if (data?.companyName) {
+                    document.title = data.companyName;
+                }
+
+                const faviconUrl = data?.faviconUrl || data?.logoUrl;
+                if (faviconUrl) {
+                    let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+                    if (!link) {
+                        link = document.createElement("link");
+                        link.rel = "icon";
+                        document.head.appendChild(link);
+                    }
+                    link.href = faviconUrl;
+                }
+            } catch (error) {
+                console.error("Failed to load tenant branding:", error);
+            }
+        };
+
+        void loadBranding();
+    }, []);
+
     if (isLoading) {
         return (
             <div className="h-screen w-screen flex items-center justify-center bg-white">
-                <div className="animate-pulse text-slate-400 font-semibold text-lg">PharmaFlow...</div>
+                <div className="animate-pulse text-slate-400 font-semibold text-lg">
+                    {branding?.companyName || "PharmaFlow..."}
+                </div>
             </div>
         );
     }
 
-    // Login page should not have sidebar or header
     if (isLoginPage) {
         return <>{children}</>;
     }
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 print:overflow-visible print:h-auto">
-            {/* Desktop Sidebar */}
-            <Sidebar className="hidden md:flex no-print" />
+            <Sidebar className="hidden md:flex no-print" branding={branding} />
 
             <div className="flex flex-col flex-1 overflow-hidden print:overflow-visible print:h-auto">
-                {/* Mobile Header with Hamburger */}
                 <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40 no-print">
                     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                         <SheetTrigger asChild>
@@ -60,11 +96,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="p-0 w-80">
-                            <Sidebar className="w-full h-full border-none" onNavigate={() => setIsMobileMenuOpen(false)} />
+                            <Sidebar className="w-full h-full border-none" onNavigate={() => setIsMobileMenuOpen(false)} branding={branding} />
                         </SheetContent>
                     </Sheet>
-                    <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex-1">
-                        PharmaFlow
+                    <span className="font-bold text-lg text-slate-900 flex-1">
+                        {branding?.companyName || "PharmaFlow"}
                     </span>
                     <div className="flex items-center gap-2">
                         <Popover>
@@ -86,10 +122,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </div>
 
-                {/* Desktop Header / Content Container */}
                 <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible print:h-auto">
                     <div className="hidden md:block no-print">
-                        <Header />
+                        <Header branding={branding} />
                     </div>
 
                     <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 print:overflow-visible print:h-auto print:p-0">
@@ -97,7 +132,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </main>
                 </div>
 
-                {/* Mobile Bottom Navigation */}
                 <div className="no-print">
                     <MobileNav />
                 </div>

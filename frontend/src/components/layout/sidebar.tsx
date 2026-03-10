@@ -18,7 +18,6 @@ import {
   UserCog,
   MapPin,
   Navigation,
-  LogOut,
   Map as MapIcon,
   Clock,
   FileSpreadsheet,
@@ -59,14 +58,20 @@ const PLATFORM_HOSTS = new Set([
   "127.0.0.1",
 ].filter(Boolean) as string[]);
 
+interface ShellBranding {
+  companyName?: string | null;
+  logoUrl?: string | null;
+}
+
 interface SidebarProps {
   className?: string;
   onNavigate?: () => void;
+  branding?: ShellBranding | null;
 }
 
-export function Sidebar({ className, onNavigate }: SidebarProps) {
+export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { showHints } = useShortcut();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hostname, setHostname] = useState<string | null>(null);
@@ -83,39 +88,58 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
   return (
     <div className={cn(
-      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300 z-50 relative", // Added z-50 and relative
+      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300 z-50 relative",
       isCollapsed ? "w-20" : "w-64",
       className
     )}>
       <div className="p-6 flex items-center gap-3 border-b relative">
         {!isCollapsed && (
           <>
-            <Image
-              src="/pharmaflow-logo.png"
-              alt="PharmaFlow Pro"
-              width={40}
-              height={40}
-              className="rounded-lg"
-            />
+            {branding?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={branding.logoUrl}
+                alt={branding.companyName || "Client Logo"}
+                className="h-10 w-10 rounded-lg object-contain bg-white"
+              />
+            ) : (
+              <Image
+                src="/pharmaflow-logo.png"
+                alt="PharmaFlow Pro"
+                width={40}
+                height={40}
+                className="rounded-lg"
+              />
+            )}
             <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                PharmaFlow
+              <h1 className="text-lg font-bold text-slate-900">
+                {branding?.companyName || "PharmaFlow"}
               </h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Pro Edition</p>
+              <p className="text-[10px] text-muted-foreground font-medium">
+                {branding?.companyName ? "Client Portal" : "Pro Edition"}
+              </p>
             </div>
           </>
         )}
         {isCollapsed && (
-          <Image
-            src="/pharmaflow-logo.png"
-            alt="PharmaFlow Pro"
-            width={32}
-            height={32}
-            className="rounded-lg mx-auto"
-          />
+          branding?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={branding.logoUrl}
+              alt={branding.companyName || "Client Logo"}
+              className="h-8 w-8 rounded-lg object-contain bg-white mx-auto"
+            />
+          ) : (
+            <Image
+              src="/pharmaflow-logo.png"
+              alt="PharmaFlow Pro"
+              width={32}
+              height={32}
+              className="rounded-lg mx-auto"
+            />
+          )
         )}
 
-        {/* Only show collapse button on desktop */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-blue-600 text-white md:flex hidden items-center justify-center shadow-lg hover:bg-blue-700 transition-all border-2 border-white z-50"
@@ -134,9 +158,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative group",
-                isActive
-                  ? "bg-primary/10 text-primary shadow-sm"
-                  : "text-muted-foreground hover:bg-muted",
+                isActive ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted",
                 isCollapsed && "justify-center px-2"
               )}
               title={isCollapsed ? item.label : undefined}
@@ -162,9 +184,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative group",
-              pathname === "/settings"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted",
+              pathname === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
               isCollapsed && "justify-center px-2"
             )}
             title={isCollapsed ? "Settings" : undefined}
@@ -174,7 +194,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
           </Link>
         </div>
       )}
-
     </div>
   );
 }

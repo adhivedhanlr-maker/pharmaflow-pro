@@ -1,9 +1,10 @@
-import React from 'react';
-import { format } from 'date-fns';
+import React from "react";
+import { format } from "date-fns";
 
 interface InvoicePrintProps {
     invoiceNumber: string;
     date: Date;
+    preview?: boolean;
     businessProfile?: {
         companyName: string;
         address: string;
@@ -38,18 +39,22 @@ interface InvoicePrintProps {
 }
 
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
-    ({ invoiceNumber, date, customer, items, totals, businessProfile }, ref) => {
-        // Default values to fallback if profile not set
+    ({ invoiceNumber, date, customer, items, totals, businessProfile, preview = false }, ref) => {
         const companyName = businessProfile?.companyName || "PharmaFlow";
         const companyAddress = businessProfile?.address || "Address not configured";
-        // Construct full logo URL if it's a relative path (starts with /uploads)
         const logoUrl = businessProfile?.logoUrl
-            ? (businessProfile.logoUrl.startsWith('http') ? businessProfile.logoUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${businessProfile.logoUrl}`)
+            ? (businessProfile.logoUrl.startsWith("http")
+                ? businessProfile.logoUrl
+                : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${businessProfile.logoUrl}`)
             : "/pharmaflow-logo.png";
 
         return (
-            <div ref={ref} className="hidden print:block p-6 bg-white text-black font-sans max-w-[210mm] mx-auto h-auto">
-                {/* Header */}
+            <div
+                ref={ref}
+                className={preview
+                    ? "p-6 bg-white text-black font-sans h-auto rounded-xl border border-slate-200 shadow-sm"
+                    : "hidden print:block p-6 bg-white text-black font-sans max-w-[210mm] mx-auto h-auto"}
+            >
                 <div className="flex justify-between items-start mb-8 border-b-2 border-slate-800 pb-4">
                     <div className="flex items-center gap-4">
                         <img
@@ -57,8 +62,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             alt="Company Logo"
                             className="h-16 w-16 object-contain rounded-lg"
                             onError={(e) => {
-                                // Fallback if image fails
-                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).style.display = "none";
                             }}
                         />
                         <div>
@@ -69,11 +73,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     <div className="text-right text-sm">
                         <h2 className="font-bold text-lg mb-1">Invoice</h2>
                         <p className="text-slate-600">Original for Recipient</p>
-                        <p className="mt-2 text-xs text-slate-400">Date: {format(date, 'dd MMM yyyy')}</p>
+                        <p className="mt-2 text-xs text-slate-400">Date: {format(date, "dd MMM yyyy")}</p>
                     </div>
                 </div>
 
-                {/* Company & Customer Details */}
                 <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
                         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Billed By</h3>
@@ -85,13 +88,12 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     <div>
                         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Billed To</h3>
                         <p className="font-bold text-lg">{customer.name}</p>
-                        <p className="text-sm text-slate-600 max-w-[250px]">{customer.address || 'Address not provided'}</p>
+                        <p className="text-sm text-slate-600 max-w-[250px]">{customer.address || "Address not provided"}</p>
                         {customer.gstin && <p className="text-sm font-medium mt-1">GSTIN: {customer.gstin}</p>}
                         {customer.phone && <p className="text-sm text-slate-600">Phone: {customer.phone}</p>}
                     </div>
                 </div>
 
-                {/* Invoice Meta */}
                 <div className="flex justify-between mb-8 bg-slate-50 p-4 rounded-lg border border-slate-100">
                     <div>
                         <span className="text-xs text-slate-500 uppercase font-bold">Invoice No.</span>
@@ -99,11 +101,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     </div>
                     <div className="text-right">
                         <span className="text-xs text-slate-500 uppercase font-bold">Invoice Date</span>
-                        <p className="font-bold">{format(date, 'dd MMM yyyy')}</p>
+                        <p className="font-bold">{format(date, "dd MMM yyyy")}</p>
                     </div>
                 </div>
 
-                {/* Items Table */}
                 <table className="w-full mb-8 text-sm">
                     <thead>
                         <tr className="border-b-2 border-slate-800">
@@ -139,38 +140,33 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     </tbody>
                 </table>
 
-                {/* Totals */}
                 <div className="flex justify-end mb-12">
                     <div className="w-[300px] space-y-3">
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Subtotal</span>
-                            <span>₹{(totals.subtotal || 0).toFixed(2)}</span>
+                            <span>Rs {(totals.subtotal || 0).toFixed(2)}</span>
                         </div>
-                        {totals.discount! > 0 && (
+                        {(totals.discount || 0) > 0 && (
                             <div className="flex justify-between text-sm text-destructive">
                                 <span>Discount</span>
-                                <span>- ₹{(totals.discount || 0).toFixed(2)}</span>
+                                <span>- Rs {(totals.discount || 0).toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Taxable Amount</span>
-                            <span>₹{((totals.subtotal || 0) - (totals.discount || 0)).toFixed(2)}</span>
+                            <span>Rs {((totals.subtotal || 0) - (totals.discount || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Total GST</span>
-                            <span>₹{(totals.gst || 0).toFixed(2)}</span>
+                            <span>Rs {(totals.gst || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold border-t border-slate-800 pt-3 text-slate-900">
                             <span>Grand Total</span>
-                            <span>₹{totals.net.toFixed(2)}</span>
-                        </div>
-                        <div className="text-right text-[10px] text-slate-500 uppercase font-medium">
-                            (Amount in Words)
+                            <span>Rs {totals.net.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="border-t-2 border-slate-100 pt-8 mt-auto">
                     <div className="grid grid-cols-2 gap-8">
                         <div>
@@ -182,7 +178,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             </ul>
                         </div>
                         <div className="text-right">
-                            <h4 className="font-bold text-xs uppercase mb-12 text-slate-500">For PharmaFlow Pro</h4>
+                            <h4 className="font-bold text-xs uppercase mb-12 text-slate-500">For {companyName}</h4>
                             <div className="h-px bg-slate-300 w-[150px] ml-auto mb-1"></div>
                             <p className="text-[10px] text-slate-500">Authorized Signatory</p>
                         </div>
@@ -193,4 +189,4 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
     }
 );
 
-InvoicePrint.displayName = 'InvoicePrint';
+InvoicePrint.displayName = "InvoicePrint";

@@ -19,16 +19,24 @@ interface Notification {
     createdAt: string;
 }
 
+interface ShellBranding {
+    companyName?: string | null;
+}
+
+interface HeaderProps {
+    branding?: ShellBranding | null;
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export function Header() {
+export function Header({ branding }: HeaderProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const { logout, user: authUser } = useAuth();
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // Polling every 30s
+        const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -56,16 +64,19 @@ export function Header() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case "EXPIRY": return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-            case "LOW_STOCK": return <XCircle className="h-4 w-4 text-red-500" />;
-            default: return <Info className="h-4 w-4 text-blue-500" />;
+            case "EXPIRY":
+                return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+            case "LOW_STOCK":
+                return <XCircle className="h-4 w-4 text-red-500" />;
+            default:
+                return <Info className="h-4 w-4 text-blue-500" />;
         }
     };
 
     return (
         <header className="h-16 border-b bg-background flex items-center justify-between px-8 sticky top-0 z-10">
             <div>
-                <h2 className="text-lg font-semibold text-slate-800">System Overview</h2>
+                <h2 className="text-lg font-semibold text-slate-800">{branding?.companyName || "System Overview"}</h2>
             </div>
             <div className="flex items-center gap-6">
                 <Popover>
@@ -114,13 +125,6 @@ export function Header() {
                                 ))
                             )}
                         </div>
-                        {notifications.length > 0 && (
-                            <div className="p-3 text-center border-t bg-slate-50/50">
-                                <button className="text-[11px] font-semibold text-primary hover:underline">
-                                    View All Activity
-                                </button>
-                            </div>
-                        )}
                     </PopoverContent>
                 </Popover>
 
@@ -150,4 +154,3 @@ export function Header() {
         </header>
     );
 }
-
