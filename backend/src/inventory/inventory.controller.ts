@@ -40,6 +40,12 @@ export class InventoryController {
         return this.inventoryService.createProduct(data);
     }
 
+    @Post('batches')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    createBatch(@Body() data: any) {
+        return this.inventoryService.createBatch(data);
+    }
+
     @Get('alerts/expiring')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
     getExpiringSoon() {

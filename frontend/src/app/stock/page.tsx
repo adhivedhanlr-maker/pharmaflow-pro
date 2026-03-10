@@ -44,6 +44,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 import { cn } from "@/lib/utils";
 import { EditStockDialog } from "@/components/stock/edit-stock-dialog";
+import { AddStockDialog } from "@/components/stock/add-stock-dialog";
 
 export default function StockPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -120,12 +121,13 @@ export default function StockPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Stock Inventory</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Stock Inventory</h1>
                         <p className="text-muted-foreground">View and manage all pharmaceutical batches.</p>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Export Report</Button>
-                        <Button variant="outline" onClick={fetchStock}>
+                        <AddStockDialog onSuccess={fetchStock} />
+                        <Button variant="outline" className="hidden sm:flex border-slate-200"><Filter className="mr-2 h-4 w-4" /> Export Report</Button>
+                        <Button variant="outline" onClick={fetchStock} className="border-slate-200">
                             <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                             Refresh
                         </Button>
