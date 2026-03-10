@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Building2, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const PLATFORM_HOSTS = new Set([
+    process.env.NEXT_PUBLIC_PLATFORM_HOST,
+    "pharmaflow.eflybe.com",
+    "localhost",
+    "127.0.0.1",
+].filter(Boolean) as string[]);
 
 type Tenant = {
     id: string;
@@ -39,6 +46,7 @@ const INITIAL_FORM = {
 };
 
 export default function TenantManagementPage() {
+    const router = useRouter();
     const { token, user } = useAuth();
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,12 +54,25 @@ export default function TenantManagementPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
+    const [isPlatformHost, setIsPlatformHost] = useState(false);
 
     useEffect(() => {
-        if (token && user?.role === "ADMIN") {
+        setIsPlatformHost(PLATFORM_HOSTS.has(window.location.hostname));
+    }, []);
+
+    useEffect(() => {
+        if (token && user?.role === "ADMIN" && isPlatformHost) {
             fetchTenants();
+        } else if (!isPlatformHost && !loading) {
+            router.replace("/");
         }
-    }, [token, user]);
+    }, [token, user, isPlatformHost, loading, router]);
+
+    useEffect(() => {
+        if (user && (!isPlatformHost || user.role !== "ADMIN")) {
+            router.replace("/");
+        }
+    }, [user, isPlatformHost, router]);
 
     const fetchTenants = async () => {
         setLoading(true);
@@ -174,6 +195,7 @@ export default function TenantManagementPage() {
                 </div>
             }
         >
+            {!isPlatformHost ? null : (
             <div className="space-y-6">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -336,6 +358,7 @@ export default function TenantManagementPage() {
                     )}
                 </div>
             </div>
+            )}
         </RoleGate>
     );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Receipt,
@@ -52,6 +52,13 @@ const menuItems = [
   { icon: Building2, label: "Client Tenants", href: "/admin/tenants", roles: ["ADMIN"] },
 ];
 
+const PLATFORM_HOSTS = new Set([
+  process.env.NEXT_PUBLIC_PLATFORM_HOST,
+  "pharmaflow.eflybe.com",
+  "localhost",
+  "127.0.0.1",
+].filter(Boolean) as string[]);
+
 interface SidebarProps {
   className?: string;
   onNavigate?: () => void;
@@ -62,9 +69,16 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   const { user, logout } = useAuth();
   const { showHints } = useShortcut();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hostname, setHostname] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHostname(window.location.hostname);
+  }, []);
 
   const filteredMenuItems = menuItems.filter(item =>
-    user && item.roles.includes(user.role)
+    user &&
+    item.roles.includes(user.role) &&
+    (item.href !== "/admin/tenants" || (hostname !== null && PLATFORM_HOSTS.has(hostname)))
   );
 
   return (

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import TwoFactorSetup from "@/components/settings/two-factor-setup";
 import { RoleGate } from "@/components/auth/role-gate";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -42,6 +43,8 @@ export default function SettingsPage() {
         address: "",
         logoUrl: ""
     });
+    const [brandingName, setBrandingName] = useState("");
+    const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
 
     useEffect(() => {
         if (token && user?.role === "ADMIN") {
@@ -52,27 +55,35 @@ export default function SettingsPage() {
     const fetchProfile = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/business-profile`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const [profileResponse, brandingResponse] = await Promise.all([
+                fetch(`${API_BASE}/business-profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`),
+            ]);
+
+            const profileText = profileResponse.ok ? await profileResponse.text() : "";
+            const profileData = profileText ? JSON.parse(profileText) : null;
+            const brandingData = brandingResponse.ok ? await brandingResponse.json() : null;
+
+            const companyName = profileData?.companyName || brandingData?.companyName || "";
+            const logoUrl = profileData?.logoUrl || brandingData?.logoUrl || "";
+
+            setBrandingName(brandingData?.companyName || "");
+            setBrandingLogoUrl(brandingData?.logoUrl || "");
+            setFormData({
+                companyName,
+                gstin: profileData?.gstin || "",
+                email: profileData?.email || "",
+                phone: profileData?.phone || "",
+                address: profileData?.address || "",
+                logoUrl
             });
-            if (response.ok) {
-                const text = await response.text();
-                if (text) {
-                    const data = JSON.parse(text);
-                    if (data) {
-                        setFormData({
-                            companyName: data.companyName || "",
-                            gstin: data.gstin || "",
-                            email: data.email || "",
-                            phone: data.phone || "",
-                            address: data.address || "",
-                            logoUrl: data.logoUrl || ""
-                        });
-                        if (data.logoUrl) {
-                            setLogoPreview(data.logoUrl);
-                        }
-                    }
-                }
+
+            if (logoUrl) {
+                setLogoPreview(logoUrl);
+            } else {
+                setLogoPreview(null);
             }
         } catch (error) {
             console.error("Failed to fetch profile:", error);
@@ -80,6 +91,25 @@ export default function SettingsPage() {
             setLoading(false);
         }
     };
+
+    const hasLogo = Boolean(logoPreview || formData.logoUrl || brandingLogoUrl);
+    const missingFields = [
+        !formData.companyName && "company name",
+        !hasLogo && "company logo",
+        !formData.gstin && "GSTIN",
+        !formData.email && "contact email",
+        !formData.phone && "phone number",
+        !formData.address && "full address",
+    ].filter(Boolean) as string[];
+
+    const alertMessage = missingFields.length > 0
+        ? `Complete ${missingFields.join(", ")} to finish your invoice profile.`
+        : null;
+
+    const companyNamePlaceholder = brandingName || "Antigravity Medical Systems";
+    const logoHint = brandingLogoUrl && !logoPreview
+        ? "Tenant logo is available and will be used until you upload a dedicated invoice logo."
+        : "Recommended: 200x200px PNG or JPG";
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -123,7 +153,6 @@ export default function SettingsPage() {
 
                 if (!logoRes.ok) throw new Error("Failed to upload logo");
 
-                // Refresh to get new URL (though we could just update local state)
                 fetchProfile();
                 alert("Settings and logo saved successfully!");
             } else {
@@ -163,6 +192,14 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground">Manage your distributor profile and system preferences.</p>
                 </div>
 
+                {alertMessage && (
+                    <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+                        <ShieldAlert className="h-4 w-4 !text-amber-700" />
+                        <AlertTitle>Complete distributor profile</AlertTitle>
+                        <AlertDescription>{alertMessage}</AlertDescription>
+                    </Alert>
+                )}
+
                 <div className="grid grid-cols-1 gap-6">
                     <Card>
                         <CardHeader>
@@ -198,7 +235,7 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-2 text-center w-40">
-                                        Recommended: 200x200px PNG or JPG
+                                        {logoHint}
                                     </p>
                                 </div>
 
@@ -209,7 +246,7 @@ export default function SettingsPage() {
                                         <div className="relative">
                                             <Building2 className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="Antigravity Medical Systems"
+                                                placeholder={companyNamePlaceholder}
                                                 className="pl-8"
                                                 value={formData.companyName}
                                                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}

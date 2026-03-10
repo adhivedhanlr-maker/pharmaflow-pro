@@ -3,6 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SalesGateway } from './sales.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 
+type AnalyticsRange = 'day' | 'week' | 'month' | 'year' | 'custom';
+type AnalyticsBucket = 'hour' | 'day' | 'month';
+
 @Injectable()
 export class SalesService {
     constructor(
@@ -223,15 +226,19 @@ export class SalesService {
 
     // Updated delivery verification logic with location support
 
-    async getSalesAnalytics(tenantId?: string, days: number = 7) {
-        const date = new Date();
-        date.setDate(date.getDate() - days);
+    async getSalesAnalytics(
+        tenantId?: string,
+        options?: { range?: string; startDate?: string; endDate?: string }
+    ) {
+        const range = this.normalizeAnalyticsRange(options?.range);
+        const { start, end, bucket } = this.resolveAnalyticsWindow(range, options?.startDate, options?.endDate);
 
         const sales = await this.prisma.sale.findMany({
             where: {
                 ...(tenantId ? { tenantId } : {}),
                 createdAt: {
-                    gte: date
+                    gte: start,
+                    lte: end,
                 }
             },
             select: {
@@ -240,28 +247,149 @@ export class SalesService {
             }
         });
 
-        // Group by date
-        const grouped = sales.reduce((acc, sale) => {
-            const dateStr = sale.createdAt.toISOString().split('T')[0];
-            if (!acc[dateStr]) {
-                acc[dateStr] = 0;
-            }
-            acc[dateStr] += sale.netAmount;
-            return acc;
-        }, {} as Record<string, number>);
+        const grouped = new Map<string, number>();
 
-        // Fill missing dates
-        const result = [];
-        for (let i = 0; i < days; i++) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            result.push({
-                date: dateStr,
-                total: grouped[dateStr] || 0
-            });
+        for (const sale of sales) {
+            const key = this.getAnalyticsBucketKey(sale.createdAt, bucket);
+            grouped.set(key, (grouped.get(key) || 0) + sale.netAmount);
         }
 
-        return result.reverse();
+        const points = this.buildAnalyticsBuckets(start, end, bucket).map((point) => ({
+            ...point,
+            total: grouped.get(point.key) || 0,
+        }));
+
+        return {
+            range,
+            bucket,
+            startDate: start.toISOString(),
+            endDate: end.toISOString(),
+            points,
+        };
+    }
+
+    private normalizeAnalyticsRange(range?: string): AnalyticsRange {
+        if (range === 'day' || range === 'week' || range === 'month' || range === 'year' || range === 'custom') {
+            return range;
+        }
+
+        return 'week';
+    }
+
+    private resolveAnalyticsWindow(range: AnalyticsRange, startDate?: string, endDate?: string) {
+        const now = new Date();
+
+        if (range === 'custom') {
+            if (!startDate || !endDate) {
+                throw new BadRequestException('startDate and endDate are required for custom analytics');
+            }
+
+            const start = new Date(`${startDate}T00:00:00.000Z`);
+            const end = new Date(`${endDate}T23:59:59.999Z`);
+
+            if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+                throw new BadRequestException('Invalid analytics date range');
+            }
+
+            if (start > end) {
+                throw new BadRequestException('startDate must be before endDate');
+            }
+
+            const diffDays = Math.ceil((end.getTime() - start.getTime()) / 86400000);
+            const bucket: AnalyticsBucket = diffDays <= 1 ? 'hour' : diffDays > 92 ? 'month' : 'day';
+
+            return { start, end, bucket };
+        }
+
+        if (range === 'day') {
+            const start = new Date(now);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(now);
+            end.setHours(23, 59, 59, 999);
+            return { start, end, bucket: 'hour' as const };
+        }
+
+        if (range === 'week') {
+            const start = new Date(now);
+            start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - 6);
+            const end = new Date(now);
+            end.setHours(23, 59, 59, 999);
+            return { start, end, bucket: 'day' as const };
+        }
+
+        if (range === 'month') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            return { start, end, bucket: 'day' as const };
+        }
+
+        const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+        return { start, end, bucket: 'month' as const };
+    }
+
+    private buildAnalyticsBuckets(start: Date, end: Date, bucket: AnalyticsBucket) {
+        const points: Array<{ key: string; label: string; date: string }> = [];
+
+        if (bucket === 'hour') {
+            const cursor = new Date(start);
+            while (cursor <= end) {
+                const key = this.getAnalyticsBucketKey(cursor, bucket);
+                points.push({
+                    key,
+                    label: cursor.toLocaleTimeString('en-US', { hour: 'numeric' }),
+                    date: cursor.toISOString(),
+                });
+                cursor.setHours(cursor.getHours() + 1, 0, 0, 0);
+            }
+            return points;
+        }
+
+        if (bucket === 'day') {
+            const cursor = new Date(start);
+            while (cursor <= end) {
+                const key = this.getAnalyticsBucketKey(cursor, bucket);
+                points.push({
+                    key,
+                    label: cursor.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    date: cursor.toISOString(),
+                });
+                cursor.setDate(cursor.getDate() + 1);
+                cursor.setHours(0, 0, 0, 0);
+            }
+            return points;
+        }
+
+        const cursor = new Date(start.getFullYear(), start.getMonth(), 1, 0, 0, 0, 0);
+        while (cursor <= end) {
+            const key = this.getAnalyticsBucketKey(cursor, bucket);
+            points.push({
+                key,
+                label: cursor.toLocaleDateString('en-US', { month: 'short' }),
+                date: cursor.toISOString(),
+            });
+            cursor.setMonth(cursor.getMonth() + 1, 1);
+            cursor.setHours(0, 0, 0, 0);
+        }
+
+        return points;
+    }
+
+    private getAnalyticsBucketKey(date: Date, bucket: AnalyticsBucket) {
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const hour = String(date.getUTCHours()).padStart(2, '0');
+
+        if (bucket === 'month') {
+            return `${year}-${month}`;
+        }
+
+        if (bucket === 'day') {
+            return `${year}-${month}-${day}`;
+        }
+
+        return `${year}-${month}-${day}-${hour}`;
     }
 }

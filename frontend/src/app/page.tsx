@@ -23,6 +23,7 @@ interface Stats {
   stockItems: number;
   customersCount: number;
   expiringSoon: number;
+  inventoryHealth: number;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -39,7 +40,8 @@ export default function Dashboard() {
     salesToday: 0,
     stockItems: 0,
     customersCount: 0,
-    expiringSoon: 0
+    expiringSoon: 0,
+    inventoryHealth: 0,
   });
   const [loading, setLoading] = useState(false);
 
@@ -67,26 +69,37 @@ export default function Dashboard() {
       const headers = {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       };
-      const [prodRes, custRes, expRes, saleRes] = await Promise.all([
+      const [prodRes, custRes, expRes, lowStockRes, saleRes] = await Promise.all([
         fetch(`${API_BASE}/inventory/products`, { headers }),
         fetch(`${API_BASE}/parties/customers`, { headers }),
         fetch(`${API_BASE}/inventory/alerts/expiring`, { headers }),
+        fetch(`${API_BASE}/inventory/alerts/low-stock`, { headers }),
         fetch(`${API_BASE}/sales/invoices`, { headers })
       ]);
 
       const productsData = prodRes.ok ? await prodRes.json() : { data: [] };
       const customersData = custRes.ok ? await custRes.json() : { data: [] };
       const expiring = expRes.ok ? await expRes.json() : [];
+      const lowStock = lowStockRes.ok ? await lowStockRes.json() : [];
       const sales = saleRes.ok ? await saleRes.json() : [];
 
       const products = productsData.data || productsData;
       const customers = customersData.data || customersData;
+      const totalBatches = Array.isArray(products)
+        ? products.reduce((acc: number, p: any) => acc + (p.batches?.length || 0), 0)
+        : 0;
+      const unhealthyCount = (Array.isArray(expiring) ? expiring.length : 0) + (Array.isArray(lowStock) ? lowStock.length : 0);
+      const healthyCount = Math.max(totalBatches - unhealthyCount, 0);
+      const inventoryHealth = totalBatches > 0
+        ? Math.round((healthyCount / totalBatches) * 100)
+        : 0;
 
       setStats({
         salesToday: Array.isArray(sales) ? sales.length : 0,
-        stockItems: Array.isArray(products) ? products.reduce((acc: number, p: any) => acc + (p.batches?.length || 0), 0) : 0,
+        stockItems: totalBatches,
         customersCount: Array.isArray(customers) ? customers.length : 0,
-        expiringSoon: Array.isArray(expiring) ? expiring.length : 0
+        expiringSoon: Array.isArray(expiring) ? expiring.length : 0,
+        inventoryHealth,
       });
     } catch (error) {
       console.error("Failed to fetch dashboard stats:", error);
@@ -187,13 +200,16 @@ export default function Dashboard() {
               <CardTitle>Inventory Health</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="text-sm text-muted-foreground space-y-4">
+                  <div className="flex justify-between items-center">
                   <span>Healthy Items</span>
-                  <span className="font-bold text-green-600">92%</span>
+                  <span className="font-bold text-green-600">{stats.inventoryHealth}%</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-green-500 h-full w-[92%]" />
+                  <div
+                    className="bg-green-500 h-full transition-all"
+                    style={{ width: `${stats.inventoryHealth}%` }}
+                  />
                 </div>
                 <p className="text-[10px]">Based on current stock levels and expiry dates.</p>
               </div>

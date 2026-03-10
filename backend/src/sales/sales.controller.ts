@@ -56,8 +56,17 @@ export class SalesController {
     }
     @Get('analytics')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    getAnalytics(@Request() req: any, @Query('days') days?: string) {
-        return this.salesService.getSalesAnalytics(req.user?.tenantId, days ? parseInt(days) : 7);
+    getAnalytics(
+        @Request() req: any,
+        @Query('range') range?: string,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        return this.salesService.getSalesAnalytics(req.user?.tenantId, {
+            range,
+            startDate,
+            endDate,
+        });
     }
 
     @Get(':id/delivery-proof')
