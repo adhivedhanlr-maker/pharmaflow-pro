@@ -1,15 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Lock, User } from "lucide-react";
+import { Building2, Loader2, Lock, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import Image from "next/image";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+type TenantBranding = {
+    slug: string;
+    companyName: string;
+    logoUrl: string | null;
+    primaryColor: string;
+    accentColor: string;
+    loginTitle: string;
+    loginSubtitle: string;
+    faviconUrl: string | null;
+};
+
+const DEFAULT_BRANDING: TenantBranding = {
+    slug: "default",
+    companyName: "PharmaFlow Pro",
+    logoUrl: null,
+    primaryColor: "#2563eb",
+    accentColor: "#0f172a",
+    loginTitle: "Welcome Back",
+    loginSubtitle: "Sign in to manage your pharmaceutical distribution",
+    faviconUrl: null,
+};
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -18,7 +39,50 @@ export default function LoginPage() {
     const [requires2FA, setRequires2FA] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [branding, setBranding] = useState<TenantBranding>(DEFAULT_BRANDING);
     const { login } = useAuth();
+
+    useEffect(() => {
+        const fetchBranding = async () => {
+            try {
+                const host = window.location.host;
+                const response = await fetch(
+                    `${API_BASE}/public/tenant-branding?host=${encodeURIComponent(host)}`
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data: TenantBranding = await response.json();
+                setBranding({
+                    ...DEFAULT_BRANDING,
+                    ...data,
+                });
+            } catch {
+                // Keep default branding when the tenant lookup is unavailable.
+            }
+        };
+
+        fetchBranding();
+    }, []);
+
+    useEffect(() => {
+        document.title = `${branding.companyName} Login`;
+
+        if (!branding.faviconUrl) {
+            return;
+        }
+
+        let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+        if (!favicon) {
+            favicon = document.createElement("link");
+            favicon.rel = "icon";
+            document.head.appendChild(favicon);
+        }
+
+        favicon.href = branding.faviconUrl;
+    }, [branding]);
 
     const handleQuickLogin = async (roleUsername: string) => {
         setUsername(roleUsername);
@@ -106,24 +170,46 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div
+            className="min-h-screen flex items-center justify-center p-6"
+            style={{
+                background: `linear-gradient(135deg, ${branding.accentColor} 0%, ${branding.primaryColor} 100%)`,
+            }}
+        >
             <div className="w-full max-w-md space-y-8">
                 <div className="text-center space-y-2">
                     <div className="flex justify-center mb-6">
-                        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
-                            <div className="bg-primary p-2 rounded-lg">
-                                <Lock className="text-white h-6 w-6" />
+                        <div className="bg-white/95 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/70 flex items-center gap-3">
+                            <div
+                                className="p-2 rounded-lg flex h-12 w-12 items-center justify-center overflow-hidden"
+                                style={{ backgroundColor: branding.primaryColor }}
+                            >
+                                {branding.logoUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={branding.logoUrl}
+                                        alt={`${branding.companyName} logo`}
+                                        className="h-full w-full object-contain"
+                                    />
+                                ) : (
+                                    <Building2 className="text-white h-6 w-6" />
+                                )}
                             </div>
-                            <span className="text-xl font-bold tracking-tight text-slate-800">
-                                PharmaFlow <span className="text-primary">Pro</span>
-                            </span>
+                            <div className="text-left">
+                                <span className="text-xl font-bold tracking-tight text-slate-800 block">
+                                    {branding.companyName}
+                                </span>
+                                <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-500">
+                                    Client Portal
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900">Welcome Back</h1>
-                    <p className="text-slate-500 text-sm">Sign in to manage your pharmaceutical distribution</p>
+                    <h1 className="text-3xl font-bold text-white">{branding.loginTitle}</h1>
+                    <p className="text-white/80 text-sm">{branding.loginSubtitle}</p>
                 </div>
 
-                <Card className="border-slate-200 shadow-xl shadow-slate-200/50">
+                <Card className="border-white/50 bg-white/95 backdrop-blur shadow-2xl shadow-slate-900/20">
                     <CardHeader>
                         <CardTitle className="text-lg">Staff Login</CardTitle>
                         <CardDescription>Enter your credentials to access the dashboard</CardDescription>
@@ -163,7 +249,12 @@ export default function LoginPage() {
                                         />
                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>
+                                <Button
+                                    type="submit"
+                                    className="w-full h-11 text-sm font-semibold"
+                                    style={{ backgroundColor: branding.primaryColor }}
+                                    disabled={loading}
+                                >
                                     {loading ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
@@ -204,7 +295,12 @@ export default function LoginPage() {
                                     >
                                         Back
                                     </Button>
-                                    <Button type="submit" className="flex-1" disabled={loading || twoFactorCode.length !== 6}>
+                                    <Button
+                                        type="submit"
+                                        className="flex-1"
+                                        style={{ backgroundColor: branding.primaryColor }}
+                                        disabled={loading || twoFactorCode.length !== 6}
+                                    >
                                         {loading ? (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         ) : (
@@ -223,7 +319,7 @@ export default function LoginPage() {
                             <span className="w-full border-t border-slate-200" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-slate-50 px-2 text-slate-400 font-medium tracking-widest">Developer Quick Access</span>
+                            <span className="bg-white/95 px-2 text-slate-400 font-medium tracking-widest">Developer Quick Access</span>
                         </div>
                     </div>
 
@@ -276,8 +372,8 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <p className="text-center text-xs text-slate-400">
-                    &copy; {new Date().getFullYear()} PharmaFlow Pro Systems. All rights reserved.
+                <p className="text-center text-xs text-white/70">
+                    &copy; {new Date().getFullYear()} {branding.companyName}. Powered by PharmaFlow Pro.
                 </p>
             </div>
         </div>

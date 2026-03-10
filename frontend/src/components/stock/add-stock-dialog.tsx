@@ -33,6 +33,38 @@ import { useAuth } from "@/context/auth-context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+const generateNextBatchNumber = (batches: any[]) => {
+    if (!batches || batches.length === 0) {
+        const dateStr = new Date().toISOString().slice(2, 7).replace('-', '');
+        return `B-${dateStr}-01`;
+    }
+
+    let maxSuffix = -1;
+    let bestPrefix = "";
+    let padding = 0;
+
+    for (const b of batches) {
+        const match = b.batchNumber.match(/^(.*?)(\d+)$/);
+        if (match) {
+            const prefix = match[1];
+            const numStr = match[2];
+            const num = parseInt(numStr, 10);
+            if (num > maxSuffix) {
+                maxSuffix = num;
+                bestPrefix = prefix;
+                padding = numStr.length;
+            }
+        }
+    }
+
+    if (maxSuffix !== -1) {
+        const nextNumStr = String(maxSuffix + 1).padStart(padding, '0');
+        return `${bestPrefix}${nextNumStr}`;
+    }
+
+    return `BATCH-${batches.length + 1}`;
+};
+
 interface AddStockDialogProps {
     onSuccess: () => void;
 }
@@ -211,7 +243,11 @@ export function AddStockDialog({ onSuccess }: AddStockDialogProps) {
                                                             value={product.name}
                                                             onSelect={() => {
                                                                 setSelectedProduct(product);
-                                                                setFormData(prev => ({ ...prev, mrp: product.mrp.toString() }));
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    mrp: product.mrp.toString(),
+                                                                    batchNumber: generateNextBatchNumber(product.batches || [])
+                                                                }));
                                                                 setIsProductPopoverOpen(false);
                                                             }}
                                                         >

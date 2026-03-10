@@ -24,15 +24,22 @@ import {
     Loader2,
     Edit2,
     Trash2,
-    ShieldAlert
+    ShieldAlert,
+    ArrowUpDown,
+    ArrowDown,
+    ArrowUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RoleGate } from "@/components/auth/role-gate";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Product {
     id: string;
     name: string;
+    company?: string;
+    hsnCode?: string;
+    mrp: number;
     batches: {
         id: string;
         batchNumber: string;
@@ -47,6 +54,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 import { cn } from "@/lib/utils";
 import { EditStockDialog } from "@/components/stock/edit-stock-dialog";
 import { AddStockDialog } from "@/components/stock/add-stock-dialog";
+import { EditProductDialog } from "@/components/stock/edit-product-dialog";
 
 export default function StockPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -54,6 +62,32 @@ export default function StockPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [editingBatch, setEditingBatch] = useState<any>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [editProductDialogOpen, setEditProductDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("batches");
+
+    type BatchSortField = 'productName' | 'batchNumber' | 'expiryDate' | 'currentStock';
+    type ProductSortField = 'name' | 'company' | 'mrp' | 'batchesCount';
+    type SortOrder = 'asc' | 'desc';
+
+    const [batchSortConfig, setBatchSortConfig] = useState<{ field: BatchSortField, order: SortOrder }>({ field: 'productName', order: 'asc' });
+    const [productSortConfig, setProductSortConfig] = useState<{ field: ProductSortField, order: SortOrder }>({ field: 'name', order: 'asc' });
+
+    const handleBatchSort = (field: BatchSortField) => {
+        if (batchSortConfig.field === field) {
+            setBatchSortConfig({ field, order: batchSortConfig.order === 'asc' ? 'desc' : 'asc' });
+        } else {
+            setBatchSortConfig({ field, order: 'asc' });
+        }
+    };
+
+    const handleProductSort = (field: ProductSortField) => {
+        if (productSortConfig.field === field) {
+            setProductSortConfig({ field, order: productSortConfig.order === 'asc' ? 'desc' : 'asc' });
+        } else {
+            setProductSortConfig({ field, order: 'asc' });
+        }
+    };
 
     useEffect(() => {
         fetchStock();
@@ -80,7 +114,7 @@ export default function StockPage() {
 
     const allBatches = useMemo(() => {
         if (!Array.isArray(products)) return [];
-        const flat = products.flatMap(p =>
+        let flat = products.flatMap(p =>
             p.batches.map(b => ({
                 ...b,
                 productName: p.name,
@@ -91,9 +125,57 @@ export default function StockPage() {
             b.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        // Sort case-insensitively by product name
-        return flat.sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: 'base' }));
-    }, [products, searchQuery]);
+        flat.sort((a, b) => {
+            let comparison = 0;
+            switch (batchSortConfig.field) {
+                case 'productName':
+                    comparison = a.productName.localeCompare(b.productName, undefined, { sensitivity: 'base' });
+                    break;
+                case 'batchNumber':
+                    comparison = a.batchNumber.localeCompare(b.batchNumber, undefined, { sensitivity: 'base' });
+                    break;
+                case 'expiryDate':
+                    comparison = new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+                    break;
+                case 'currentStock':
+                    comparison = a.currentStock - b.currentStock;
+                    break;
+            }
+            return batchSortConfig.order === 'asc' ? comparison : -comparison;
+        });
+
+        return flat;
+    }, [products, searchQuery, batchSortConfig]);
+
+    const sortedProducts = useMemo(() => {
+        if (!Array.isArray(products)) return [];
+        let filtered = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        filtered.sort((a, b) => {
+            let comparison = 0;
+            switch (productSortConfig.field) {
+                case 'name':
+                    comparison = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+                    break;
+                case 'company':
+                    comparison = (a.company || '').localeCompare(b.company || '', undefined, { sensitivity: 'base' });
+                    break;
+                case 'mrp':
+                    comparison = (a.mrp || 0) - (b.mrp || 0);
+                    break;
+                case 'batchesCount':
+                    comparison = (a.batches?.length || 0) - (b.batches?.length || 0);
+                    break;
+            }
+            return productSortConfig.order === 'asc' ? comparison : -comparison;
+        });
+        return filtered;
+    }, [products, searchQuery, productSortConfig]);
+
+    const renderSortIcon = (field: string, configField: string, order: SortOrder) => {
+        if (field !== configField) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+        return order === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+    };
 
     const getStatusBadge = (stock: number, expiry: string) => {
         const expDate = new Date(expiry);
@@ -131,6 +213,30 @@ export default function StockPage() {
         }
     };
 
+    const handleDeleteProduct = async (productId: string, productName: string) => {
+        if (!window.confirm(`Are you sure you want to delete Product "${productName}"? This will delete all its batches and cannot be undone.`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/inventory/products/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+
+            if (response.ok) {
+                toast.success("Product deleted successfully");
+                fetchStock();
+            } else {
+                const error = await response.json();
+                toast.error(error.message || "Failed to delete product");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("Failed to connect to server");
+        }
+    };
+
     return (
         <RoleGate
             allowedRoles={["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"]}
@@ -150,12 +256,11 @@ export default function StockPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Stock Inventory</h1>
-                        <p className="text-muted-foreground">View and manage all pharmaceutical batches.</p>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Inventory Management</h1>
+                        <p className="text-muted-foreground">Manage batches and your product master database.</p>
                     </div>
                     <div className="flex gap-2">
                         <AddStockDialog onSuccess={fetchStock} />
-                        <Button variant="outline" className="hidden sm:flex border-slate-200"><Filter className="mr-2 h-4 w-4" /> Export Report</Button>
                         <Button variant="outline" onClick={fetchStock} className="border-slate-200">
                             <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                             Refresh
@@ -163,86 +268,184 @@ export default function StockPage() {
                     </div>
                 </div>
 
-                <Card>
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Batch Visibility</CardTitle>
-                        <div className="relative w-72">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <TabsList className="bg-slate-100 p-1 h-11">
+                            <TabsTrigger value="batches" className="h-9 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">Stock Batches</TabsTrigger>
+                            <TabsTrigger value="products" className="h-9 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">Product Master</TabsTrigger>
+                        </TabsList>
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                type="search"
-                                placeholder="Search products/batches..."
-                                className="pl-8"
+                                placeholder={activeTab === "batches" ? "Search batch or product..." : "Search product master..."}
+                                className="pl-9 h-11"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Product Name</TableHead>
-                                    <TableHead>Batch No.</TableHead>
-                                    <TableHead>Expiry</TableHead>
-                                    <TableHead className="text-right">Current Stock</TableHead>
-                                    <TableHead className="text-right">S.Price</TableHead>
-                                    <TableHead className="text-right">Value</TableHead>
-                                    <TableHead className="w-[100px] text-center">Status</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
-                                    </TableRow>
-                                ) : allBatches.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-20 text-muted-foreground">No stock matching your search.</TableCell>
-                                    </TableRow>
-                                ) : allBatches.map((b, idx) => (
-                                    <TableRow key={`${b.id}-${idx}`}>
-                                        <TableCell className="font-medium text-primary">{b.productName}</TableCell>
-                                        <TableCell className="font-mono">{b.batchNumber}</TableCell>
-                                        <TableCell className="text-muted-foreground">{new Date(b.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</TableCell>
-                                        <TableCell className="text-right font-bold">{b.currentStock} Units</TableCell>
-                                        <TableCell className="text-right font-mono">₹{b.salePrice.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-mono">₹{(b.currentStock * b.salePrice).toLocaleString()}</TableCell>
-                                        <TableCell className="text-center">
-                                            {getStatusBadge(b.currentStock, b.expiryDate)}
-                                        </TableCell>
-                                        <TableCell className="flex gap-1 justify-end items-center">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                onClick={() => {
-                                                    setEditingBatch(b);
-                                                    setEditDialogOpen(true);
-                                                }}
-                                            >
-                                                <Edit2 className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                onClick={() => handleDeleteBatch(b.id, b.batchNumber)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                    </div>
+
+                    <TabsContent value="batches" className="mt-0">
+                        <Card className="border shadow-sm overflow-hidden">
+                            <CardContent className="p-0">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50">
+                                            <TableHead className="w-[60px]">Sr. No.</TableHead>
+                                            <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('productName')}>
+                                                <div className="flex items-center">Product Name {renderSortIcon('productName', batchSortConfig.field, batchSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('batchNumber')}>
+                                                <div className="flex items-center">Batch No. {renderSortIcon('batchNumber', batchSortConfig.field, batchSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('expiryDate')}>
+                                                <div className="flex items-center">Expiry {renderSortIcon('expiryDate', batchSortConfig.field, batchSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('currentStock')}>
+                                                <div className="flex items-center justify-end">Current Stock {renderSortIcon('currentStock', batchSortConfig.field, batchSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="text-right">S.Price</TableHead>
+                                            <TableHead className="text-right">Value</TableHead>
+                                            <TableHead className="text-center">Status</TableHead>
+                                            <TableHead className="w-[100px] text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {loading ? (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
+                                            </TableRow>
+                                        ) : allBatches.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">No stock matching your search.</TableCell>
+                                            </TableRow>
+                                        ) : allBatches.map((b, idx) => (
+                                            <TableRow key={`${b.id}-${idx}`} className="hover:bg-slate-50/50">
+                                                <TableCell className="text-slate-500">{idx + 1}</TableCell>
+                                                <TableCell className="font-semibold text-blue-900">{b.productName}</TableCell>
+                                                <TableCell className="font-mono text-xs">{b.batchNumber}</TableCell>
+                                                <TableCell className="text-slate-500">{new Date(b.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</TableCell>
+                                                <TableCell className="text-right font-bold text-slate-700">{b.currentStock} Units</TableCell>
+                                                <TableCell className="text-right font-mono">₹{b.salePrice.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-mono">₹{(b.currentStock * b.salePrice).toLocaleString()}</TableCell>
+                                                <TableCell className="text-center">
+                                                    {getStatusBadge(b.currentStock, b.expiryDate)}
+                                                </TableCell>
+                                                <TableCell className="flex gap-1 justify-end items-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        onClick={() => {
+                                                            setEditingBatch(b);
+                                                            setEditDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => handleDeleteBatch(b.id, b.batchNumber)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="products" className="mt-0">
+                        <Card className="border shadow-sm overflow-hidden">
+                            <CardContent className="p-0">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50">
+                                            <TableHead className="w-[60px]">Sr. No.</TableHead>
+                                            <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('name')}>
+                                                <div className="flex items-center">Product Name {renderSortIcon('name', productSortConfig.field, productSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('company')}>
+                                                <div className="flex items-center">Company {renderSortIcon('company', productSortConfig.field, productSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead>HSN Code</TableHead>
+                                            <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('mrp')}>
+                                                <div className="flex items-center justify-end">MRP {renderSortIcon('mrp', productSortConfig.field, productSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('batchesCount')}>
+                                                <div className="flex items-center justify-end">Batches {renderSortIcon('batchesCount', productSortConfig.field, productSortConfig.order)}</div>
+                                            </TableHead>
+                                            <TableHead className="w-[100px] text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {loading ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
+                                            </TableRow>
+                                        ) : sortedProducts.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>
+                                            </TableRow>
+                                        ) : sortedProducts
+                                            .map((p, idx) => (
+                                                <TableRow key={p.id} className="hover:bg-slate-50/50">
+                                                    <TableCell className="text-slate-500">{idx + 1}</TableCell>
+                                                    <TableCell className="font-semibold text-blue-900">{p.name}</TableCell>
+                                                    <TableCell className="text-slate-500">{p.company || 'N/A'}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{p.hsnCode || 'N/A'}</TableCell>
+                                                    <TableCell className="text-right font-mono">₹{p.mrp.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Badge variant="outline" className="font-normal">{p.batches?.length || 0} batches</Badge>
+                                                    </TableCell>
+                                                    <TableCell className="flex gap-1 justify-end items-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                            onClick={() => {
+                                                                setEditingProduct(p);
+                                                                setEditProductDialogOpen(true);
+                                                            }}
+                                                            title="Edit Product"
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeleteProduct(p.id, p.name)}
+                                                            title="Delete Product from Master"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
 
                 <EditStockDialog
                     batch={editingBatch}
                     open={editDialogOpen}
                     onOpenChange={setEditDialogOpen}
+                    onSuccess={fetchStock}
+                />
+
+                <EditProductDialog
+                    product={editingProduct}
+                    open={editProductDialogOpen}
+                    onOpenChange={setEditProductDialogOpen}
                     onSuccess={fetchStock}
                 />
             </div>

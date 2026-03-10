@@ -21,6 +21,7 @@ import { AuditLogModule } from './audit/audit-log.module';
 import { VisitsModule } from './visits/visits.module';
 import { OrdersModule } from './orders/orders.module';
 import { RoutesModule } from './routes/routes.module';
+import { TenantBrandingModule } from './tenant-branding/tenant-branding.module';
 
 
 @Module({
@@ -39,6 +40,7 @@ import { RoutesModule } from './routes/routes.module';
     VisitsModule,
     OrdersModule,
     RoutesModule,
+    TenantBrandingModule,
 
     ScheduleModule.forRoot(),
     MailerModule.forRoot({

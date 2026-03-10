@@ -73,6 +73,21 @@ export class InventoryService {
         });
     }
 
+    async updateProduct(id: string, data: any) {
+        const product = await this.prisma.product.findUnique({ where: { id } });
+        if (!product) throw new NotFoundException('Product not found');
+
+        return this.prisma.product.update({
+            where: { id },
+            data: {
+                name: data.name,
+                company: data.company,
+                hsnCode: data.hsnCode,
+                mrp: data.mrp,
+            },
+        });
+    }
+
     // Batch Methods
     async createBatch(data: any) {
         return this.prisma.batch.create({

@@ -128,8 +128,10 @@ export default function BillingPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
-                const data = await response.json();
-                setBusinessProfile(data);
+                const text = await response.text();
+                if (text) {
+                    setBusinessProfile(JSON.parse(text));
+                }
             }
         } catch (error) {
             console.error("Failed to fetch business profile:", error);

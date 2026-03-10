@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // I need to create this
 import { RolesGuard } from '../auth/roles.guard';
@@ -50,6 +50,12 @@ export class InventoryController {
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
     createProduct(@Body() data: any) {
         return this.inventoryService.createProduct(data);
+    }
+
+    @Put('products/:id')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    updateProduct(@Param('id') id: string, @Body() data: any) {
+        return this.inventoryService.updateProduct(id, data);
     }
 
     @Post('batches')

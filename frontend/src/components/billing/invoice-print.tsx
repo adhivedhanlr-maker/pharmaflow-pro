@@ -32,6 +32,7 @@ interface InvoicePrintProps {
     totals: {
         subtotal: number;
         gst: number;
+        discount?: number;
         net: number;
     };
 }
@@ -106,7 +107,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                 <table className="w-full mb-8 text-sm">
                     <thead>
                         <tr className="border-b-2 border-slate-800">
-                            <th className="text-left py-2 font-bold w-[40%]">Product Description</th>
+                            <th className="text-left py-2 font-bold w-[5%]">Sr. No.</th>
+                            <th className="text-left py-2 font-bold w-[35%]">Product Description</th>
                             <th className="text-left py-2 font-bold">Batch</th>
                             <th className="text-right py-2 font-bold">Qty</th>
                             <th className="text-right py-2 font-bold">Price</th>
@@ -117,6 +119,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     <tbody>
                         {items.map((item, index) => (
                             <tr key={item.id} className="border-b border-slate-100">
+                                <td className="py-3 font-medium text-slate-600">{index + 1}</td>
                                 <td className="py-3">
                                     <p className="font-bold text-slate-900">{item.name}</p>
                                     <p className="text-[10px] text-slate-500">HSN: 3004</p>
@@ -141,15 +144,21 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     <div className="w-[300px] space-y-3">
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Subtotal</span>
-                            <span>₹{totals.subtotal.toFixed(2)}</span>
+                            <span>₹{(totals.subtotal || 0).toFixed(2)}</span>
                         </div>
+                        {totals.discount! > 0 && (
+                            <div className="flex justify-between text-sm text-destructive">
+                                <span>Discount</span>
+                                <span>- ₹{(totals.discount || 0).toFixed(2)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Taxable Amount</span>
-                            <span>₹{totals.subtotal.toFixed(2)}</span>
+                            <span>₹{((totals.subtotal || 0) - (totals.discount || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>Total GST</span>
-                            <span>₹{totals.gst.toFixed(2)}</span>
+                            <span>₹{(totals.gst || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold border-t border-slate-800 pt-3 text-slate-900">
                             <span>Grand Total</span>

@@ -56,18 +56,21 @@ export default function SettingsPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
-                const data = await response.json();
-                if (data) {
-                    setFormData({
-                        companyName: data.companyName || "",
-                        gstin: data.gstin || "",
-                        email: data.email || "",
-                        phone: data.phone || "",
-                        address: data.address || "",
-                        logoUrl: data.logoUrl || ""
-                    });
-                    if (data.logoUrl) {
-                        setLogoPreview(data.logoUrl);
+                const text = await response.text();
+                if (text) {
+                    const data = JSON.parse(text);
+                    if (data) {
+                        setFormData({
+                            companyName: data.companyName || "",
+                            gstin: data.gstin || "",
+                            email: data.email || "",
+                            phone: data.phone || "",
+                            address: data.address || "",
+                            logoUrl: data.logoUrl || ""
+                        });
+                        if (data.logoUrl) {
+                            setLogoPreview(data.logoUrl);
+                        }
                     }
                 }
             }

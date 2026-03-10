@@ -109,7 +109,10 @@ export default function SalesHistoryPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
-                setBusinessProfile(await response.json());
+                const text = await response.text();
+                if (text) {
+                    setBusinessProfile(JSON.parse(text));
+                }
             }
         } catch (error) {
             console.error("Failed to fetch business profile:", error);
@@ -242,6 +245,7 @@ export default function SalesHistoryPage() {
                             totals={{
                                 subtotal: selectedInvoice.totalAmount, // This is pre-tax total in backend
                                 gst: selectedInvoice.gstAmount,
+                                discount: selectedInvoice.discountAmount,
                                 net: selectedInvoice.netAmount
                             }}
                         />

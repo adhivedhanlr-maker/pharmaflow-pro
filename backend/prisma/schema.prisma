@@ -155,7 +155,8 @@ model Sale {
   gstAmount     Float
   netAmount     Float
   discountAmount Float   @default(0)
-  isCash        Boolean  @default(true)
+  isCash        Boolean  @default(true) // Deprecated: keeping for compatibility
+  paymentMethod PaymentMethod @default(CASH)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   items         SaleItem[]
@@ -164,6 +165,14 @@ model Sale {
   deliveryOtp    String?
   deliveredAt    DateTime?
   deliveryProof  DeliveryProof?
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT
+  UPI
+  CARD
+  BANK_TRANSFER
 }
 
 model DeliveryProof {
@@ -416,4 +425,25 @@ model LocationLog {
 
   @@index([userId])
   @@index([timestamp])
+}
+
+model TenantBranding {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  companyName    String
+  customDomain   String?  @unique
+  logoUrl        String?
+  primaryColor   String?  @default("#2563eb")
+  accentColor    String?  @default("#0f172a")
+  loginTitle     String?
+  loginSubtitle  String?
+  faviconUrl     String?
+  isDefault      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([customDomain])
+  @@index([isActive])
 }
