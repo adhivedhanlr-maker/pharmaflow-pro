@@ -8,8 +8,12 @@ export function PWAInstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [showInstallPrompt, setShowInstallPrompt] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const [showIOSHelp, setShowIOSHelp] = useState(false);
 
     useEffect(() => {
+        const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
         const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -46,8 +50,13 @@ export function PWAInstallPrompt() {
 
         window.addEventListener('beforeinstallprompt', handler);
 
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (isStandalone) {
             setShowInstallPrompt(false);
+            setShowIOSHelp(false);
+        } else if (isIos) {
+            setShowInstallPrompt(true);
+            setShowIOSHelp(true);
+            setIsVisible(true);
         }
 
         return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -92,14 +101,18 @@ export function PWAInstallPrompt() {
                         Install PharmaFlow Pro
                     </h3>
                     <p className="text-sm text-slate-600 mb-3">
-                        Install our app for faster access and offline support
+                        {showIOSHelp
+                            ? "On iPhone, tap Share in Safari and then Add to Home Screen."
+                            : "Install our app for faster access and offline support"}
                     </p>
                     <div className="flex gap-2">
-                        <Button onClick={handleInstall} size="sm" className="flex-1">
-                            Install
-                        </Button>
+                        {!showIOSHelp && (
+                            <Button onClick={handleInstall} size="sm" className="flex-1">
+                                Install
+                            </Button>
+                        )}
                         <Button onClick={handleDismiss} size="sm" variant="outline">
-                            Not now
+                            {showIOSHelp ? "Close" : "Not now"}
                         </Button>
                     </div>
                 </div>

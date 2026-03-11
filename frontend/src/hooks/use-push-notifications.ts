@@ -33,7 +33,7 @@ export function usePushNotifications() {
             }
 
             try {
-                const registration = await navigator.serviceWorker.register("/sw.js");
+                const registration = await navigator.serviceWorker.ready;
 
                 let permission = Notification.permission;
                 if (permission === "default") {
