@@ -2,12 +2,38 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CheckInDto } from './dto/check-in.dto';
 
+const CHECK_IN_RADIUS_METERS = 100;
+
 @Injectable()
 export class VisitsService {
     constructor(private prisma: PrismaService) { }
 
     async checkIn(userId: string, tenantId: string | undefined, dto: CheckInDto) {
         return this.prisma.$transaction(async (tx) => {
+            const customer = await tx.customer.findFirst({
+                where: {
+                    id: dto.customerId,
+                    ...(tenantId ? { tenantId } : {}),
+                },
+                select: {
+                    latitude: true,
+                    longitude: true,
+                },
+            });
+
+            const hasCustomerCoords = customer?.latitude != null && customer?.longitude != null;
+            const distance = hasCustomerCoords
+                ? Math.round(
+                    this.calculateDistance(
+                        dto.latitude,
+                        dto.longitude,
+                        Number(customer.latitude),
+                        Number(customer.longitude),
+                    ),
+                )
+                : null;
+            const status = distance !== null && distance <= CHECK_IN_RADIUS_METERS ? 'VERIFIED' : 'MISMATCH';
+
             // Update rep's last known location
             await tx.user.update({
                 where: { id: userId },
@@ -24,8 +50,8 @@ export class VisitsService {
                     customerId: dto.customerId,
                     latitude: dto.latitude,
                     longitude: dto.longitude,
-                    distance: dto.distance,
-                    status: dto.status,
+                    distance: distance ?? dto.distance ?? null,
+                    status,
                 },
                 include: {
                     customer: true,
@@ -39,6 +65,21 @@ export class VisitsService {
                 },
             });
         });
+    }
+
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+        const radius = 6371e3;
+        const phi1 = lat1 * Math.PI / 180;
+        const phi2 = lat2 * Math.PI / 180;
+        const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+        const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2)
+            + Math.cos(phi1) * Math.cos(phi2)
+            * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return radius * c;
     }
 
     async getReports(tenantId?: string) {

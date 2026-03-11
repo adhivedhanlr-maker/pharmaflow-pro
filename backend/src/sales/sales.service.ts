@@ -159,6 +159,9 @@ export class SalesService {
 
     async findAll(user?: any) {
         const where: any = {};
+        if (user?.tenantId) {
+            where.tenantId = user.tenantId;
+        }
         if (user && user.role === 'SALES_REP') {
             where.repId = user.userId;
         }

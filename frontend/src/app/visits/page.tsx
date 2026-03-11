@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { CustomerDialog } from "@/components/billing/customer-dialog";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const CHECK_IN_RADIUS_METERS = 100;
 
 export default function VisitsPage() {
     const { token } = useAuth();
@@ -99,7 +100,7 @@ export default function VisitsPage() {
             const custLng = customer.longitude || 0;
 
             const distance = calculateDistance(latitude, longitude, custLat, custLng);
-            const isValid = distance < 500; // 500m radius
+            const isValid = distance <= CHECK_IN_RADIUS_METERS;
 
             try {
                 const response = await fetch(`${API_BASE}/visits/check-in`, {
@@ -123,7 +124,7 @@ export default function VisitsPage() {
                         // Navigate to orders page to capture requirements
                         window.location.href = `/orders?customerId=${customer.id}`;
                     } else {
-                        alert(`Check-in recorded, but you are ${Math.round(distance)}m away. Distance mismatch flagged.`);
+                        alert(`Check-in recorded, but you are ${Math.round(distance)}m away. Allowed radius is ${CHECK_IN_RADIUS_METERS}m.`);
                         // Optional: Still navigate but with a flag? For now just stay.
                     }
                 } else {
@@ -267,6 +268,9 @@ export default function VisitsPage() {
                     <p className="mt-1">
                         For accurate tracking, we recommend using the **PharmaFlow Mobile App**.
                         Web browser check-ins are recorded but may have lower location precision depending on your internet connection.
+                    </p>
+                    <p className="mt-1 font-medium">
+                        Verified check-ins require being within {CHECK_IN_RADIUS_METERS}m of the mapped pharmacy location.
                     </p>
                 </div>
             </div>

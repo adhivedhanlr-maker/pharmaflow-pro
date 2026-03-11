@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   TrendingUp,
   Package,
   Users,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  ShieldAlert
 } from "lucide-react";
 import { SalesRepDashboard } from "@/components/dashboard/sales-rep-dashboard";
 import { useAuth } from "@/context/auth-context";
@@ -17,6 +19,7 @@ import { RoleGate } from "@/components/auth/role-gate";
 import { io } from "socket.io-client";
 import { cn } from "@/lib/utils";
 import { SalesChart } from "@/components/dashboard/sales-chart";
+import Link from "next/link";
 
 interface Stats {
   salesToday: number;
@@ -44,9 +47,13 @@ export default function Dashboard() {
     inventoryHealth: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [profileAlertMessage, setProfileAlertMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
+    if (user?.role === "ADMIN") {
+      void fetchProfileCompleteness();
+    }
 
     // Real-time synchronization
     const socket = io(API_BASE);
@@ -61,7 +68,7 @@ export default function Dashboard() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [user?.role]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -105,6 +112,42 @@ export default function Dashboard() {
       console.error("Failed to fetch dashboard stats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProfileCompleteness = async () => {
+    try {
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`
+      };
+
+      const [profileResponse, brandingResponse] = await Promise.all([
+        fetch(`${API_BASE}/business-profile`, { headers }),
+        fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`),
+      ]);
+
+      const profileText = profileResponse.ok ? await profileResponse.text() : "";
+      const profile = profileText ? JSON.parse(profileText) : null;
+      const branding = brandingResponse.ok ? await brandingResponse.json() : null;
+
+      const hasLogo = Boolean(profile?.logoUrl || branding?.logoUrl);
+      const companyName = profile?.companyName || branding?.companyName || "";
+      const missingFields = [
+        !companyName && "company name",
+        !hasLogo && "company logo",
+        !profile?.gstin && "GSTIN",
+        !profile?.email && "contact email",
+        !profile?.phone && "phone number",
+        !profile?.address && "full address",
+      ].filter(Boolean) as string[];
+
+      setProfileAlertMessage(
+        missingFields.length > 0
+          ? `Complete ${missingFields.join(", ")} to finish your invoice profile.`
+          : null
+      );
+    } catch (error) {
+      console.error("Failed to fetch profile completeness:", error);
     }
   };
 
@@ -165,6 +208,19 @@ export default function Dashboard() {
           Refresh
         </Button>
       </div>
+
+      {user?.role === "ADMIN" && profileAlertMessage && (
+        <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+          <ShieldAlert className="h-4 w-4 !text-amber-700" />
+          <AlertTitle>Complete distributor profile</AlertTitle>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>{profileAlertMessage}</span>
+            <Link href="/settings" className="text-sm font-semibold text-amber-800 underline underline-offset-4">
+              Open Settings
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {filteredStats.map((stat) => (
