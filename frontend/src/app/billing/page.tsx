@@ -53,6 +53,7 @@ interface Customer {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const BILLING_DRAFT_STORAGE_KEY = "billing_draft_v1";
 
 export default function BillingPage() {
     const { token, user } = useAuth();
@@ -78,6 +79,21 @@ export default function BillingPage() {
     const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [extraDiscount, setExtraDiscount] = useState(0);
     const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const savedDraft = localStorage.getItem(BILLING_DRAFT_STORAGE_KEY);
+        if (!savedDraft) return;
+
+        try {
+            const draft = JSON.parse(savedDraft);
+            setSelectedCustomerId(draft.selectedCustomerId || "");
+            setItems(Array.isArray(draft.items) ? draft.items : []);
+            setPaymentMethod(draft.paymentMethod || "CASH");
+            setExtraDiscount(typeof draft.extraDiscount === "number" ? draft.extraDiscount : 0);
+        } catch (error) {
+            console.error("Failed to restore billing draft:", error);
+        }
+    }, []);
 
     useEffect(() => {
         const customerId = searchParams.get("customerId");
@@ -173,6 +189,16 @@ export default function BillingPage() {
         return () => clearTimeout(timer);
     }, [customerSearch, token]);
 
+    useEffect(() => {
+        const draft = {
+            selectedCustomerId,
+            items,
+            paymentMethod,
+            extraDiscount,
+        };
+        localStorage.setItem(BILLING_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }, [selectedCustomerId, items, paymentMethod, extraDiscount]);
+
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
         const gst = items.reduce((acc, item) => acc + item.gstAmount, 0);
@@ -209,6 +235,9 @@ export default function BillingPage() {
                 alert("Invoice saved successfully!");
                 setItems([]);
                 setSelectedCustomerId("");
+                setPaymentMethod("CASH");
+                setExtraDiscount(0);
+                localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
             } else {
                 const error = await response.json();
                 alert(`Error: ${error.message}`);
@@ -543,21 +572,6 @@ export default function BillingPage() {
                                             </div>
                                         </div>
                                     </div>
-
-                                    <Button
-                                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-widest text-[11px] shadow-sm rounded-lg flex items-center justify-center gap-2"
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                    >
-                                        {isSaving ? (
-                                            <Loader2 className="animate-spin h-4 w-4" />
-                                        ) : (
-                                            <>
-                                                <Printer className="h-4 w-4" />
-                                                <span>Finalize & Print</span>
-                                            </>
-                                        )}
-                                    </Button>
                                 </CardContent>
                             </Card>
                         </div>

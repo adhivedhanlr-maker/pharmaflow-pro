@@ -53,6 +53,7 @@ interface Supplier {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const PURCHASE_DRAFT_STORAGE_KEY = "purchase_draft_v1";
 
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -68,6 +69,20 @@ export default function PurchasesPage() {
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
+        const savedDraft = localStorage.getItem(PURCHASE_DRAFT_STORAGE_KEY);
+        if (!savedDraft) return;
+
+        try {
+            const draft = JSON.parse(savedDraft);
+            setSelectedSupplierId(draft.selectedSupplierId || "");
+            setBillNumber(draft.billNumber || "");
+            setItems(Array.isArray(draft.items) ? draft.items : []);
+        } catch (error) {
+            console.error("Failed to restore purchase draft:", error);
+        }
+    }, []);
+
+    useEffect(() => {
         fetchData();
         // Clear alerts after 5 seconds
         if (error || success) {
@@ -78,6 +93,15 @@ export default function PurchasesPage() {
             return () => clearTimeout(timer);
         }
     }, [error, success]);
+
+    useEffect(() => {
+        const draft = {
+            selectedSupplierId,
+            billNumber,
+            items,
+        };
+        localStorage.setItem(PURCHASE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }, [selectedSupplierId, billNumber, items]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -197,6 +221,7 @@ export default function PurchasesPage() {
                 setItems([]);
                 setBillNumber("");
                 setSelectedSupplierId("");
+                localStorage.removeItem(PURCHASE_DRAFT_STORAGE_KEY);
                 fetchData();
             } else {
                 const errorData = await response.json();
