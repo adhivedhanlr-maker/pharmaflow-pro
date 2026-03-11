@@ -452,8 +452,8 @@ export default function BillingPage() {
                                                                 {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>)}
                                                             </select>
                                                         </TableCell>
-                                                        <TableCell className="text-right"><Input type="number" className="h-8 w-20 ml-auto text-right font-semibold" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", parseInt(e.target.value) || 0)} /></TableCell>
-                                                        <TableCell className="text-right"><Input type="number" className="h-8 w-16 ml-auto text-right font-semibold text-green-600 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", parseInt(e.target.value) || 0)} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-20 ml-auto text-right font-semibold" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right font-semibold text-green-600 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
                                                         <TableCell className="text-right font-mono text-slate-600">Rs {item.unitPrice.toFixed(2)}</TableCell>
                                                         <TableCell className="text-right p-4 font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
                                                         <TableCell className="text-right font-black font-mono text-slate-900">Rs {(item.total + item.gstAmount).toFixed(2)}</TableCell>
@@ -499,9 +499,10 @@ export default function BillingPage() {
                                                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
                                                     <Input
                                                         type="number"
+                                                        min={0}
                                                         className="h-8 w-24 bg-slate-50 border-slate-200 text-right pr-2 pl-6 text-sm font-bold focus:bg-white transition-all rounded-md"
                                                         value={extraDiscount}
-                                                        onChange={(e) => setExtraDiscount(parseFloat(e.target.value) || 0)}
+                                                        onChange={(e) => setExtraDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
                                                     />
                                                 </div>
                                             </div>

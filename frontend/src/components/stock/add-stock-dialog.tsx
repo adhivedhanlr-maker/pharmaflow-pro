@@ -115,9 +115,10 @@ export function AddStockDialog({ onSuccess }: AddStockDialogProps) {
     }, [productSearch, token, open]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: type === "number" ? Math.max(0, parseFloat(value) || 0).toString() : value
         });
     };
 

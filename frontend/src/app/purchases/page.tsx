@@ -374,7 +374,7 @@ export default function PurchasesPage() {
                                                 className="h-8 w-20 ml-auto text-right text-xs"
                                                 value={item.quantity}
                                                 min="1"
-                                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                onChange={(e) => updateItem(item.id, 'quantity', Math.max(1, parseInt(e.target.value) || 0))}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -384,7 +384,7 @@ export default function PurchasesPage() {
                                                 value={item.purchasePrice}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'purchasePrice', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => updateItem(item.id, 'purchasePrice', Math.max(0, parseFloat(e.target.value) || 0))}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -394,7 +394,7 @@ export default function PurchasesPage() {
                                                 value={item.salePrice}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'salePrice', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => updateItem(item.id, 'salePrice', Math.max(0, parseFloat(e.target.value) || 0))}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-bold text-slate-700">

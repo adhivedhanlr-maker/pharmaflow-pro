@@ -37,9 +37,10 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target as any;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: type === "number" ? Math.max(name === "reorderLevel" ? 1 : 0, parseFloat(value) || 0).toString() : value
         });
     };
 

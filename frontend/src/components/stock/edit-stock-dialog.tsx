@@ -97,9 +97,10 @@ export function EditStockDialog({ batch, open, onOpenChange, onSuccess }: EditSt
                         <label className="text-sm font-medium">New Quantity</label>
                         <Input
                             type="number"
+                            min={0}
                             placeholder="Enter new quantity"
                             value={formData.quantity}
-                            onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                            onChange={e => setFormData({ ...formData, quantity: Math.max(0, parseInt(e.target.value) || 0) })}
                             required
                         />
                     </div>

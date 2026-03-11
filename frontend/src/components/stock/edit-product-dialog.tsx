@@ -49,7 +49,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === "mrp" ? parseFloat(value) || 0 : value
+            [name]: name === "mrp" ? Math.max(0, parseFloat(value) || 0) : value
         }));
     };
 
