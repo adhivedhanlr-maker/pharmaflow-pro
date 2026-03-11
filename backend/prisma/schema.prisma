@@ -49,6 +49,7 @@ model User {
   routes           Route[]
   locationLogs     LocationLog[]
   businessProfile  BusinessProfile?
+  pushSubscriptions PushSubscription[]
 
   @@unique([tenantId, username])
   @@index([tenantId])
@@ -551,8 +552,26 @@ model TenantBranding {
   routes              Route[]
   routeStops          RouteStop[]
   locationLogs        LocationLog[]
+  pushSubscriptions   PushSubscription[]
 
   @@index([slug])
   @@index([customDomain])
   @@index([isActive])
+}
+
+model PushSubscription {
+  id        String          @id @default(cuid())
+  endpoint  String          @unique
+  p256dh    String
+  auth      String
+  userId    String
+  tenantId  String?
+  user      User            @relation(fields: [userId], references: [id])
+  tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([userId, endpoint])
+  @@index([tenantId])
+  @@index([userId])
 }

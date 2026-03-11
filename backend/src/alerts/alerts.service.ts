@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AlertsService {
@@ -10,6 +11,7 @@ export class AlertsService {
     constructor(
         private prisma: PrismaService,
         private mailerService: MailerService,
+        private notificationsService: NotificationsService,
     ) { }
 
     @Cron(CronExpression.EVERY_HOUR) // Runs every hour for the demo
@@ -31,9 +33,10 @@ export class AlertsService {
         for (const product of lowStockProducts) {
             const totalStock = product.batches.reduce((acc, b) => acc + b.currentStock, 0);
             if (totalStock <= product.reorderLevel) {
-                await this.createNotification(
+            await this.createNotification(
                     'LOW_STOCK',
-                    `Product ${product.name} is running low (Total: ${totalStock}, Reorder: ${product.reorderLevel})`
+                    `Product ${product.name} is running low (Total: ${totalStock}, Reorder: ${product.reorderLevel})`,
+                    product.tenantId || undefined,
                 );
             }
         }
@@ -52,7 +55,8 @@ export class AlertsService {
         for (const batch of expiringBatches) {
             await this.createNotification(
                 'EXPIRY',
-                `Batch ${batch.batchNumber} of ${batch.product.name} expires on ${batch.expiryDate.toDateString()}`
+                `Batch ${batch.batchNumber} of ${batch.product.name} expires on ${batch.expiryDate.toDateString()}`,
+                batch.tenantId || undefined,
             );
         }
     }
@@ -74,6 +78,11 @@ export class AlertsService {
             });
 
             this.logger.warn(`Alert Generated: ${message}`);
+            await this.notificationsService.pushToTenantAdmins(tenantId, {
+                title: 'PharmaFlow Pro Alert',
+                body: message,
+                url: '/',
+            });
 
             // Attempt to send email in production environment
             if (process.env.NODE_ENV === 'production') {

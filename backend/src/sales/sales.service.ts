@@ -143,6 +143,12 @@ export class SalesService {
                 .catch(err => console.error('Failed to send OTP SMS:', err));
         }
 
+        await this.notificationsService.pushToTenantAdmins(tenantId, {
+            title: 'New Sale',
+            body: `Invoice ${result.invoiceNumber} created for ${result.customer.name}`,
+            url: '/sales',
+        });
+
         return result;
     }
 
@@ -234,6 +240,12 @@ export class SalesService {
                 }
             },
             include: { deliveryProof: true }
+        });
+
+        await this.notificationsService.pushToTenantAdmins(tenantId, {
+            title: 'Delivery Verified',
+            body: `Invoice ${sale.invoiceNumber} marked delivered`,
+            url: '/deliveries',
         });
 
         return updatedSale;

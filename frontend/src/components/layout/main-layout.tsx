@@ -48,7 +48,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 setBranding(data);
 
                 if (data?.companyName) {
-                    document.title = data.companyName;
+                    document.title = `${data.companyName} | PharmaFlow Pro`;
+                } else {
+                    document.title = "PharmaFlow Pro";
                 }
 
                 const faviconUrl = data?.faviconUrl || data?.logoUrl;
@@ -60,6 +62,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         document.head.appendChild(link);
                     }
                     link.href = faviconUrl;
+                } else {
+                    let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+                    if (!link) {
+                        link = document.createElement("link");
+                        link.rel = "icon";
+                        document.head.appendChild(link);
+                    }
+                    link.href = "/logo.png";
                 }
             } catch (error) {
                 console.error("Failed to load tenant branding:", error);
