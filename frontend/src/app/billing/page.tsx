@@ -15,6 +15,7 @@ import { CustomerDialog } from "@/components/billing/customer-dialog";
 import { useAuth } from "@/context/auth-context";
 import { RoleGate } from "@/components/auth/role-gate";
 import { BarcodeScanner } from "@/components/barcode/barcode-scanner";
+import { cn } from "@/lib/utils";
 
 interface BillingItem {
     id: string;
@@ -471,45 +472,115 @@ export default function BillingPage() {
                         </div>
 
                         <div className="space-y-6">
-                            <Card className="bg-slate-900 text-white border-none shadow-xl hidden md:block">
-                                <CardHeader>
-                                    <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bill Summary</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4 pt-0">
-                                    <div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal:</span><span className="font-mono">Rs {totals.subtotal.toFixed(2)}</span></div>
-                                    <div className="flex justify-between text-sm"><span className="text-slate-400">Total GST:</span><span className="font-mono">Rs {totals.gst.toFixed(2)}</span></div>
-                                    <div className="space-y-2 border-b border-slate-800 pb-4">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400">Extra Discount:</span>
-                                            <Input
-                                                type="number"
-                                                className="h-7 w-20 bg-slate-800 border-slate-700 text-right text-xs"
-                                                value={extraDiscount}
-                                                onChange={(e) => setExtraDiscount(parseFloat(e.target.value) || 0)}
-                                            />
+                            {/* Premium Redesigned Bill Summary Card */}
+                            <Card className="bg-[#0b1222] border-slate-800/40 shadow-2xl overflow-hidden relative group hidden md:block">
+                                {/* Decorative elements */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[60px] pointer-events-none" />
+                                <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 blur-[60px] pointer-events-none" />
+
+                                <CardHeader className="border-b border-slate-800/50 bg-slate-900/30 backdrop-blur-md py-4">
+                                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 flex items-center justify-between">
+                                        <span>Bill Summary</span>
+                                        <div className="flex gap-1">
+                                            <span className="h-1 w-1 rounded-full bg-blue-500/50" />
+                                            <span className="h-1 w-1 rounded-full bg-blue-500" />
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400">Total Discount:</span>
-                                            <span className="font-mono text-red-400">-Rs {totals.discount.toFixed(2)}</span>
+                                    </CardTitle>
+                                </CardHeader>
+
+                                <CardContent className="p-6 space-y-6 relative">
+                                    {/* Financial Breakdown */}
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center group/row">
+                                            <span className="text-xs text-slate-400 font-medium group-hover/row:text-slate-300 transition-colors">Subtotal</span>
+                                            <span className="text-sm text-slate-100 font-bold font-mono">₹{totals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center group/row">
+                                            <span className="text-xs text-slate-400 font-medium group-hover/row:text-emerald-400 transition-colors">GST (Applied)</span>
+                                            <span className="text-sm text-emerald-400 font-bold font-mono">+₹{totals.gst.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-slate-800/60 mt-4 space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-slate-400 font-medium">Extra Discount</span>
+                                                    <span className="text-[9px] text-slate-500 uppercase tracking-tighter">Adjusted manually</span>
+                                                </div>
+                                                <div className="relative group/input">
+                                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 group-focus-within/input:text-blue-400 transition-colors">₹</span>
+                                                    <Input
+                                                        type="number"
+                                                        className="h-8 w-24 bg-slate-900/80 border-slate-800 text-right pr-3 pl-6 text-xs font-black text-blue-400 focus:bg-slate-800 focus:border-blue-500/50 transition-all rounded-lg"
+                                                        value={extraDiscount}
+                                                        onChange={(e) => setExtraDiscount(parseFloat(e.target.value) || 0)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center font-bold">
+                                                <span className="text-xs text-slate-400">Total Savings</span>
+                                                <span className="text-sm text-rose-400 font-mono italic">
+                                                    -₹{totals.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <span className="text-xs font-bold uppercase text-slate-500">Payment Mode</span>
-                                        <div className="grid grid-cols-2 gap-1 px-1">
+
+                                    {/* Payment Section */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-px flex-1 bg-slate-800" />
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                                Preferred Mode
+                                            </label>
+                                            <div className="h-px flex-1 bg-slate-800" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
                                             {["CASH", "UPI", "CARD", "CREDIT"].map(mode => (
                                                 <Button
                                                     key={mode}
-                                                    size="sm"
-                                                    variant={paymentMethod === mode ? "default" : "outline"}
-                                                    className={paymentMethod === mode ? "bg-blue-600 h-8 text-[10px]" : "h-8 text-[10px] border-slate-700 text-slate-300"}
+                                                    variant="secondary"
+                                                    className={cn(
+                                                        "h-10 text-[10px] font-black uppercase tracking-tight transition-all duration-300 rounded-lg",
+                                                        paymentMethod === mode
+                                                            ? "bg-blue-600/90 text-white border-blue-500/50 shadow-lg shadow-blue-500/10 ring-1 ring-blue-400/30 scale-[1.02]"
+                                                            : "bg-slate-900 text-slate-500 border-transparent hover:bg-slate-800 hover:text-slate-200"
+                                                    )}
                                                     onClick={() => setPaymentMethod(mode)}
                                                 >
                                                     {mode}
+                                                    {paymentMethod === mode && <span className="ml-1.5 h-1 w-1 rounded-full bg-white animate-pulse" />}
                                                 </Button>
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="pt-2 flex justify-between items-end"><span className="text-sm font-bold uppercase text-slate-400">Net Payable</span><span className="text-3xl font-black text-blue-400 font-mono">Rs {totals.net.toFixed(2)}</span></div>
+
+                                    {/* Payable - Grand Result */}
+                                    <div className="pt-6 mt-4 relative group/payable">
+                                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+                                        <div className="flex flex-col items-center gap-1.5">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Amount to Settle</span>
+                                            <div className="relative">
+                                                <span className="text-4xl font-black text-white font-mono tracking-tighter drop-shadow-sm">
+                                                    ₹{totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </span>
+                                                <div className="absolute -inset-2 bg-blue-500/5 blur-2xl opacity-0 group-hover/payable:opacity-100 transition-opacity" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        className="w-full h-12 bg-white hover:bg-slate-100 text-slate-950 font-black uppercase tracking-widest text-[11px] shadow-2xl transition-all mt-4 border-none hover:translate-y-[-2px] active:translate-y-[0px]"
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                    >
+                                        {isSaving ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="animate-spin h-4 w-4" /> <span>Syncing...</span>
+                                            </div>
+                                        ) : (
+                                            "Finalize & Print"
+                                        )}
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </div>
