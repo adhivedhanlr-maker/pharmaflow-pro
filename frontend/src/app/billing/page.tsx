@@ -74,6 +74,8 @@ export default function BillingPage() {
     const [customerSearch, setCustomerSearch] = useState("");
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState("CASH");
+    const [extraDiscount, setExtraDiscount] = useState(0);
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -173,9 +175,10 @@ export default function BillingPage() {
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
         const gst = items.reduce((acc, item) => acc + item.gstAmount, 0);
-        const discount = items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0);
-        return { subtotal, gst, discount, net: subtotal + gst - discount };
-    }, [items]);
+        const bulkDiscount = items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0);
+        const discount = bulkDiscount + extraDiscount;
+        return { subtotal, gst, discount, net: Math.max(0, subtotal + gst - discount) };
+    }, [items, extraDiscount]);
 
     const handleSave = async () => {
         if (!selectedCustomerId) return alert("Please select a customer");
@@ -196,7 +199,7 @@ export default function BillingPage() {
                         batchId: item.batchId,
                         quantity: item.quantity + (item.freeQuantity || 0)
                     })),
-                    isCash,
+                    paymentMethod,
                     discountAmount: totals.discount,
                 }),
             });
@@ -418,6 +421,7 @@ export default function BillingPage() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="bg-slate-50/50">
+                                                    <TableHead className="w-[50px]">Sr.</TableHead>
                                                     <TableHead className="w-[300px]">Product Name</TableHead>
                                                     <TableHead>Batch</TableHead>
                                                     <TableHead className="text-right">Qty</TableHead>
@@ -431,15 +435,16 @@ export default function BillingPage() {
                                             <TableBody>
                                                 {items.length === 0 ? (
                                                     <TableRow>
-                                                        <TableCell colSpan={8} className="text-center py-20 text-muted-foreground">
+                                                        <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">
                                                             <div className="flex flex-col items-center gap-2">
                                                                 <ShoppingCart className="h-8 w-8 opacity-20" />
                                                                 <p>No items added yet. Search products to add.</p>
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
-                                                ) : items.map((item) => (
+                                                ) : items.map((item, index) => (
                                                     <TableRow key={item.id} className="hover:bg-slate-50/30">
+                                                        <TableCell className="text-slate-500 font-medium">{index + 1}</TableCell>
                                                         <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
                                                         <TableCell>
                                                             <select className="text-xs font-semibold bg-slate-100 rounded px-2 py-1 border-none" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
@@ -466,32 +471,6 @@ export default function BillingPage() {
                         </div>
 
                         <div className="space-y-6">
-                            <Card className="border-slate-200">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-xs font-bold uppercase text-slate-500">Invoice Preview</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <InvoicePrint
-                                        preview
-                                        invoiceNumber="DRAFT-001"
-                                        date={new Date()}
-                                        businessProfile={businessProfile}
-                                        customer={printCustomer}
-                                        items={items.map(item => ({
-                                            id: item.id,
-                                            name: item.name,
-                                            batchNumber: item.batchNumber,
-                                            quantity: item.quantity,
-                                            unitPrice: item.unitPrice,
-                                            freeQuantity: item.freeQuantity || 0,
-                                            gstRate: item.gstRate,
-                                            gstAmount: item.gstAmount,
-                                            total: item.total
-                                        }))}
-                                        totals={totals}
-                                    />
-                                </CardContent>
-                            </Card>
                             <Card className="bg-slate-900 text-white border-none shadow-xl hidden md:block">
                                 <CardHeader>
                                     <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bill Summary</CardTitle>
@@ -499,7 +478,37 @@ export default function BillingPage() {
                                 <CardContent className="space-y-4 pt-0">
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal:</span><span className="font-mono">Rs {totals.subtotal.toFixed(2)}</span></div>
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Total GST:</span><span className="font-mono">Rs {totals.gst.toFixed(2)}</span></div>
-                                    <div className="flex justify-between text-sm border-b border-slate-800 pb-4"><span className="text-slate-400">Discount (Bulk Offers):</span><span className="font-mono text-red-400">-Rs {totals.discount.toFixed(2)}</span></div>
+                                    <div className="space-y-2 border-b border-slate-800 pb-4">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-400">Extra Discount:</span>
+                                            <Input
+                                                type="number"
+                                                className="h-7 w-20 bg-slate-800 border-slate-700 text-right text-xs"
+                                                value={extraDiscount}
+                                                onChange={(e) => setExtraDiscount(parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-400">Total Discount:</span>
+                                            <span className="font-mono text-red-400">-Rs {totals.discount.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <span className="text-xs font-bold uppercase text-slate-500">Payment Mode</span>
+                                        <div className="grid grid-cols-2 gap-1 px-1">
+                                            {["CASH", "UPI", "CARD", "CREDIT"].map(mode => (
+                                                <Button
+                                                    key={mode}
+                                                    size="sm"
+                                                    variant={paymentMethod === mode ? "default" : "outline"}
+                                                    className={paymentMethod === mode ? "bg-blue-600 h-8 text-[10px]" : "h-8 text-[10px] border-slate-700 text-slate-300"}
+                                                    onClick={() => setPaymentMethod(mode)}
+                                                >
+                                                    {mode}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <div className="pt-2 flex justify-between items-end"><span className="text-sm font-bold uppercase text-slate-400">Net Payable</span><span className="text-3xl font-black text-blue-400 font-mono">Rs {totals.net.toFixed(2)}</span></div>
                                 </CardContent>
                             </Card>

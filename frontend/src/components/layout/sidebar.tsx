@@ -40,6 +40,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Orders", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },
   { icon: Package, label: "Deliveries", href: "/deliveries", roles: ["ADMIN", "BILLING_OPERATOR", "SALES_REP"], hint: "L" },
   { icon: Receipt, label: "Sales History", href: "/sales", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "H" },
+  { icon: FileSpreadsheet, label: "Bills Receivable", href: "/sales/receivables", roles: ["ADMIN", "ACCOUNTANT"], hint: "R" },
   { icon: MapPin, label: "Visits", href: "/visits", roles: ["SALES_REP"], hint: "V" },
   { icon: Calendar, label: "Route Planner", href: "/admin/routes", roles: ["ADMIN"], hint: "R" },
   { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
@@ -58,15 +59,13 @@ const PLATFORM_HOSTS = new Set([
   "127.0.0.1",
 ].filter(Boolean) as string[]);
 
-interface ShellBranding {
-  companyName?: string | null;
-  logoUrl?: string | null;
-}
-
 interface SidebarProps {
   className?: string;
   onNavigate?: () => void;
-  branding?: ShellBranding | null;
+  branding?: {
+    companyName?: string | null;
+    logoUrl?: string | null;
+  } | null;
 }
 
 export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
@@ -95,49 +94,29 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
       <div className="p-6 flex items-center gap-3 border-b relative">
         {!isCollapsed && (
           <>
-            {branding?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={branding.logoUrl}
-                alt={branding.companyName || "Client Logo"}
-                className="h-10 w-10 rounded-lg object-contain bg-white"
-              />
-            ) : (
-              <Image
-                src="/pharmaflow-logo.png"
-                alt="PharmaFlow Pro"
-                width={40}
-                height={40}
-                className="rounded-lg"
-              />
-            )}
+            <Image
+              src="/pharmaflow-logo.png"
+              alt="PharmaFlow Pro"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
             <div>
-              <h1 className="text-lg font-bold text-slate-900">
-                {branding?.companyName || "PharmaFlow"}
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                PharmaFlow Pro
               </h1>
-              <p className="text-[10px] text-muted-foreground font-medium">
-                {branding?.companyName ? "Client Portal" : "Pro Edition"}
-              </p>
+              <p className="text-[10px] text-muted-foreground font-medium">Client Portal</p>
             </div>
           </>
         )}
         {isCollapsed && (
-          branding?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={branding.logoUrl}
-              alt={branding.companyName || "Client Logo"}
-              className="h-8 w-8 rounded-lg object-contain bg-white mx-auto"
-            />
-          ) : (
-            <Image
-              src="/pharmaflow-logo.png"
-              alt="PharmaFlow Pro"
-              width={32}
-              height={32}
-              className="rounded-lg mx-auto"
-            />
-          )
+          <Image
+            src="/pharmaflow-logo.png"
+            alt="PharmaFlow Pro"
+            width={32}
+            height={32}
+            className="rounded-lg mx-auto"
+          />
         )}
 
         <button

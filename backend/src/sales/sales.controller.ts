@@ -23,6 +23,12 @@ export class SalesController {
         return this.salesService.findAll(req.user);
     }
 
+    @Get('receivables')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    getReceivables(@Request() req: any) {
+        return this.salesService.getReceivables(req.user?.tenantId);
+    }
+
     @Post(':id/verify-delivery')
     @Roles(Role.ADMIN, Role.SALES_REP)
     async verifyDelivery(

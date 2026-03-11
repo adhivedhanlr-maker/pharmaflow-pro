@@ -21,6 +21,7 @@ interface Notification {
 
 interface ShellBranding {
     companyName?: string | null;
+    logoUrl?: string | null;
 }
 
 interface HeaderProps {
@@ -75,7 +76,15 @@ export function Header({ branding }: HeaderProps) {
 
     return (
         <header className="h-16 border-b bg-background flex items-center justify-between px-8 sticky top-0 z-10">
-            <div>
+            <div className="flex items-center gap-3">
+                {branding?.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={branding.logoUrl}
+                        alt={branding.companyName || "Client Logo"}
+                        className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-200 p-1"
+                    />
+                ) : null}
                 <h2 className="text-lg font-semibold text-slate-800">{branding?.companyName || "System Overview"}</h2>
             </div>
             <div className="flex items-center gap-6">

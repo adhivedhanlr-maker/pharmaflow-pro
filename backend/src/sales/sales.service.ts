@@ -15,11 +15,13 @@ export class SalesService {
     ) { }
 
     async createInvoice(data: any, userId?: string, tenantId?: string) {
-        const { customerId, items, isCash, discountAmount = 0 } = data;
+        const { customerId, items, discountAmount = 0 } = data;
+        const finalPaymentMethod = data.paymentMethod || (data.isCash === false ? 'CREDIT' : 'CASH');
+        const isCash = finalPaymentMethod !== 'CREDIT';
+
         const finalUserId = userId || (await this.prisma.user.findFirst({ where: tenantId ? { tenantId } : undefined }))?.id;
         if (!finalUserId) throw new BadRequestException('No default user found for invoice creation');
 
-        // Check Permissions
         const user = await this.prisma.user.findFirst({ where: { id: finalUserId, ...(tenantId ? { tenantId } : {}) } });
         if (!user) throw new NotFoundException('User not found');
 
@@ -87,10 +89,10 @@ export class SalesService {
                 });
             }
 
-            const netAmount = totalAmount + totalGst - discountAmount;
+            const netAmount = Math.max(0, totalAmount + totalGst - discountAmount);
 
             // 5. Update Customer Balance if Credit
-            if (!isCash) {
+            if (finalPaymentMethod === 'CREDIT') {
                 await tx.customer.update({
                     where: { id: customerId },
                     data: { currentBalance: { increment: netAmount } },
@@ -114,6 +116,7 @@ export class SalesService {
                     netAmount,
                     discountAmount,
                     isCash,
+                    paymentMethod: finalPaymentMethod,
                     deliveryOtp: otp,
                     items: {
                         create: invoiceItems,
@@ -172,6 +175,20 @@ export class SalesService {
                 }
             },
             orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async getReceivables(tenantId?: string) {
+        return this.prisma.sale.findMany({
+            where: {
+                paymentMethod: 'CREDIT',
+                ...(tenantId ? { tenantId } : {})
+            },
+            include: {
+                customer: true,
+                items: { include: { product: true } }
+            },
+            orderBy: { createdAt: 'desc' }
         });
     }
 
