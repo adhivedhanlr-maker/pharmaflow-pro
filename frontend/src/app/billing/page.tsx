@@ -473,66 +473,58 @@ export default function BillingPage() {
 
                         <div className="space-y-6">
                             {/* Premium Redesigned Bill Summary Card */}
-                            <Card className="bg-white border-2 border-slate-100 shadow-xl overflow-hidden hidden md:block rounded-2xl">
-                                <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
+                            <Card className="bg-white border shadow-sm rounded-xl overflow-hidden hidden md:block">
+                                <CardHeader className="border-b py-3 px-5">
                                     <div className="flex items-center gap-2">
-                                        <div className="bg-blue-600 p-1.5 rounded-lg">
-                                            <ShoppingCart className="h-4 w-4 text-white" />
-                                        </div>
-                                        <CardTitle className="text-sm font-bold text-slate-800 tracking-tight">Invoice Summary</CardTitle>
+                                        <ShoppingCart className="h-4 w-4 text-slate-400" />
+                                        <CardTitle className="text-sm font-bold text-slate-800">Bill Summary</CardTitle>
                                     </div>
                                 </CardHeader>
 
                                 <CardContent className="p-6 space-y-6">
                                     <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-slate-500">Subtotal Amount</span>
-                                            <span className="text-sm font-bold text-slate-900 font-mono">₹{totals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500 font-medium">Subtotal</span>
+                                            <span className="font-semibold text-slate-900 font-mono">₹{totals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                         </div>
-                                        <div className="flex justify-between items-center px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100/50">
-                                            <span className="text-xs font-semibold text-emerald-700">GST (Taxes)</span>
-                                            <span className="text-sm font-black text-emerald-600 font-mono">+₹{totals.gst.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500 font-medium">GST (Taxes)</span>
+                                            <span className="font-semibold text-emerald-600 font-mono">+₹{totals.gst.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                         </div>
 
-                                        <div className="pt-2 space-y-3">
+                                        <div className="pt-2 border-t border-slate-100/60 space-y-3">
                                             <div className="flex justify-between items-center">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-slate-700">Extra Discount</span>
-                                                    <span className="text-[10px] text-slate-400 font-medium italic">Adjust bill total</span>
-                                                </div>
+                                                <span className="text-sm font-semibold text-slate-700">Extra Discount</span>
                                                 <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
+                                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
                                                     <Input
                                                         type="number"
-                                                        className="h-10 w-28 bg-slate-50 border-slate-200 text-right pr-3 pl-7 text-sm font-bold text-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all rounded-xl"
+                                                        className="h-8 w-24 bg-slate-50 border-slate-200 text-right pr-2 pl-6 text-sm font-bold focus:bg-white transition-all rounded-md"
                                                         value={extraDiscount}
                                                         onChange={(e) => setExtraDiscount(parseFloat(e.target.value) || 0)}
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="flex justify-between items-center px-3 py-2 bg-rose-50 rounded-lg border border-rose-100/50">
-                                                <span className="text-xs font-semibold text-rose-700 italic">Total Savings</span>
-                                                <span className="text-sm font-black text-rose-600 font-mono">-₹{totals.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-slate-500 italic">Total Savings</span>
+                                                <span className="font-bold text-rose-500 font-mono">-₹{totals.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3">
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                            <span className="h-px flex-1 bg-slate-100" />
-                                            Select Payment Mode
-                                            <span className="h-px flex-1 bg-slate-100" />
-                                        </h3>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Mode</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {["CASH", "UPI", "CARD", "CREDIT"].map(mode => (
                                                 <Button
                                                     key={mode}
-                                                    variant="outline"
+                                                    variant={paymentMethod === mode ? "default" : "outline"}
+                                                    size="sm"
                                                     className={cn(
-                                                        "h-11 text-[11px] font-bold rounded-xl border-2 transition-all duration-200",
+                                                        "h-9 text-[11px] font-bold rounded-lg transition-all",
                                                         paymentMethod === mode
-                                                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 ring-2 ring-blue-100"
-                                                            : "bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
+                                                            ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                                                            : "text-slate-600 border-slate-200 hover:bg-slate-50"
                                                     )}
                                                     onClick={() => setPaymentMethod(mode)}
                                                 >
@@ -542,32 +534,26 @@ export default function BillingPage() {
                                         </div>
                                     </div>
 
-                                    <div className="pt-6 relative">
-                                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center relative overflow-hidden group/payable">
-                                            <div className="absolute top-0 left-0 w-2 h-full bg-blue-600" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1 block">Net Payable Amount</span>
-                                            <div className="text-4xl font-black text-slate-900 font-mono tracking-tight">
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-100">
+                                            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1 block">Net Amount</span>
+                                            <div className="text-3xl font-black text-slate-900 font-mono tracking-tighter">
                                                 ₹{totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                            </div>
-                                            <div className="mt-2 flex items-center justify-center gap-1.5 text-[9px] font-bold text-emerald-600 uppercase tracking-wider">
-                                                <ShieldAlert className="h-3 w-3" />
-                                                Verified & Valid Invoice
                                             </div>
                                         </div>
                                     </div>
 
                                     <Button
-                                        className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-blue-200 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-widest text-[11px] shadow-sm rounded-lg flex items-center justify-center gap-2"
                                         onClick={handleSave}
                                         disabled={isSaving}
                                     >
                                         {isSaving ? (
-                                            <Loader2 className="animate-spin h-5 w-5" />
+                                            <Loader2 className="animate-spin h-4 w-4" />
                                         ) : (
                                             <>
-                                                <Printer className="h-5 w-5" />
-                                                <span>Finalize & Print (F12)</span>
+                                                <Printer className="h-4 w-4" />
+                                                <span>Finalize & Print</span>
                                             </>
                                         )}
                                     </Button>
