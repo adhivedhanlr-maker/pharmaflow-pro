@@ -118,7 +118,7 @@ export function AddStockDialog({ onSuccess }: AddStockDialogProps) {
         const { name, value, type } = e.target;
         setFormData({
             ...formData,
-            [name]: type === "number" ? Math.max(0, parseFloat(value) || 0).toString() : value
+            [name]: type === "number" ? (value === "" ? "" : Math.max(0, parseFloat(value) || 0).toString()) : value
         });
     };
 

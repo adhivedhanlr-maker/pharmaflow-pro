@@ -35,7 +35,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
         hsnCode: "",
         company: "",
         mrp: "",
-        gstRate: "12", // Default popular tax rate
+        gstRate: "5", // Default requested by user
         reorderLevel: "10"
     });
 
@@ -43,7 +43,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
         const { name, value, type } = e.target as any;
         setFormData({
             ...formData,
-            [name]: type === "number" ? Math.max(name === "reorderLevel" ? 1 : 0, parseFloat(value) || 0).toString() : value
+            [name]: type === "number" ? (value === "" ? "" : Math.max(name === "reorderLevel" ? 1 : 0, parseFloat(value) || 0).toString()) : value
         });
     };
 
@@ -81,7 +81,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
                     hsnCode: "",
                     company: "",
                     mrp: "",
-                    gstRate: "12",
+                    gstRate: "5",
                     reorderLevel: "10"
                 });
                 onProductAdded();
@@ -136,7 +136,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
                             <Input
                                 id="composition"
                                 name="composition"
-                                placeholder="e.g. Paracetamol 650mg"
+                                placeholder="e.g. Paracetamol 650mg, Phenylephrine 5mg"
                                 value={formData.composition}
                                 onChange={handleChange}
                             />

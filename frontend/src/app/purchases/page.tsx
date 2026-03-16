@@ -28,6 +28,8 @@ import {
     ShieldAlert,
     UserPlus,
     FileText,
+    FileUp,
+    FileSearch,
     Upload
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -77,6 +79,7 @@ export default function PurchasesPage() {
     const [loading, setLoading] = useState(false);
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [gstPercent, setGstPercent] = useState(5); // Default to 5% as per user request
 
     // UI Feedback State
@@ -262,12 +265,24 @@ export default function PurchasesPage() {
         }
     };
 
-    const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+        let file: File | undefined;
+        let eventTarget: HTMLInputElement | null = null;
+        
+        if (e.type === 'change') {
+            const changeEvent = e as React.ChangeEvent<HTMLInputElement>;
+            eventTarget = changeEvent.target;
+            file = eventTarget.files?.[0];
+        } else if (e.type === 'drop') {
+            const dragEvent = e as React.DragEvent;
+            file = dragEvent.dataTransfer.files?.[0];
+        }
+
         if (!file) return;
 
         setIsUploading(true);
         setError(null);
+        setSuccess(null);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -337,9 +352,27 @@ export default function PurchasesPage() {
             setError(error.message || "Failed to process invoice.");
         } finally {
             setIsUploading(false);
-            // Reset input
-            if (e.target) e.target.value = '';
+            if (eventTarget) eventTarget.value = '';
         }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        handleInvoiceUpload(e);
     };
 
     return (
@@ -358,7 +391,25 @@ export default function PurchasesPage() {
                 </div>
             }
         >
-            <div className="space-y-6">
+            <div 
+                className="p-6 space-y-6 max-w-7xl mx-auto relative"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                {isDragging && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/10 backdrop-blur-sm border-2 border-dashed border-primary m-4 rounded-xl">
+                        <div className="bg-white p-8 rounded-2xl shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-200">
+                            <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                                <FileUp className="h-10 w-10 text-primary animate-bounce" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800">Drop Invoice Here</h3>
+                                <p className="text-slate-500">PDF or Images (JPG, PNG) supported</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Purchase Entry (GRN)</h1>
@@ -369,7 +420,7 @@ export default function PurchasesPage() {
                             type="file"
                             id="invoice-upload"
                             className="hidden"
-                            accept=".pdf"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
                             onChange={handleInvoiceUpload}
                             disabled={isUploading}
                         />
@@ -571,6 +622,7 @@ export default function PurchasesPage() {
                                                 type="number"
                                                 className="h-8 w-16 ml-auto text-right text-[11px] font-bold"
                                                 value={item.quantity === 0 ? "" : item.quantity}
+                                                placeholder="0"
                                                 min="0"
                                                 onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                                             />
@@ -580,6 +632,7 @@ export default function PurchasesPage() {
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono"
                                                 value={item.purchasePrice === 0 ? "" : item.purchasePrice}
+                                                placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
                                                 onChange={(e) => updateItem(item.id, 'purchasePrice', parseFloat(e.target.value) || 0)}
@@ -590,6 +643,7 @@ export default function PurchasesPage() {
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-blue-600"
                                                 value={item.ptr === 0 ? "" : item.ptr}
+                                                placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
                                                 onChange={(e) => updateItem(item.id, 'ptr', parseFloat(e.target.value) || 0)}
@@ -600,6 +654,7 @@ export default function PurchasesPage() {
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-green-600"
                                                 value={item.pts === 0 ? "" : item.pts}
+                                                placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
                                                 onChange={(e) => updateItem(item.id, 'pts', parseFloat(e.target.value) || 0)}
@@ -610,6 +665,7 @@ export default function PurchasesPage() {
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-orange-600"
                                                 value={item.nr === 0 ? "" : item.nr}
+                                                placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
                                                 onChange={(e) => updateItem(item.id, 'nr', parseFloat(e.target.value) || 0)}

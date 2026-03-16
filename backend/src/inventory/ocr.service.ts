@@ -14,53 +14,93 @@ export class OCRService {
         }
     }
 
-    async extractFromInvoice(fileBuffer: Buffer): Promise<any> {
+    async extractFromInvoice(file: { buffer: Buffer, mimetype: string }): Promise<any> {
         if (!this.genAI) {
             throw new Error('GEMINI_API_KEY is not configured');
         }
 
         try {
-            // 1. Extract text from PDF
-            this.logger.log('Extracting text from PDF...');
-            const data = await pdf(fileBuffer);
-            const text = data.text;
+            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            let prompt = "";
+            let parts: any[] = [];
 
-            if (!text || text.trim().length === 0) {
-                throw new Error('No text could be extracted from the PDF');
+            if (file.mimetype === 'application/pdf') {
+                // 1. Extract text from PDF
+                this.logger.log('Extracting text from PDF...');
+                const data = await pdf(file.buffer);
+                const text = data.text;
+
+                if (!text || text.trim().length === 0) {
+                    throw new Error('No text could be extracted from the PDF');
+                }
+
+                prompt = `
+          You are an expert at parsing medical distribution invoices (GST Invoices). 
+          Extract the following information from the provided text and return ONLY a valid JSON object.
+          Do not include any markdown formatting like \`\`\`json or explanations.
+
+          Fields to extract:
+          - supplierName: Name of the company selling the products
+          - invoiceNumber: The bill or invoice number
+          - date: Invoice date (format: YYYY-MM-DD)
+          - items: An array of objects, each containing:
+            - name: Product name
+            - hsn: HSN code
+            - pack: Packing (e.g., 10'S, 100ML)
+            - batch: Batch number
+            - expiry: Expiry date (format: MM/YY or YYYY-MM-DD)
+            - quantity: Quantity purchased
+            - free: Free quantity (0 if not mentioned)
+            - ptr: Purchase Price to Retailer
+            - mrp: Maximum Retail Price
+            - discount: Discount percentage
+            - gstPercent: GST percentage (SGST + CGST)
+            - amount: Total amount for this item
+
+          Invoice Text Content:
+          ${text}
+          `;
+                parts = [prompt];
+            } else {
+                // 2. Handle Images (Multimodal)
+                this.logger.log('Processing image with Gemini AI (Multimodal)...');
+                
+                prompt = `
+          You are an expert at parsing medical distribution invoices (GST Invoices) from images. 
+          Extract the following information from the provided image and return ONLY a valid JSON object.
+          Do not include any markdown formatting like \`\`\`json or explanations.
+
+          Fields to extract:
+          - supplierName: Name of the company selling the products
+          - invoiceNumber: The bill or invoice number
+          - date: Invoice date (format: YYYY-MM-DD)
+          - items: An array of objects, each containing:
+            - name: Product name
+            - hsn: HSN code
+            - pack: Packing (e.g., 10'S, 100ML)
+            - batch: Batch number
+            - expiry: Expiry date (format: MM/YY or YYYY-MM-DD)
+            - quantity: Quantity purchased
+            - free: Free quantity (0 if not mentioned)
+            - ptr: Purchase Price to Retailer
+            - mrp: Maximum Retail Price
+            - discount: Discount percentage
+            - gstPercent: GST percentage (SGST + CGST)
+            - amount: Total amount for this item
+          `;
+                
+                parts = [
+                    prompt,
+                    {
+                        inlineData: {
+                            data: file.buffer.toString('base64'),
+                            mimeType: file.mimetype
+                        }
+                    }
+                ];
             }
 
-            // 2. Use Gemini to parse the text
-            this.logger.log('Parsing text with Gemini AI...');
-            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-            const prompt = `
-      You are an expert at parsing medical distribution invoices (GST Invoices). 
-      Extract the following information from the provided text and return ONLY a valid JSON object.
-      Do not include any markdown formatting like \`\`\`json or explanations.
-
-      Fields to extract:
-      - supplierName: Name of the company selling the products
-      - invoiceNumber: The bill or invoice number
-      - date: Invoice date (format: YYYY-MM-DD)
-      - items: An array of objects, each containing:
-        - name: Product name
-        - hsn: HSN code
-        - pack: Packing (e.g., 10'S, 100ML)
-        - batch: Batch number
-        - expiry: Expiry date (format: MM/YY or YYYY-MM-DD)
-        - quantity: Quantity purchased
-        - free: Free quantity (0 if not mentioned)
-        - ptr: Purchase Price to Retailer
-        - mrp: Maximum Retail Price
-        - discount: Discount percentage
-        - gstPercent: GST percentage (SGST + CGST)
-        - amount: Total amount for this item
-
-      Invoice Text Content:
-      ${text}
-      `;
-
-            const result = await model.generateContent(prompt);
+            const result = await model.generateContent(parts);
             const response = await result.response;
             const responseText = response.text();
 
@@ -68,7 +108,7 @@ export class OCRService {
             const cleanJson = responseText.replace(/```json|```/g, '').trim();
             
             return JSON.parse(cleanJson);
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error(`Error in OCR extraction: ${error.message}`);
             throw error;
         }

@@ -14,6 +14,6 @@ export class OCRController {
         if (!file) {
             throw new Error('No file uploaded');
         }
-        return this.ocrService.extractFromInvoice(file.buffer);
+        return this.ocrService.extractFromInvoice(file);
     }
 }
