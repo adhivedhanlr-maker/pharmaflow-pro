@@ -309,35 +309,41 @@ export default function PurchasesPage() {
                         <CardHeader className="py-3">
                             <CardTitle className="text-sm font-medium">Bill Details</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-4 pb-4">
+                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6">
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-sm font-medium">Supplier</label>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="h-6 text-[10px] text-primary hover:text-primary/80 p-0"
-                                        onClick={() => setShowSupplierDialog(true)}
+                                <label className="text-sm font-semibold text-slate-700">Supplier</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-all font-medium"
+                                        value={selectedSupplierId}
+                                        onChange={(e) => setSelectedSupplierId(e.target.value)}
                                     >
-                                        <Plus className="h-3 w-3 mr-1" /> New Supplier
+                                        <option value="">Select Supplier</option>
+                                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                    <Button 
+                                        variant="outline" 
+                                        className="h-10 px-3 shrink-0 border-primary/20 text-primary hover:bg-primary/5"
+                                        onClick={() => setShowSupplierDialog(true)}
+                                        title="Add New Supplier"
+                                    >
+                                        <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
-                                <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    value={selectedSupplierId}
-                                    onChange={(e) => setSelectedSupplierId(e.target.value)}
-                                >
-                                    <option value="">Select Supplier</option>
-                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Bill/Invoice Number</label>
+                                <label className="text-sm font-semibold text-slate-700">Bill/Invoice Number</label>
                                 <Input
+                                    className="h-10 border-slate-200 font-mono"
                                     placeholder="Enter Bill No."
                                     value={billNumber}
                                     onChange={(e) => setBillNumber(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="hidden md:flex flex-col justify-end pb-1 italic text-[10px] text-muted-foreground">
+                                * Ensure bill details match the physical invoice.
                             </div>
                         </CardContent>
                     </Card>
