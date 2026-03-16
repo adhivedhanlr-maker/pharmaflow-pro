@@ -23,6 +23,17 @@ export class PurchasesService {
                 let product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
                 if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
+                // Update product composition and packing if provided
+                if (item.composition || item.packing) {
+                    product = await tx.product.update({
+                        where: { id: product.id },
+                        data: {
+                            composition: item.composition || product.composition,
+                            packing: item.packing || product.packing,
+                        }
+                    });
+                }
+
                 // Check if batch exists or create new
                 let batch = await tx.batch.findFirst({
                     where: {
@@ -40,6 +51,9 @@ export class PurchasesService {
                             currentStock: { increment: item.quantity },
                             purchasePrice: item.purchasePrice,
                             salePrice: item.salePrice,
+                            ptr: item.ptr,
+                            pts: item.pts,
+                            nr: item.nr,
                             expiryDate: new Date(item.expiryDate),
                         },
                     });
@@ -54,6 +68,9 @@ export class PurchasesService {
                             currentStock: item.quantity,
                             purchasePrice: item.purchasePrice,
                             salePrice: item.salePrice,
+                            ptr: item.ptr,
+                            pts: item.pts,
+                            nr: item.nr,
                         },
                     });
                 }

@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -29,6 +28,8 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
 
     const [formData, setFormData] = useState({
         name: "",
+        composition: "",
+        packing: "",
         hsnCode: "",
         company: "",
         mrp: "",
@@ -59,6 +60,8 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
                 },
                 body: JSON.stringify({
                     name: formData.name,
+                    composition: formData.composition,
+                    packing: formData.packing,
                     hsnCode: formData.hsnCode,
                     company: formData.company,
                     mrp: parseFloat(formData.mrp),
@@ -71,6 +74,8 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
                 setOpen(false);
                 setFormData({
                     name: "",
+                    composition: "",
+                    packing: "",
                     hsnCode: "",
                     company: "",
                     mrp: "",
@@ -121,6 +126,28 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
+                            />
+                        </div>
+
+                        <div className="space-y-2 col-span-2">
+                            <Label htmlFor="composition">Composition</Label>
+                            <Input
+                                id="composition"
+                                name="composition"
+                                placeholder="e.g. Paracetamol 650mg"
+                                value={formData.composition}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="packing">Packing</Label>
+                            <Input
+                                id="packing"
+                                name="packing"
+                                placeholder="e.g. 15 Tablets"
+                                value={formData.packing}
+                                onChange={handleChange}
                             />
                         </div>
 

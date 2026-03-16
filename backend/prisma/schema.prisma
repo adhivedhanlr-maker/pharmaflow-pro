@@ -80,6 +80,8 @@ model Product {
   gstRate       Float           @default(0)
   mrp           Float
   company       String?
+  composition   String?
+  packing       String?
   reorderLevel  Int             @default(10)
   barcode       String?
   barcodeType   String?
@@ -109,6 +111,9 @@ model Batch {
   mrp           Float?
   purchasePrice Float
   salePrice     Float
+  ptr           Float?
+  pts           Float?
+  nr            Float?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   saleItems     SaleItem[]
