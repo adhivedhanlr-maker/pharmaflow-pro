@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 import { EditStockDialog } from "@/components/stock/edit-stock-dialog";
 import { AddStockDialog } from "@/components/stock/add-stock-dialog";
 import { EditProductDialog } from "@/components/stock/edit-product-dialog";
+import { AddProductDialog } from "@/components/inventory/add-product-dialog";
 
 export default function StockPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -260,7 +261,15 @@ export default function StockPage() {
                         <p className="text-muted-foreground">Manage batches and your product master database.</p>
                     </div>
                     <div className="flex gap-2">
-                        <AddStockDialog onSuccess={fetchStock} />
+                        {activeTab === "products" ? (
+                            <AddProductDialog 
+                                onProductAdded={fetchStock} 
+                                triggerLabel="Add Product"
+                                triggerClassName="bg-blue-600 hover:bg-blue-700 text-white shadow-md border-none h-10 px-4"
+                            />
+                        ) : (
+                            <AddStockDialog onSuccess={fetchStock} />
+                        )}
                         <Button variant="outline" onClick={fetchStock} className="border-slate-200">
                             <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                             Refresh

@@ -19,9 +19,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface AddProductDialogProps {
     onProductAdded: () => void;
+    triggerLabel?: string;
+    triggerClassName?: string;
 }
 
-export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
+export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product", triggerClassName }: AddProductDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -98,8 +100,8 @@ export function AddProductDialog({ onProductAdded }: AddProductDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="secondary" size="sm">
-                    <Plus className="mr-2 h-4 w-4" /> New Product
+                <Button variant="secondary" size="sm" className={triggerClassName}>
+                    <Plus className="mr-2 h-4 w-4" /> {triggerLabel}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[90vh]">
