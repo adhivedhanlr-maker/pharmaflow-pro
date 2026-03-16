@@ -19,19 +19,47 @@ export class PurchasesService {
             const purchaseItems = [];
 
             for (const item of items) {
-                // 2. Upsert Product/Batch
-                let product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
-                if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
+                // 2. Find or Create Product
+                let product;
+                if (item.productId) {
+                    product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
+                    if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
-                // Update product composition and packing if provided
-                if (item.composition || item.packing) {
-                    product = await tx.product.update({
-                        where: { id: product.id },
-                        data: {
-                            composition: item.composition || product.composition,
-                            packing: item.packing || product.packing,
-                        }
+                    // Update existing product composition and packing if provided
+                    if (item.composition || item.packing) {
+                        product = await tx.product.update({
+                            where: { id: product.id },
+                            data: {
+                                composition: item.composition || product.composition,
+                                packing: item.packing || product.packing,
+                            }
+                        });
+                    }
+                } else if (item.name) {
+                    // Search by name
+                    product = await tx.product.findFirst({ 
+                        where: { 
+                            name: { equals: item.name, mode: 'insensitive' },
+                            ...(tenantId ? { tenantId } : {}) 
+                        } 
                     });
+
+                    // If still not found, create it
+                    if (!product) {
+                        product = await tx.product.create({
+                            data: {
+                                tenantId,
+                                name: item.name,
+                                composition: item.composition || "",
+                                packing: item.packing || "",
+                                gstRate: item.gstPercent || 12, // Default to 12% if unknown
+                                company: "General",
+                                mrp: item.salePrice || 0,
+                            }
+                        });
+                    }
+                } else {
+                    throw new Error("Each item must have a productId or a name");
                 }
 
                 // Check if batch exists or create new

@@ -26,7 +26,9 @@ import {
     AlertCircle,
     CheckCircle2,
     ShieldAlert,
-    UserPlus
+    UserPlus,
+    FileText,
+    Upload
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -74,6 +76,7 @@ export default function PurchasesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     // UI Feedback State
     const [error, setError] = useState<string | null>(null);
@@ -193,7 +196,7 @@ export default function PurchasesPage() {
         if (items.length === 0) return "Please add at least one item.";
 
         for (const item of items) {
-            if (!item.productId) return "All items must have a product selected.";
+            if (!item.productId && !item.name.trim()) return "All items must have a product selected or a name entered.";
             if (!item.batchNumber.trim()) return "All items must have a batch number.";
             if (!item.expiryDate) return "All items must have an expiry date.";
             if (item.quantity <= 0) return "Quantity must be greater than 0.";
@@ -224,7 +227,8 @@ export default function PurchasesPage() {
                     supplierId: selectedSupplierId,
                     billNumber,
                     items: items.map(item => ({
-                        productId: item.productId,
+                        productId: item.productId || undefined,
+                        name: item.name,
                         composition: item.composition,
                         packing: item.packing,
                         batchNumber: item.batchNumber,
@@ -257,6 +261,86 @@ export default function PurchasesPage() {
         }
     };
 
+    const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_BASE}/inventory/extract-invoice`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to extract data from invoice.");
+            }
+
+            const data = await response.json();
+            
+            // 1. Match Supplier
+            if (data.supplierName) {
+                const supplier = suppliers.find(s => 
+                    s.name.toLowerCase().includes(data.supplierName.toLowerCase()) ||
+                    data.supplierName.toLowerCase().includes(s.name.toLowerCase())
+                );
+                if (supplier) {
+                    setSelectedSupplierId(supplier.id);
+                } else {
+                    setError(`Supplier "${data.supplierName}" not found. Please add them first.`);
+                }
+            }
+
+            if (data.invoiceNumber) setBillNumber(data.invoiceNumber);
+
+            // 2. Map Items
+            const newItems: PurchaseItem[] = data.items.map((item: any) => {
+                const product = products.find(p => 
+                    p.name.toLowerCase().includes(item.name.toLowerCase()) ||
+                    item.name.toLowerCase().includes(p.name.toLowerCase())
+                );
+
+                return {
+                    id: Math.random().toString(36).substr(2, 9),
+                    productId: product?.id || "",
+                    name: item.name,
+                    composition: item.composition || "",
+                    packing: item.pack || "",
+                    batchNumber: item.batch || "",
+                    expiryDate: item.expiry || "",
+                    quantity: item.quantity || 1,
+                    purchasePrice: item.ptr || 0,
+                    salePrice: item.mrp || 0,
+                    ptr: item.ptr || 0,
+                    pts: item.pts || 0,
+                    nr: item.nr || 0,
+                };
+            });
+
+            if (newItems.length > 0) {
+                setItems(newItems);
+                setSuccess(`Successfully extracted ${newItems.length} items from invoice.`);
+            }
+
+        } catch (error: any) {
+            console.error("Invoice upload error:", error);
+            setError(error.message || "Failed to process invoice.");
+        } finally {
+            setIsUploading(false);
+            // Reset input
+            if (e.target) e.target.value = '';
+        }
+    };
+
     return (
         <RoleGate
             allowedRoles={["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"]}
@@ -280,8 +364,29 @@ export default function PurchasesPage() {
                         <p className="text-muted-foreground">Record stock arrival from suppliers.</p>
                     </div>
                     <div className="flex gap-2">
+                        <input
+                            type="file"
+                            id="invoice-upload"
+                            className="hidden"
+                            accept=".pdf"
+                            onChange={handleInvoiceUpload}
+                            disabled={isUploading}
+                        />
+                        <Button 
+                            variant="outline" 
+                            className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                            onClick={() => document.getElementById('invoice-upload')?.click()}
+                            disabled={isUploading}
+                        >
+                            {isUploading ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <FileText className="h-4 w-4 mr-2" />
+                            )}
+                            Upload Invoice (AI)
+                        </Button>
                         <Button variant="outline"><FileDown className="mr-2 h-4 w-4" /> Import CSV</Button>
-                        <Button onClick={handleSave} disabled={isSaving}>
+                        <Button onClick={handleSave} disabled={isUploading || isSaving}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save Purchase
                         </Button>
