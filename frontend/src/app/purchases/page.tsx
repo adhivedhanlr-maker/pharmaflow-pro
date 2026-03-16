@@ -77,6 +77,7 @@ export default function PurchasesPage() {
     const [loading, setLoading] = useState(false);
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [gstPercent, setGstPercent] = useState(5); // Default to 5% as per user request
 
     // UI Feedback State
     const [error, setError] = useState<string | null>(null);
@@ -185,10 +186,10 @@ export default function PurchasesPage() {
     };
 
     const totals = useMemo(() => {
-        const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.purchasePrice), 0);
-        const tax = subtotal * 0.12; // Assuming 12% GST
+        const subtotal = items.reduce((acc, item) => acc + (item.quantity * (item.purchasePrice || 0)), 0);
+        const tax = subtotal * (gstPercent / 100);
         return { subtotal, tax, net: subtotal + tax };
-    }, [items]);
+    }, [items, gstPercent]);
 
     const validateForm = () => {
         if (!selectedSupplierId) return "Please select a supplier.";
@@ -465,11 +466,20 @@ export default function PurchasesPage() {
                                 <span className="font-mono font-semibold">₹{totals.subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-xs">
-                                <span className="text-slate-500">Tax (12%):</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-slate-500">Tax</span>
+                                    <input 
+                                        type="number" 
+                                        className="w-8 bg-transparent border-none p-0 text-[10px] font-bold text-slate-600 focus:ring-0 text-center"
+                                        value={gstPercent}
+                                        onChange={(e) => setGstPercent(parseFloat(e.target.value) || 0)}
+                                    />
+                                    <span className="text-[10px] font-bold text-slate-400">%</span>
+                                </div>
                                 <span className="font-mono font-semibold">₹{totals.tax.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center border-t border-slate-200 pt-1 mt-1">
-                                <span className="text-xs font-bold">Net Total:</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Bill:</span>
                                 <span className="text-lg font-black text-primary font-mono tracking-tighter">₹{totals.net.toFixed(2)}</span>
                             </div>
                         </CardContent>
@@ -560,49 +570,49 @@ export default function PurchasesPage() {
                                             <Input
                                                 type="number"
                                                 className="h-8 w-16 ml-auto text-right text-[11px] font-bold"
-                                                value={item.quantity}
-                                                min="1"
-                                                onChange={(e) => updateItem(item.id, 'quantity', Math.max(1, parseInt(e.target.value) || 0))}
+                                                value={item.quantity === 0 ? "" : item.quantity}
+                                                min="0"
+                                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono"
-                                                value={item.purchasePrice}
+                                                value={item.purchasePrice === 0 ? "" : item.purchasePrice}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'purchasePrice', Math.max(0, parseFloat(e.target.value) || 0))}
+                                                onChange={(e) => updateItem(item.id, 'purchasePrice', parseFloat(e.target.value) || 0)}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-blue-600"
-                                                value={item.ptr}
+                                                value={item.ptr === 0 ? "" : item.ptr}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'ptr', Math.max(0, parseFloat(e.target.value) || 0))}
+                                                onChange={(e) => updateItem(item.id, 'ptr', parseFloat(e.target.value) || 0)}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-green-600"
-                                                value={item.pts}
+                                                value={item.pts === 0 ? "" : item.pts}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'pts', Math.max(0, parseFloat(e.target.value) || 0))}
+                                                onChange={(e) => updateItem(item.id, 'pts', parseFloat(e.target.value) || 0)}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
                                                 className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-orange-600"
-                                                value={item.nr}
+                                                value={item.nr === 0 ? "" : item.nr}
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'nr', Math.max(0, parseFloat(e.target.value) || 0))}
+                                                onChange={(e) => updateItem(item.id, 'nr', parseFloat(e.target.value) || 0)}
                                             />
                                         </TableCell>
                                         <TableCell>
@@ -616,23 +626,7 @@ export default function PurchasesPage() {
                         </Table>
                     </CardContent>
                     
-                    <div className="p-4 border-t flex justify-end bg-slate-50/30">
-                        <div className="w-64 space-y-2">
-                            <div className="flex justify-between text-xs">
-                                <span className="text-slate-500 font-medium uppercase tracking-wider">Gross Total</span>
-                                <span className="font-mono font-bold text-slate-700">₹{totals.subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                                <span className="text-slate-500 font-medium uppercase tracking-wider">GST (12%)</span>
-                                <span className="font-mono font-bold text-slate-700">₹{totals.tax.toFixed(2)}</span>
-                            </div>
-                            <div className="h-px bg-slate-200" />
-                            <div className="flex justify-between items-center py-1">
-                                <span className="text-sm font-black uppercase tracking-tighter">Net Payable</span>
-                                <span className="text-xl font-black text-primary font-mono tracking-tighter">₹{totals.net.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Removed redundant bottom total section as requested */}
                 </Card>
 
                 <AddSupplierDialog 
