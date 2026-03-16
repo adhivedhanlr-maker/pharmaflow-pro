@@ -298,7 +298,8 @@ export default function PurchasesPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to extract data from invoice.");
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Server error (${response.status})`);
             }
 
             const data = await response.json();
@@ -392,13 +393,17 @@ export default function PurchasesPage() {
             }
         >
             <div 
-                className="p-6 space-y-6 max-w-7xl mx-auto relative"
+                className="p-6 space-y-6 max-w-7xl mx-auto relative min-h-[85vh]"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
                 {isDragging && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/10 backdrop-blur-sm border-2 border-dashed border-primary m-4 rounded-xl">
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-primary/10 backdrop-blur-sm border-2 border-dashed border-primary m-4 rounded-xl"
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={handleDrop}
+                    >
                         <div className="bg-white p-8 rounded-2xl shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-200">
                             <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                                 <FileUp className="h-10 w-10 text-primary animate-bounce" />
