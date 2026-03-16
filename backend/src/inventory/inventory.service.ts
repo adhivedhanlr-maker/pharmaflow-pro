@@ -89,7 +89,11 @@ export class InventoryService {
                 name: data.name,
                 company: data.company,
                 hsnCode: data.hsnCode,
+                composition: data.composition,
+                packing: data.packing,
                 mrp: data.mrp,
+                gstRate: data.gstRate,
+                reorderLevel: data.reorderLevel,
             },
         });
     }
