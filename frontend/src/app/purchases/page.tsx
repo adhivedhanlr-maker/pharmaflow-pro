@@ -304,79 +304,80 @@ export default function PurchasesPage() {
                     </Alert>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="md:col-span-2">
-                        <CardHeader className="py-3">
-                            <CardTitle className="text-sm font-medium">Bill Details</CardTitle>
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <Card className="flex-1">
+                        <CardHeader className="py-2 px-4 border-b bg-slate-50/50">
+                            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Bill Details</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700">Supplier</label>
-                                <div className="flex gap-2">
-                                    <select
-                                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-all font-medium"
-                                        value={selectedSupplierId}
-                                        onChange={(e) => setSelectedSupplierId(e.target.value)}
-                                    >
-                                        <option value="">Select Supplier</option>
-                                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                    </select>
-                                    <Button 
-                                        variant="outline" 
-                                        className="h-10 px-3 shrink-0 border-primary/20 text-primary hover:bg-primary/5"
-                                        onClick={() => setShowSupplierDialog(true)}
-                                        title="Add New Supplier"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
+                        <CardContent className="p-4">
+                            <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+                                <div className="space-y-1.5 min-w-[280px] flex-1">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase">Supplier</label>
+                                    <div className="flex gap-1.5">
+                                        <select
+                                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-all font-medium"
+                                            value={selectedSupplierId}
+                                            onChange={(e) => setSelectedSupplierId(e.target.value)}
+                                        >
+                                            <option value="">Select Supplier</option>
+                                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                        <Button 
+                                            variant="outline" 
+                                            className="h-9 w-9 p-0 shrink-0 border-primary/20 text-primary hover:bg-primary/5"
+                                            onClick={() => setShowSupplierDialog(true)}
+                                            title="Add New Supplier"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700">Bill/Invoice Number</label>
-                                <Input
-                                    className="h-10 border-slate-200 font-mono"
-                                    placeholder="Enter Bill No."
-                                    value={billNumber}
-                                    onChange={(e) => setBillNumber(e.target.value)}
-                                />
-                            </div>
+                                <div className="space-y-1.5 w-full sm:w-48">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase">Invoice Number</label>
+                                    <Input
+                                        className="h-9 border-slate-200 font-mono text-sm"
+                                        placeholder="Enter Bill No."
+                                        value={billNumber}
+                                        onChange={(e) => setBillNumber(e.target.value)}
+                                    />
+                                </div>
 
-                            <div className="hidden md:flex flex-col justify-end pb-1 italic text-[10px] text-muted-foreground">
-                                * Ensure bill details match the physical invoice.
+                                <div className="hidden xl:block pb-1 italic text-[10px] text-muted-foreground ml-auto">
+                                    * Ensure details match physical invoice
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-50">
-                        <CardHeader className="py-3">
-                            <CardTitle className="text-sm font-medium">Summary</CardTitle>
+                    <Card className="lg:w-80 bg-slate-50 border-dashed">
+                        <CardHeader className="py-2 px-4 border-b">
+                            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Summary</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground text-sm">Gross Amount:</span>
+                        <CardContent className="p-3 space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">Gross:</span>
                                 <span className="font-mono font-semibold">₹{totals.subtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground text-sm">Tax Total (12%):</span>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">Tax (12%):</span>
                                 <span className="font-mono font-semibold">₹{totals.tax.toFixed(2)}</span>
                             </div>
-                            <div className="h-px bg-slate-200 my-2" />
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold">Net Total:</span>
-                                <span className="text-2xl font-black text-primary font-mono">₹{totals.net.toFixed(2)}</span>
+                            <div className="flex justify-between items-center border-t border-slate-200 pt-1 mt-1">
+                                <span className="text-xs font-bold">Net Total:</span>
+                                <span className="text-lg font-black text-primary font-mono tracking-tighter">₹{totals.net.toFixed(2)}</span>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between py-4">
-                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Item Entry Details</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b">
+                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Item Entry Details</CardTitle>
                         <div className="flex gap-2 items-center">
                             <AddProductDialog onProductAdded={fetchData} />
-                            <Button size="sm" onClick={addItem} className="h-9 px-4">
-                                <Plus className="mr-2 h-4 w-4" /> Add Item
+                            <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs">
+                                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Item
                             </Button>
                         </div>
                     </CardHeader>
