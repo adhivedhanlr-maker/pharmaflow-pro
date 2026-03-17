@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards, Request, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { OCRService } from './ocr.service';
 import { InventoryService } from './inventory.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // I need to create this
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
@@ -8,7 +10,20 @@ import { Role } from '@prisma/client';
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InventoryController {
-    constructor(private readonly inventoryService: InventoryService) { }
+    constructor(
+        private readonly inventoryService: InventoryService,
+        private readonly ocrService: OCRService
+    ) { }
+
+    @Post('extract-invoice')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(FileInterceptor('file'))
+    async extractInvoice(@UploadedFile() file: Express.Multer.File) {
+        if (!file) {
+            throw new Error('No file uploaded');
+        }
+        return this.ocrService.extractFromInvoice(file);
+    }
 
     @Delete('products/:id')
     @Roles(Role.ADMIN)
