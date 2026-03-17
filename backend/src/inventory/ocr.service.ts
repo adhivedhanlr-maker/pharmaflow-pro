@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-const pdf = require('pdf-parse');
 
 @Injectable()
 export class OCRService {
@@ -45,30 +44,17 @@ export class OCRService {
             - amount: Total amount for this item
           `;
 
-            let parts: any[] = [];
-
-            if (file.mimetype === 'application/pdf') {
-                this.logger.log('Extracting text from PDF...');
-                const data = await pdf(file.buffer);
-                const extractedText = data.text;
-
-                if (!extractedText || extractedText.trim().length === 0) {
-                    throw new Error('No text could be extracted from the PDF');
-                }
-
-                parts = [`${prompt}\n\nInvoice Text Content:\n${extractedText}`];
-            } else {
-                this.logger.log('Processing image with Gemini AI (Multimodal)...');
-                parts = [
-                    prompt,
-                    {
-                        inlineData: {
-                            data: file.buffer.toString('base64'),
-                            mimeType: file.mimetype
-                        }
+            this.logger.log(`Processing ${file.mimetype} with Gemini AI...`);
+            
+            const parts = [
+                prompt,
+                {
+                    inlineData: {
+                        data: file.buffer.toString('base64'),
+                        mimeType: file.mimetype
                     }
-                ];
-            }
+                }
+            ];
 
             const result = await model.generateContent(parts);
             const response = await result.response;

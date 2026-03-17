@@ -67,6 +67,7 @@ interface Supplier {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+console.log("[PurchasesPage] Using API_BASE:", API_BASE);
 const PURCHASE_DRAFT_STORAGE_KEY = "purchase_draft_v2";
 
 export default function PurchasesPage() {
@@ -209,9 +210,13 @@ export default function PurchasesPage() {
                 const updated = { ...item, [field]: value };
                 if (field === 'productId') {
                     const product = products.find(p => p.id === value);
-                    updated.name = product?.name || "";
-                    updated.composition = product?.composition || "";
-                    updated.packing = product?.packing || "";
+                    if (product) {
+                        updated.name = product.name;
+                        updated.composition = product.composition || "";
+                        updated.packing = product.packing || "";
+                        // If it's a newly added product, we might want to keep the invoice price/batch
+                        // unless specifically updated.
+                    }
                 }
                 return updated;
             }
@@ -380,8 +385,13 @@ export default function PurchasesPage() {
             }
 
         } catch (error: any) {
-            console.error("Invoice upload error:", error);
-            setError(`AI extraction error: ${error.message || "Failed to process invoice."}`);
+            console.error("Invoice upload error details:", error);
+            // Handle specific error types if needed
+            let displayMsg = error.message || "Failed to process invoice.";
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                displayMsg = `Network Error: Could not connect to the server at ${API_BASE}. Please check your internet or if the backend is running.`;
+            }
+            setError(`AI extraction error: ${displayMsg}`);
         } finally {
             setIsUploading(false);
             if (eventTarget) eventTarget.value = '';
@@ -612,14 +622,32 @@ export default function PurchasesPage() {
                                     <TableRow key={item.id} className="hover:bg-slate-50/30 transition-colors">
                                         <TableCell className="text-center font-bold text-slate-400 text-xs">{index + 1}</TableCell>
                                         <TableCell>
-                                            <select
-                                                className="h-8 w-full text-[11px] bg-white border border-slate-200 rounded px-1.5 focus:ring-1 focus:ring-primary outline-none"
-                                                value={item.productId}
-                                                onChange={(e) => updateItem(item.id, 'productId', e.target.value)}
-                                            >
-                                                <option value="">Select Item</option>
-                                                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                            </select>
+                                            <div className="flex gap-1 items-center">
+                                                <select
+                                                    className={`h-8 flex-1 text-[11px] bg-white border ${item.productId ? 'border-slate-200' : 'border-orange-200 bg-orange-50/30'} rounded px-1.5 focus:ring-1 focus:ring-primary outline-none transition-colors`}
+                                                    value={item.productId}
+                                                    onChange={(e) => updateItem(item.id, 'productId', e.target.value)}
+                                                >
+                                                    <option value="">{item.productId ? "Select Item" : "Product Not Found"}</option>
+                                                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                                </select>
+                                                {!item.productId && item.name && (
+                                                    <AddProductDialog 
+                                                        onProductAdded={(newProd) => {
+                                                            fetchData();
+                                                            if (newProd?.id) updateItem(item.id, 'productId', newProd.id);
+                                                        }}
+                                                        initialData={{
+                                                            name: item.name,
+                                                            composition: item.composition,
+                                                            packing: item.packing,
+                                                            mrp: item.salePrice
+                                                        }}
+                                                        triggerLabel=""
+                                                        triggerClassName="h-8 w-8 p-0 shrink-0 border-orange-200 text-orange-600 hover:bg-orange-50"
+                                                    />
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <Input
@@ -660,7 +688,10 @@ export default function PurchasesPage() {
                                                 value={item.quantity === 0 ? "" : item.quantity}
                                                 placeholder="0"
                                                 min="0"
-                                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                    updateItem(item.id, 'quantity', isNaN(val) ? 0 : val);
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -671,7 +702,10 @@ export default function PurchasesPage() {
                                                 placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'purchasePrice', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'purchasePrice', isNaN(val) ? 0 : val);
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -682,7 +716,10 @@ export default function PurchasesPage() {
                                                 placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'ptr', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'ptr', isNaN(val) ? 0 : val);
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -693,7 +730,10 @@ export default function PurchasesPage() {
                                                 placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'pts', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'pts', isNaN(val) ? 0 : val);
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -704,7 +744,10 @@ export default function PurchasesPage() {
                                                 placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
-                                                onChange={(e) => updateItem(item.id, 'nr', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'nr', isNaN(val) ? 0 : val);
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell>

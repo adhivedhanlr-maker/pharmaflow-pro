@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,26 +18,44 @@ import { Label } from "@/components/ui/label";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface AddProductDialogProps {
-    onProductAdded: () => void;
+    onProductAdded: (newProduct?: any) => void;
     triggerLabel?: string;
     triggerClassName?: string;
+    initialData?: {
+        name?: string;
+        composition?: string;
+        packing?: string;
+        mrp?: number;
+    };
 }
 
-export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product", triggerClassName }: AddProductDialogProps) {
+export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product", triggerClassName, initialData }: AddProductDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
-        name: "",
-        composition: "",
-        packing: "",
+        name: initialData?.name || "",
+        composition: initialData?.composition || "",
+        packing: initialData?.packing || "",
         hsnCode: "",
         company: "",
-        mrp: "",
+        mrp: initialData?.mrp?.toString() || "",
         gstRate: "5", // Default requested by user
         reorderLevel: "10"
     });
+
+    useEffect(() => {
+        if (initialData && open) {
+            setFormData(prev => ({
+                ...prev,
+                name: initialData.name || prev.name,
+                composition: initialData.composition || prev.composition,
+                packing: initialData.packing || prev.packing,
+                mrp: initialData.mrp?.toString() || prev.mrp,
+            }));
+        }
+    }, [initialData, open]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target as any;
@@ -73,6 +91,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
             });
 
             if (response.ok) {
+                const newProduct = await response.json();
                 setOpen(false);
                 setFormData({
                     name: "",
@@ -84,7 +103,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
                     gstRate: "5",
                     reorderLevel: "10"
                 });
-                onProductAdded();
+                onProductAdded(newProduct);
             } else {
                 const data = await response.json();
                 setError(data.message || "Failed to create product");
@@ -227,7 +246,7 @@ export function AddProductDialog({ onProductAdded, triggerLabel = "Add Product",
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving
                                 </>
                             ) : (
-                                "Create Product"
+                                "Add Product"
                             )}
                         </Button>
                     </DialogFooter>
