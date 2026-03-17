@@ -80,7 +80,7 @@ export class OCRService {
             
             if (jsonStart === -1 || jsonEnd === -1) {
                 this.logger.error("AI did not return valid JSON: " + responseText);
-                throw new Error("The AI model returned an invalid response format. Please try again or enter details manually.");
+                throw new Error("The AI provided a response but it was not in the expected format. Please ensure the invoice is clear and readable.");
             }
 
             const cleanJson = responseText.substring(jsonStart, jsonEnd + 1);

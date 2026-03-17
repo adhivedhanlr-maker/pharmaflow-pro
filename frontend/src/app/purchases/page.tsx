@@ -102,14 +102,45 @@ export default function PurchasesPage() {
 
     useEffect(() => {
         fetchData();
+        
+        // window-level drag and drop to catch drops anywhere on the page
+        const handleWindowDragOver = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer?.types.includes('Files')) {
+                setIsDragging(true);
+            }
+        };
+
+        const handleWindowDrop = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+            if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+                handleInvoiceUpload(e as any);
+            }
+        };
+
+        window.addEventListener('dragover', handleWindowDragOver);
+        window.addEventListener('drop', handleWindowDrop);
+
         // Clear alerts after 5 seconds
         if (error || success) {
             const timer = setTimeout(() => {
                 setError(null);
                 setSuccess(null);
             }, 5000);
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(timer);
+                window.removeEventListener('dragover', handleWindowDragOver);
+                window.removeEventListener('drop', handleWindowDrop);
+            };
         }
+
+        return () => {
+            window.removeEventListener('dragover', handleWindowDragOver);
+            window.removeEventListener('drop', handleWindowDrop);
+        };
     }, [error, success]);
 
     useEffect(() => {
@@ -350,7 +381,7 @@ export default function PurchasesPage() {
 
         } catch (error: any) {
             console.error("Invoice upload error:", error);
-            setError(error.message || "Failed to process invoice.");
+            setError(`AI extraction error: ${error.message || "Failed to process invoice."}`);
         } finally {
             setIsUploading(false);
             if (eventTarget) eventTarget.value = '';
