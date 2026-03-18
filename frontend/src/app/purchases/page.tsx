@@ -66,9 +66,30 @@ interface Supplier {
     name: string;
 }
 
+interface ExtractedInvoiceItem {
+    name?: string;
+    composition?: string;
+    pack?: string;
+    batch?: string;
+    expiry?: string;
+    quantity?: number;
+    ptr?: number;
+    mrp?: number;
+    pts?: number;
+    nr?: number;
+}
+
+interface ExtractedInvoiceResponse {
+    supplierName?: string;
+    invoiceNumber?: string;
+    items?: ExtractedInvoiceItem[];
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 console.log("[PurchasesPage] Using API_BASE:", API_BASE);
 const PURCHASE_DRAFT_STORAGE_KEY = "purchase_draft_v2";
+const SUPPORTED_INVOICE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const MAX_INVOICE_UPLOAD_SIZE = 10 * 1024 * 1024;
 
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -315,6 +336,19 @@ export default function PurchasesPage() {
         }
 
         if (!file) return;
+        const normalizedMimeType = file.type === "image/jpg" ? "image/jpeg" : file.type;
+
+        if (!SUPPORTED_INVOICE_TYPES.has(normalizedMimeType)) {
+            setError("Please upload a PDF, JPG, PNG, or WEBP invoice.");
+            if (eventTarget) eventTarget.value = "";
+            return;
+        }
+
+        if (file.size > MAX_INVOICE_UPLOAD_SIZE) {
+            setError("Invoice file is too large. Please upload a file smaller than 10MB.");
+            if (eventTarget) eventTarget.value = "";
+            return;
+        }
 
         setIsUploading(true);
         setError(null);
@@ -338,34 +372,38 @@ export default function PurchasesPage() {
                 throw new Error(errorData.message || `Server error (${response.status})`);
             }
 
-            const data = await response.json();
+            const data: ExtractedInvoiceResponse = await response.json();
+            const extractedItems = Array.isArray(data.items) ? data.items : [];
             
             // 1. Match Supplier
-            if (data.supplierName) {
+            const extractedSupplierName = data.supplierName?.trim();
+            if (extractedSupplierName) {
                 const supplier = suppliers.find(s => 
-                    s.name.toLowerCase().includes(data.supplierName.toLowerCase()) ||
-                    data.supplierName.toLowerCase().includes(s.name.toLowerCase())
+                    s.name.toLowerCase().includes(extractedSupplierName.toLowerCase()) ||
+                    extractedSupplierName.toLowerCase().includes(s.name.toLowerCase())
                 );
                 if (supplier) {
                     setSelectedSupplierId(supplier.id);
                 } else {
-                    setError(`Supplier "${data.supplierName}" not found. Please add them first.`);
+                    setError(`Supplier "${extractedSupplierName}" not found. Please add them first.`);
                 }
             }
 
             if (data.invoiceNumber) setBillNumber(data.invoiceNumber);
 
             // 2. Map Items
-            const newItems: PurchaseItem[] = data.items.map((item: any) => {
+            const newItems: PurchaseItem[] = extractedItems
+                .filter((item) => item?.name)
+                .map((item) => {
                 const product = products.find(p => 
-                    p.name.toLowerCase().includes(item.name.toLowerCase()) ||
-                    item.name.toLowerCase().includes(p.name.toLowerCase())
+                    p.name.toLowerCase().includes(item.name!.toLowerCase()) ||
+                    item.name!.toLowerCase().includes(p.name.toLowerCase())
                 );
 
                 return {
                     id: Math.random().toString(36).substr(2, 9),
                     productId: product?.id || "",
-                    name: item.name,
+                    name: item.name || "",
                     composition: item.composition || "",
                     packing: item.pack || "",
                     batchNumber: item.batch || "",
@@ -382,6 +420,8 @@ export default function PurchasesPage() {
             if (newItems.length > 0) {
                 setItems(newItems);
                 setSuccess(`Successfully extracted ${newItems.length} items from invoice.`);
+            } else {
+                setError("The invoice was uploaded, but no items could be extracted. Please try a clearer file.");
             }
 
         } catch (error: any) {

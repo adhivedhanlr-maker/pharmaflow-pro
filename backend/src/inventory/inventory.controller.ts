@@ -1,11 +1,20 @@
-import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards, Request, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Delete, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, PayloadTooLargeException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { OCRService } from './ocr.service';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+
+const SUPPORTED_INVOICE_MIME_TYPES = new Set([
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+]);
+const MAX_INVOICE_UPLOAD_SIZE = 10 * 1024 * 1024;
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -17,11 +26,25 @@ export class InventoryController {
 
     @Post('extract-invoice')
     @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FileInterceptor('file', {
+        storage: memoryStorage(),
+        limits: {
+            fileSize: MAX_INVOICE_UPLOAD_SIZE,
+        },
+    }))
     async extractInvoice(@UploadedFile() file: Express.Multer.File) {
         if (!file) {
-            throw new Error('No file uploaded');
+            throw new BadRequestException('No file uploaded');
         }
+        if (file.size > MAX_INVOICE_UPLOAD_SIZE) {
+            throw new PayloadTooLargeException('Invoice file is too large. Please upload a file smaller than 10MB.');
+        }
+
+        const normalizedMimeType = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
+        if (!SUPPORTED_INVOICE_MIME_TYPES.has(normalizedMimeType)) {
+            throw new UnsupportedMediaTypeException('Only PDF, JPG, PNG, and WEBP invoice files are supported.');
+        }
+
         return this.ocrService.extractFromInvoice(file);
     }
 
