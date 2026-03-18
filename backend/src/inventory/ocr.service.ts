@@ -5,9 +5,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export class OCRService {
     private genAI: GoogleGenerativeAI;
     private readonly logger = new Logger(OCRService.name);
+    private readonly modelName: string;
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY;
+        this.modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
         if (apiKey) {
             this.genAI = new GoogleGenerativeAI(apiKey);
         }
@@ -61,7 +63,7 @@ export class OCRService {
         }
 
         try {
-            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = this.genAI.getGenerativeModel({ model: this.modelName });
             const prompt = `
           You are an expert at parsing medical distribution invoices (GST Invoices). 
           Extract the following information and return ONLY a valid JSON object.
@@ -86,7 +88,7 @@ export class OCRService {
             - amount: Total amount for this item
           `;
 
-            this.logger.log(`Processing ${file.mimetype} with Gemini AI...`);
+            this.logger.log(`Processing ${file.mimetype} with Gemini AI model ${this.modelName}...`);
             
             // Normalize mimetype for Gemini compatibility
             const mimeType = this.normalizeMimeType(file.mimetype);
