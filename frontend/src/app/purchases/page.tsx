@@ -431,7 +431,7 @@ export default function PurchasesPage() {
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
                 displayMsg = `Network Error: Could not connect to the server at ${API_BASE}. Please check your internet or if the backend is running.`;
             }
-            setError(`AI extraction error: ${displayMsg}`);
+            setError(`Invoice extraction error: ${displayMsg}`);
         } finally {
             setIsUploading(false);
             if (eventTarget) eventTarget.value = '';
@@ -521,7 +521,7 @@ export default function PurchasesPage() {
                             ) : (
                                 <FileText className="h-4 w-4 mr-2" />
                             )}
-                            Upload Invoice (AI)
+                            Upload Invoice
                         </Button>
                         <Button variant="outline"><FileDown className="mr-2 h-4 w-4" /> Import CSV</Button>
                         <Button onClick={handleSave} disabled={isUploading || isSaving}>

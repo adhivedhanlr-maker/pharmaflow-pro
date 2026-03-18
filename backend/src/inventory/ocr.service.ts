@@ -1,18 +1,74 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { HttpException, HttpStatus, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { PDFParse } from 'pdf-parse';
+import { createWorker, type Worker } from 'tesseract.js';
+
+type ParsedItem = {
+    name: string;
+    composition: string;
+    hsn: string;
+    pack: string;
+    batch: string;
+    expiry: string;
+    quantity: number;
+    free: number;
+    ptr: number;
+    mrp: number;
+    discount: number;
+    gstPercent: number;
+    amount: number;
+};
+
+type ParsedInvoice = {
+    supplierName: string;
+    invoiceNumber: string;
+    date: string;
+    items: ParsedItem[];
+};
+
+const SUMMARY_KEYWORDS = [
+    'total',
+    'taxable',
+    'discount',
+    'cgst',
+    'sgst',
+    'igst',
+    'cess',
+    'round',
+    'gross',
+    'net',
+    'balance',
+    'amount',
+    'invoice value',
+    'sub total',
+    'subtotal',
+    'grand total',
+];
 
 @Injectable()
-export class OCRService {
-    private genAI: GoogleGenerativeAI;
+export class OCRService implements OnModuleDestroy {
     private readonly logger = new Logger(OCRService.name);
-    private readonly modelName: string;
+    private workerPromise: Promise<Worker> | null = null;
 
-    constructor() {
-        const apiKey = process.env.GEMINI_API_KEY;
-        this.modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-        if (apiKey) {
-            this.genAI = new GoogleGenerativeAI(apiKey);
+    async onModuleDestroy() {
+        if (!this.workerPromise) return;
+        const worker = await this.workerPromise;
+        await worker.terminate();
+    }
+
+    private async getWorker(): Promise<Worker> {
+        if (!this.workerPromise) {
+            this.workerPromise = createWorker('eng');
         }
+        return this.workerPromise;
+    }
+
+    private normalizeText(text: string): string {
+        return text
+            .replace(/\r/g, '\n')
+            .replace(/[|]/g, ' ')
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
     }
 
     private normalizeMimeType(mimeType: string): string {
@@ -21,122 +77,267 @@ export class OCRService {
         return mimeType;
     }
 
-    private sanitizeItem(item: unknown) {
-        const safeItem: Record<string, unknown> = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-        return {
-            name: typeof safeItem.name === 'string' ? safeItem.name.trim() : '',
-            composition: typeof safeItem.composition === 'string' ? safeItem.composition.trim() : '',
-            hsn: typeof safeItem.hsn === 'string' ? safeItem.hsn.trim() : '',
-            pack: typeof safeItem.pack === 'string' ? safeItem.pack.trim() : '',
-            batch: typeof safeItem.batch === 'string' ? safeItem.batch.trim() : '',
-            expiry: typeof safeItem.expiry === 'string' ? safeItem.expiry.trim() : '',
-            quantity: Number.isFinite(Number(safeItem.quantity)) ? Number(safeItem.quantity) : 0,
-            free: Number.isFinite(Number(safeItem.free)) ? Number(safeItem.free) : 0,
-            ptr: Number.isFinite(Number(safeItem.ptr)) ? Number(safeItem.ptr) : 0,
-            mrp: Number.isFinite(Number(safeItem.mrp)) ? Number(safeItem.mrp) : 0,
-            discount: Number.isFinite(Number(safeItem.discount)) ? Number(safeItem.discount) : 0,
-            gstPercent: Number.isFinite(Number(safeItem.gstPercent)) ? Number(safeItem.gstPercent) : 0,
-            amount: Number.isFinite(Number(safeItem.amount)) ? Number(safeItem.amount) : 0,
-        };
+    private countNumericTokens(line: string): number {
+        const matches = line.match(/\b\d+(?:\.\d+)?\b/g);
+        return matches ? matches.length : 0;
     }
 
-    private sanitizeExtractedInvoice(data: unknown) {
-        const safeData: Record<string, unknown> = data && typeof data === 'object' ? data as Record<string, unknown> : {};
-        const rawItems = safeData.items;
-        const items = Array.isArray(rawItems)
-            ? rawItems
-                .map((item: unknown) => this.sanitizeItem(item))
-                .filter((item: ReturnType<OCRService['sanitizeItem']>) => item.name || item.batch || item.pack || item.quantity > 0)
-            : [];
+    private normalizeDate(dateText: string): string {
+        const match = dateText.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+        if (!match) return '';
 
-        return {
-            supplierName: typeof safeData.supplierName === 'string' ? safeData.supplierName.trim() : '',
-            invoiceNumber: typeof safeData.invoiceNumber === 'string' ? safeData.invoiceNumber.trim() : '',
-            date: typeof safeData.date === 'string' ? safeData.date.trim() : '',
-            items,
-        };
+        const [, dd, mm, yyyy] = match;
+        const fullYear = yyyy.length === 2 ? `20${yyyy}` : yyyy;
+        return `${fullYear.padStart(4, '0')}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
     }
 
-    async extractFromInvoice(file: { buffer: Buffer, mimetype: string }): Promise<any> {
-        if (!this.genAI) {
-            throw new HttpException('GEMINI_API_KEY is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+    private normalizeExpiry(expiryText: string): string {
+        const trimmed = expiryText.trim();
+        const monthYearMatch = trimmed.match(/(\d{1,2})[\/\-.](\d{2,4})/);
+        if (!monthYearMatch) return trimmed;
+
+        const [, month, year] = monthYearMatch;
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return `${fullYear.padStart(4, '0')}-${month.padStart(2, '0')}-01`;
+    }
+
+    private extractInvoiceNumber(text: string): string {
+        const patterns = [
+            /(?:invoice|bill)\s*(?:no|number|#|num)?\s*[:\-]?\s*([A-Z0-9\/-]+)/i,
+            /\b(?:inv|bill)\s*[:#-]?\s*([A-Z0-9\/-]{4,})/i,
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match?.[1]) return match[1].trim();
         }
 
+        return '';
+    }
+
+    private extractInvoiceDate(text: string): string {
+        const patterns = [
+            /(?:invoice|bill)?\s*date\s*[:\-]?\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i,
+            /\bdate\b\s*[:\-]?\s*(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/i,
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match?.[1]) return this.normalizeDate(match[1]);
+        }
+
+        return '';
+    }
+
+    private extractSupplierName(lines: string[]): string {
+        const blockedPatterns = [
+            /tax invoice/i,
+            /invoice/i,
+            /bill/i,
+            /gstin/i,
+            /phone/i,
+            /mobile/i,
+            /email/i,
+            /address/i,
+            /www\./i,
+        ];
+
+        for (const line of lines.slice(0, 8)) {
+            const trimmed = line.trim();
+            if (trimmed.length < 4) continue;
+            if (this.countNumericTokens(trimmed) > 2) continue;
+            if (blockedPatterns.some((pattern) => pattern.test(trimmed))) continue;
+            return trimmed;
+        }
+
+        return '';
+    }
+
+    private isSummaryLine(line: string): boolean {
+        const normalized = line.toLowerCase();
+        return SUMMARY_KEYWORDS.some((keyword) => normalized.includes(keyword));
+    }
+
+    private parseNumber(token: string): number {
+        const cleaned = token.replace(/[,\u20B9]/g, '');
+        const value = Number(cleaned);
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    private parseQuantity(tokens: string[]): number {
+        for (const token of tokens) {
+            if (!/^\d+(?:\.\d+)?$/.test(token)) continue;
+            const value = this.parseNumber(token);
+            if (value > 0 && value <= 10000) return value;
+        }
+        return 1;
+    }
+
+    private parseLineItem(line: string): ParsedItem | null {
+        const expiryMatch = line.match(/\b(\d{1,2}[\/\-.]\d{2,4})\b/);
+        const numericTokens = line.match(/\d+(?:\.\d+)?/g) || [];
+        if (!expiryMatch || numericTokens.length < 2 || this.isSummaryLine(line)) {
+            return null;
+        }
+
+        const tokens = line.split(/\s+/).filter(Boolean);
+        const expiryIndex = tokens.findIndex((token) => /\d{1,2}[\/\-.]\d{2,4}/.test(token));
+        if (expiryIndex === -1) return null;
+
+        const batch = expiryIndex > 0 ? tokens[expiryIndex - 1].replace(/[^A-Z0-9/-]/gi, '') : '';
+        const nameTokens = tokens
+            .slice(0, Math.max(0, expiryIndex - 1))
+            .filter((token, index) => !(index === 0 && /^\d+$/.test(token)));
+        const name = nameTokens.join(' ').trim();
+        if (!name) return null;
+
+        const trailingTokens = tokens.slice(expiryIndex + 1);
+        const values = trailingTokens
+            .map((token) => token.replace(/[,\u20B9%]/g, ''))
+            .filter((token) => /^\d+(?:\.\d+)?$/.test(token))
+            .map((token) => this.parseNumber(token));
+
+        const quantity = this.parseQuantity(trailingTokens);
+        const positiveValues = values.filter((value) => value > 0);
+        const mrp = positiveValues.length > 0 ? positiveValues[positiveValues.length - 1] : 0;
+        const ptr = positiveValues.length > 1 ? positiveValues[positiveValues.length - 2] : mrp;
+        const amount = positiveValues.length > 2 ? positiveValues[positiveValues.length - 3] : 0;
+
+        return {
+            name,
+            composition: '',
+            hsn: '',
+            pack: '',
+            batch,
+            expiry: this.normalizeExpiry(expiryMatch[1]),
+            quantity,
+            free: 0,
+            ptr,
+            mrp,
+            discount: 0,
+            gstPercent: 0,
+            amount,
+        };
+    }
+
+    private extractItems(lines: string[]): ParsedItem[] {
+        const items: ParsedItem[] = [];
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.length < 8) continue;
+            if (this.isSummaryLine(trimmed)) continue;
+            if (this.countNumericTokens(trimmed) < 2) continue;
+
+            const item = this.parseLineItem(trimmed);
+            if (!item) continue;
+
+            const duplicate = items.find(
+                (existing) =>
+                    existing.name === item.name &&
+                    existing.batch === item.batch &&
+                    existing.expiry === item.expiry,
+            );
+            if (!duplicate) {
+                items.push(item);
+            }
+        }
+
+        return items;
+    }
+
+    private sanitizeParsedInvoice(data: ParsedInvoice): ParsedInvoice {
+        return {
+            supplierName: data.supplierName.trim(),
+            invoiceNumber: data.invoiceNumber.trim(),
+            date: data.date.trim(),
+            items: data.items.filter((item) => item.name),
+        };
+    }
+
+    private parseInvoiceText(rawText: string): ParsedInvoice {
+        const text = this.normalizeText(rawText);
+        const lines = text
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean);
+
+        return this.sanitizeParsedInvoice({
+            supplierName: this.extractSupplierName(lines),
+            invoiceNumber: this.extractInvoiceNumber(text),
+            date: this.extractInvoiceDate(text),
+            items: this.extractItems(lines),
+        });
+    }
+
+    private async extractTextFromPdf(buffer: Buffer): Promise<string> {
+        const parser = new PDFParse({ data: buffer });
+
         try {
-            const model = this.genAI.getGenerativeModel({ model: this.modelName });
-            const prompt = `
-          You are an expert at parsing medical distribution invoices (GST Invoices). 
-          Extract the following information and return ONLY a valid JSON object.
-          Do not include any markdown formatting like \`\`\`json or explanations.
-
-          Fields to extract:
-          - supplierName: Name of the company selling the products
-          - invoiceNumber: The bill or invoice number
-          - date: Invoice date (format: YYYY-MM-DD)
-          - items: An array of objects, each containing:
-            - name: Product name
-            - hsn: HSN code
-            - pack: Packing (e.g., 10'S, 100ML)
-            - batch: Batch number
-            - expiry: Expiry date (format: MM/YY or YYYY-MM-DD)
-            - quantity: Quantity purchased
-            - free: Free quantity (0 if not mentioned)
-            - ptr: Purchase Price to Retailer
-            - mrp: Maximum Retail Price
-            - discount: Discount percentage
-            - gstPercent: GST percentage (SGST + CGST)
-            - amount: Total amount for this item
-          `;
-
-            this.logger.log(`Processing ${file.mimetype} with Gemini AI model ${this.modelName}...`);
-            
-            // Normalize mimetype for Gemini compatibility
-            const mimeType = this.normalizeMimeType(file.mimetype);
-            
-            const parts = [
-                prompt,
-                {
-                    inlineData: {
-                        data: file.buffer.toString('base64'),
-                        mimeType: mimeType
-                    }
-                }
-            ];
-
-            const result = await model.generateContent(parts);
-            const response = await result.response;
-            const responseText = response.text();
-
-            // Robust JSON extraction
-            const jsonStart = responseText.indexOf('{');
-            const jsonEnd = responseText.lastIndexOf('}');
-            
-            if (jsonStart === -1 || jsonEnd === -1) {
-                this.logger.error("AI did not return valid JSON: " + responseText);
-                throw new HttpException("The AI provided a response but it was not in the expected format. Please ensure the invoice is clear and readable.", HttpStatus.UNPROCESSABLE_ENTITY);
+            const textResult = await parser.getText();
+            const directText = this.normalizeText(textResult.text || '');
+            if (directText.length >= 50) {
+                return directText;
             }
 
-            const cleanJson = responseText.substring(jsonStart, jsonEnd + 1);
-            const parsedJson = JSON.parse(cleanJson);
-            const sanitizedInvoice = this.sanitizeExtractedInvoice(parsedJson);
+            const screenshotResult = await parser.getScreenshot({ first: 2, scale: 1.5 });
+            const ocrTexts: string[] = [];
 
-            if (sanitizedInvoice.items.length === 0) {
-                throw new HttpException('We could not read any line items from that invoice. Please try a clearer PDF or image.', HttpStatus.UNPROCESSABLE_ENTITY);
+            for (const page of screenshotResult.pages) {
+                const pageText = await this.extractTextFromImage(Buffer.from(page.data));
+                if (pageText) ocrTexts.push(pageText);
             }
 
-            return sanitizedInvoice;
-        } catch (error: any) {
-            this.logger.error(`Error in OCR extraction: ${error.message}`, error.stack);
-            
+            return this.normalizeText(ocrTexts.join('\n'));
+        } finally {
+            await parser.destroy();
+        }
+    }
+
+    private async extractTextFromImage(buffer: Buffer): Promise<string> {
+        const worker = await this.getWorker();
+        const result = await worker.recognize(buffer);
+        return this.normalizeText(result.data.text || '');
+    }
+
+    async extractFromInvoice(file: { buffer: Buffer; mimetype: string }): Promise<ParsedInvoice> {
+        const mimeType = this.normalizeMimeType(file.mimetype);
+
+        try {
+            this.logger.log(`Processing invoice via local OCR pipeline (${mimeType})...`);
+
+            let extractedText = '';
+            if (mimeType === 'application/pdf') {
+                extractedText = await this.extractTextFromPdf(file.buffer);
+            } else {
+                extractedText = await this.extractTextFromImage(file.buffer);
+            }
+
+            if (!extractedText) {
+                throw new HttpException(
+                    'We could not read text from that invoice. Try a clearer image or a searchable PDF.',
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                );
+            }
+
+            const parsedInvoice = this.parseInvoiceText(extractedText);
+
+            if (parsedInvoice.items.length === 0) {
+                throw new HttpException(
+                    'Invoice text was read, but no line items could be extracted. Try a clearer file or enter the items manually.',
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                );
+            }
+
+            return parsedInvoice;
+        } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
             }
-            
-            // Re-throw with a more user-friendly message that includes the original error
-            if (error.message && error.message.includes('400')) {
-                 throw new HttpException(`AI Service Error (400): ${error.message} - Please ensure the file is a valid image or PDF.`, HttpStatus.BAD_REQUEST);
-            }
-            throw new HttpException(`AI Extraction Failed: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            const message = error instanceof Error ? error.message : 'Unknown OCR error';
+            this.logger.error(`Error in local OCR extraction: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new HttpException(`Invoice extraction failed: ${message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
