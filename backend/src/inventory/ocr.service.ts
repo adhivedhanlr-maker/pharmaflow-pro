@@ -25,6 +25,8 @@ type ParsedInvoice = {
     items: ParsedItem[];
 };
 
+type TableRowShape = string[];
+
 const SUMMARY_KEYWORDS = [
     'total',
     'taxable',
@@ -87,6 +89,10 @@ export class OCRService implements OnModuleDestroy {
         if (!match) return '';
 
         const [, dd, mm, yyyy] = match;
+        const month = Number(mm);
+        const day = Number(dd);
+        if (month < 1 || month > 12 || day < 1 || day > 31) return '';
+
         const fullYear = yyyy.length === 2 ? `20${yyyy}` : yyyy;
         return `${fullYear.padStart(4, '0')}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
     }
@@ -97,19 +103,37 @@ export class OCRService implements OnModuleDestroy {
         if (!monthYearMatch) return trimmed;
 
         const [, month, year] = monthYearMatch;
+        const monthNumber = Number(month);
+        if (monthNumber < 1 || monthNumber > 12) return '';
+
         const fullYear = year.length === 2 ? `20${year}` : year;
+        const yearNumber = Number(fullYear);
+        const currentYear = new Date().getFullYear();
+        if (yearNumber < currentYear - 1 || yearNumber > currentYear + 20) return '';
+
         return `${fullYear.padStart(4, '0')}-${month.padStart(2, '0')}-01`;
+    }
+
+    private isUsableInvoiceNumber(value: string): boolean {
+        const cleaned = value.trim().replace(/[:\-]/g, '');
+        if (cleaned.length < 4) return false;
+        if (!/\d/.test(cleaned)) return false;
+        if (/^(no|number|invoice|bill)$/i.test(cleaned)) return false;
+        return true;
     }
 
     private extractInvoiceNumber(text: string): string {
         const patterns = [
-            /(?:invoice|bill)\s*(?:no|number|#|num)?\s*[:\-]?\s*([A-Z0-9\/-]+)/i,
-            /\b(?:inv|bill)\s*[:#-]?\s*([A-Z0-9\/-]{4,})/i,
+            /(?:invoice|bill)\s*(?:no|number|#|num)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\/-]{3,})/i,
+            /\b(?:inv|bill)\s*[:#-]?\s*([A-Z0-9][A-Z0-9\/-]{3,})/i,
         ];
 
         for (const pattern of patterns) {
-            const match = text.match(pattern);
-            if (match?.[1]) return match[1].trim();
+            const matches = text.matchAll(pattern);
+            for (const match of matches) {
+                const candidate = match[1]?.trim() || '';
+                if (this.isUsableInvoiceNumber(candidate)) return candidate;
+            }
         }
 
         return '';
@@ -164,6 +188,10 @@ export class OCRService implements OnModuleDestroy {
         return Number.isFinite(value) ? value : 0;
     }
 
+    private isLikelyHeaderToken(token: string): boolean {
+        return /^(no|date|batch|exp|expiry|qty|mrp|ptr|pts|nr|amount|rate)$/i.test(token.trim());
+    }
+
     private parseQuantity(tokens: string[]): number {
         for (const token of tokens) {
             if (!/^\d+(?:\.\d+)?$/.test(token)) continue;
@@ -187,9 +215,10 @@ export class OCRService implements OnModuleDestroy {
         const batch = expiryIndex > 0 ? tokens[expiryIndex - 1].replace(/[^A-Z0-9/-]/gi, '') : '';
         const nameTokens = tokens
             .slice(0, Math.max(0, expiryIndex - 1))
-            .filter((token, index) => !(index === 0 && /^\d+$/.test(token)));
+            .filter((token, index) => !(index === 0 && /^\d+$/.test(token)))
+            .filter((token) => !this.isLikelyHeaderToken(token));
         const name = nameTokens.join(' ').trim();
-        if (!name) return null;
+        if (!name || name.length < 3 || !/[A-Za-z]/.test(name)) return null;
 
         const trailingTokens = tokens.slice(expiryIndex + 1);
         const values = trailingTokens
@@ -202,6 +231,9 @@ export class OCRService implements OnModuleDestroy {
         const mrp = positiveValues.length > 0 ? positiveValues[positiveValues.length - 1] : 0;
         const ptr = positiveValues.length > 1 ? positiveValues[positiveValues.length - 2] : mrp;
         const amount = positiveValues.length > 2 ? positiveValues[positiveValues.length - 3] : 0;
+        const expiry = this.normalizeExpiry(expiryMatch[1]);
+
+        if (!expiry) return null;
 
         return {
             name,
@@ -209,7 +241,7 @@ export class OCRService implements OnModuleDestroy {
             hsn: '',
             pack: '',
             batch,
-            expiry: this.normalizeExpiry(expiryMatch[1]),
+            expiry,
             quantity,
             free: 0,
             ptr,
@@ -246,10 +278,104 @@ export class OCRService implements OnModuleDestroy {
         return items;
     }
 
+    private buildItemFromCells(cells: string[], columnMap?: Record<string, number>): ParsedItem | null {
+        const cleanedCells = cells.map((cell) => cell.trim()).filter(Boolean);
+        if (cleanedCells.length < 3) return null;
+        if (cleanedCells.some((cell) => this.isSummaryLine(cell))) return null;
+
+        const byIndex = (name: string): string => {
+            const index = columnMap?.[name];
+            return typeof index === 'number' ? cleanedCells[index] || '' : '';
+        };
+
+        const name = byIndex('name') || cleanedCells[0];
+        const batch = byIndex('batch');
+        const expiryRaw = byIndex('expiry') || cleanedCells.find((cell) => /\d{1,2}[\/\-.]\d{2,4}/.test(cell)) || '';
+        const expiry = this.normalizeExpiry(expiryRaw);
+
+        if (!name || name.length < 3 || !/[A-Za-z]/.test(name) || !expiry) return null;
+        if (/^(date|batch|expiry|exp|qty|mrp|ptr|pts|nr)$/i.test(name)) return null;
+
+        const quantity = this.parseNumber(byIndex('qty')) || 1;
+        const mrp = this.parseNumber(byIndex('mrp'));
+        const ptr = this.parseNumber(byIndex('ptr')) || mrp;
+
+        return {
+            name,
+            composition: '',
+            hsn: '',
+            pack: byIndex('pack'),
+            batch,
+            expiry,
+            quantity: quantity > 0 ? quantity : 1,
+            free: 0,
+            ptr,
+            mrp,
+            discount: 0,
+            gstPercent: 0,
+            amount: 0,
+        };
+    }
+
+    private buildColumnMap(headerCells: string[]): Record<string, number> {
+        const map: Record<string, number> = {};
+
+        headerCells.forEach((cell, index) => {
+            const normalized = cell.toLowerCase();
+            if (map.name === undefined && /(product|item|description|particular|name|brand)/.test(normalized)) map.name = index;
+            if (map.pack === undefined && /pack/.test(normalized)) map.pack = index;
+            if (map.batch === undefined && /batch/.test(normalized)) map.batch = index;
+            if (map.expiry === undefined && /(exp|expiry)/.test(normalized)) map.expiry = index;
+            if (map.qty === undefined && /(qty|quantity)/.test(normalized)) map.qty = index;
+            if (map.mrp === undefined && /mrp/.test(normalized)) map.mrp = index;
+            if (map.ptr === undefined && /(ptr|purchase|rate)/.test(normalized)) map.ptr = index;
+        });
+
+        return map;
+    }
+
+    private extractItemsFromTables(tablePages: Array<{ tables: TableRowShape[] }>): ParsedItem[] {
+        const items: ParsedItem[] = [];
+
+        for (const page of tablePages) {
+            for (const table of page.tables || []) {
+                const rows = table as unknown as TableRowShape[];
+                if (!rows.length) continue;
+
+                let columnMap: Record<string, number> | undefined;
+                rows.forEach((row, rowIndex) => {
+                    const cells = row.map((cell) => cell.trim()).filter(Boolean);
+                    if (!cells.length) return;
+
+                    if (rowIndex === 0) {
+                        const maybeHeader = this.buildColumnMap(cells);
+                        if (maybeHeader.name !== undefined || maybeHeader.batch !== undefined || maybeHeader.expiry !== undefined) {
+                            columnMap = maybeHeader;
+                            return;
+                        }
+                    }
+
+                    const item = this.buildItemFromCells(cells, columnMap);
+                    if (!item) return;
+
+                    const duplicate = items.find(
+                        (existing) =>
+                            existing.name === item.name &&
+                            existing.batch === item.batch &&
+                            existing.expiry === item.expiry,
+                    );
+                    if (!duplicate) items.push(item);
+                });
+            }
+        }
+
+        return items;
+    }
+
     private sanitizeParsedInvoice(data: ParsedInvoice): ParsedInvoice {
         return {
             supplierName: data.supplierName.trim(),
-            invoiceNumber: data.invoiceNumber.trim(),
+            invoiceNumber: this.isUsableInvoiceNumber(data.invoiceNumber) ? data.invoiceNumber.trim() : '',
             date: data.date.trim(),
             items: data.items.filter((item) => item.name),
         };
@@ -270,14 +396,20 @@ export class OCRService implements OnModuleDestroy {
         });
     }
 
-    private async extractTextFromPdf(buffer: Buffer): Promise<string> {
+    private async extractPdfData(buffer: Buffer): Promise<{ text: string; items: ParsedItem[] }> {
         const parser = new PDFParse({ data: buffer });
 
         try {
             const textResult = await parser.getText();
             const directText = this.normalizeText(textResult.text || '');
-            if (directText.length >= 50) {
-                return directText;
+            const tableResult = await parser.getTable();
+            const tableItems = this.extractItemsFromTables(tableResult.pages as unknown as Array<{ tables: TableRowShape[] }>);
+
+            if (directText.length >= 50 || tableItems.length > 0) {
+                return {
+                    text: directText,
+                    items: tableItems,
+                };
             }
 
             const screenshotResult = await parser.getScreenshot({ first: 2, scale: 1.5 });
@@ -288,7 +420,10 @@ export class OCRService implements OnModuleDestroy {
                 if (pageText) ocrTexts.push(pageText);
             }
 
-            return this.normalizeText(ocrTexts.join('\n'));
+            return {
+                text: this.normalizeText(ocrTexts.join('\n')),
+                items: tableItems,
+            };
         } finally {
             await parser.destroy();
         }
@@ -307,8 +442,11 @@ export class OCRService implements OnModuleDestroy {
             this.logger.log(`Processing invoice via local OCR pipeline (${mimeType})...`);
 
             let extractedText = '';
+            let tableItems: ParsedItem[] = [];
             if (mimeType === 'application/pdf') {
-                extractedText = await this.extractTextFromPdf(file.buffer);
+                const pdfData = await this.extractPdfData(file.buffer);
+                extractedText = pdfData.text;
+                tableItems = pdfData.items;
             } else {
                 extractedText = await this.extractTextFromImage(file.buffer);
             }
@@ -321,6 +459,9 @@ export class OCRService implements OnModuleDestroy {
             }
 
             const parsedInvoice = this.parseInvoiceText(extractedText);
+            if (tableItems.length > 0) {
+                parsedInvoice.items = tableItems;
+            }
 
             if (parsedInvoice.items.length === 0) {
                 throw new HttpException(
