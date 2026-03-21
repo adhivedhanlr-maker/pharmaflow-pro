@@ -88,22 +88,22 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                 body: JSON.stringify(formData),
             });
 
-            if (response.ok) {
-                const newSupplier = await response.json();
-                onSuccess(newSupplier.data || newSupplier);
-                setFormData({
-                    name: "",
-                    gstin: "",
-                    phone: "",
-                    address: "",
-                    latitude: null,
-                    longitude: null
-                });
-                onOpenChange(false);
-            } else {
-                const err = await response.json();
-                alert(err.message || "Failed to create supplier");
-            }
+                if (response.ok) {
+                    const newSupplier = await response.json();
+                    onSuccess(newSupplier.data || newSupplier);
+                    setFormData({
+                        name: "",
+                        gstin: "",
+                        phone: "",
+                        address: "",
+                        latitude: null,
+                        longitude: null
+                    });
+                    onOpenChange(false);
+                } else {
+                    const err = await response.json().catch(() => ({ message: "Unknown error" }));
+                    alert("Failed to create supplier\nDetails: " + (err.message || "Unknown error"));
+                }
         } catch (error) {
             console.error(error);
             alert("Network error");
@@ -220,8 +220,11 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                                     step="any"
                                     placeholder="0.0000"
                                     className="h-8 text-xs font-mono"
-                                    value={formData.latitude || ""}
-                                    onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+                                    value={formData.latitude ?? ""}
+                                    onChange={e => {
+                                        const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                                        setFormData({ ...formData, latitude: isNaN(val as number) ? null : val });
+                                    }}
                                 />
                             </div>
                             <div className="space-y-1">
@@ -231,8 +234,11 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                                     step="any"
                                     placeholder="0.0000"
                                     className="h-8 text-xs font-mono"
-                                    value={formData.longitude || ""}
-                                    onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+                                    value={formData.longitude ?? ""}
+                                    onChange={e => {
+                                        const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                                        setFormData({ ...formData, longitude: isNaN(val as number) ? null : val });
+                                    }}
                                 />
                             </div>
                         </div>

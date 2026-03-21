@@ -50,7 +50,12 @@ export class PartiesService {
     }
 
     async createCustomer(data: any, tenantId?: string) {
-        return this.prisma.customer.create({ data: { ...data, tenantId } });
+        try {
+            return await this.prisma.customer.create({ data: { ...data, tenantId } });
+        } catch (error) {
+            console.error('Error creating customer:', error);
+            throw error;
+        }
     }
 
     async updateCustomer(id: string, data: any, tenantId?: string) {
@@ -103,7 +108,18 @@ export class PartiesService {
     }
 
     async createSupplier(data: any, tenantId?: string) {
-        return this.prisma.supplier.create({ data: { ...data, tenantId } });
+        try {
+            // Ensure latitude and longitude are numbers or null, never NaN
+            if (data.latitude && isNaN(data.latitude)) data.latitude = null;
+            if (data.longitude && isNaN(data.longitude)) data.longitude = null;
+            
+            return await this.prisma.supplier.create({ 
+                data: { ...data, tenantId } 
+            });
+        } catch (error) {
+            console.error('Error creating supplier:', error);
+            throw error;
+        }
     }
 
     async updateSupplier(id: string, data: any, tenantId?: string) {
