@@ -414,67 +414,6 @@ export default function LoginPage() {
                     </CardContent>
                 </Card>
 
-                {!branding.requiresSetup && (
-                <div className="pt-4">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-slate-200" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white/95 px-2 text-slate-400 font-medium tracking-widest">Developer Quick Access</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 pb-8">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
-                            onClick={() => handleQuickLogin('admin')}
-                            disabled={loading}
-                        >
-                            Admin
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
-                            onClick={() => handleQuickLogin('billing1')}
-                            disabled={loading}
-                        >
-                            Billing
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
-                            onClick={() => handleQuickLogin('warehouse1')}
-                            disabled={loading}
-                        >
-                            Warehouse
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
-                            onClick={() => handleQuickLogin('accountant1')}
-                            disabled={loading}
-                        >
-                            Accountant
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-[10px] h-9 bg-white hover:bg-slate-50 border-slate-200"
-                            onClick={() => handleQuickLogin('sales1')}
-                            disabled={loading}
-                        >
-                            Sales Rep
-                        </Button>
-                    </div>
-                </div>
-                )}
-
                 <p className="text-center text-xs text-slate-400">
                     &copy; {new Date().getFullYear()} {branding.companyName}. Powered by PharmaFlow Pro.
                 </p>
