@@ -5,6 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PartiesService {
     constructor(private prisma: PrismaService) { }
 
+    private normalizeCoordinate(value: unknown) {
+        if (value === undefined || value === null || value === '') {
+            return null;
+        }
+
+        const parsed = typeof value === 'number' ? value : Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
     // Customer Methods
     async findAllCustomers(params?: {
         skip?: number;
@@ -58,8 +67,8 @@ export class PartiesService {
                     gstin, 
                     phone, 
                     address, 
-                    latitude, 
-                    longitude, 
+                    latitude: this.normalizeCoordinate(latitude), 
+                    longitude: this.normalizeCoordinate(longitude), 
                     creditLimit: creditLimit || 0,
                     tenantId 
                 } 
@@ -122,19 +131,15 @@ export class PartiesService {
     async createSupplier(data: any, tenantId?: string) {
         try {
             const { name, gstin, phone, address, latitude, longitude } = data;
-            
-            // Ensure latitude and longitude are numbers or null, never NaN
-            const lat = (latitude !== undefined && latitude !== null && !isNaN(latitude)) ? latitude : null;
-            const lng = (longitude !== undefined && longitude !== null && !isNaN(longitude)) ? longitude : null;
-            
+
             return await this.prisma.supplier.create({ 
                 data: { 
                     name, 
                     gstin, 
                     phone, 
                     address, 
-                    latitude: lat, 
-                    longitude: lng, 
+                    latitude: this.normalizeCoordinate(latitude), 
+                    longitude: this.normalizeCoordinate(longitude), 
                     tenantId 
                 } 
             });
