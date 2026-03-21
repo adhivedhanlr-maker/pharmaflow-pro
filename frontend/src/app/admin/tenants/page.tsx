@@ -429,16 +429,18 @@ export default function TenantManagementPage() {
                                         <p><span className="font-medium text-slate-700">Created:</span> {new Date(tenant.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-2"
-                                            onClick={() => setSupportDialogTenant(tenant)}
-                                        >
-                                            <LogIn className="h-4 w-4" />
-                                            Access Client
-                                        </Button>
+                                        {!tenant.isDefault && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-2"
+                                                onClick={() => setSupportDialogTenant(tenant)}
+                                            >
+                                                <LogIn className="h-4 w-4" />
+                                                Access Client
+                                            </Button>
+                                        )}
                                         {!tenant.isDefault && tenant.userCount === 0 && (
                                             <Button
                                                 type="button"
