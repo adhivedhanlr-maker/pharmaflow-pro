@@ -56,6 +56,14 @@ export class PartiesController {
     @Post('suppliers')
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     createSupplier(@Body() data: any, @Request() req: any) {
+        console.log('Create Supplier Request:', {
+            data,
+            user: {
+                id: req.user?.id,
+                tenantId: req.user?.tenantId,
+                role: req.user?.role
+            }
+        });
         return this.partiesService.createSupplier(data, req.user.tenantId);
     }
 

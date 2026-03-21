@@ -115,7 +115,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                     onOpenChange(false);
                 } else {
                     const err = await response.json().catch(() => ({ message: "Unknown error" }));
-                    alert("Failed to create supplier\nDetails: " + (err.message || "Unknown error"));
+                    alert("Failed to create supplier\nDetails: " + JSON.stringify(err, null, 2));
                 }
         } catch (error) {
             console.error(error);

@@ -123,7 +123,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 setFormData({ name: "", gstin: "", phone: "", address: "", latitude: null, longitude: null });
             } else {
                 const err = await response.json().catch(() => ({ message: "Unknown error" }));
-                alert("Failed to create " + label + "\nDetails: " + (err.message || "Unknown error"));
+                alert("Failed to create " + label + "\nDetails: " + JSON.stringify(err, null, 2));
             }
         } catch (error) {
             console.error(error);
