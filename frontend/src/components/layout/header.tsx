@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, User, Info, AlertTriangle, XCircle, LogOut } from "lucide-react";
+import { Bell, User, Info, AlertTriangle, XCircle, LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,7 +33,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export function Header({ branding }: HeaderProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const { logout, user: authUser } = useAuth();
+    const { logout, exitSupportAccess, user: authUser } = useAuth();
 
     useEffect(() => {
         fetchNotifications();
@@ -150,6 +150,15 @@ export function Header({ branding }: HeaderProps) {
                         </div>
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-2 shadow-xl border-slate-200" align="end">
+                        {authUser?.supportAccess?.active && (
+                            <button
+                                onClick={() => void exitSupportAccess()}
+                                className="w-full flex items-center gap-2 p-2 text-sm text-amber-700 hover:bg-amber-50 rounded-md transition-colors font-medium"
+                            >
+                                <ShieldAlert className="h-4 w-4" />
+                                Exit Support Access
+                            </button>
+                        )}
                         <button
                             onClick={logout}
                             className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"

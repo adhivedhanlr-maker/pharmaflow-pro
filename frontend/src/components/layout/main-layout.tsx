@@ -120,6 +120,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className="w-48 p-2 shadow-xl border-slate-200" align="end">
+                                {user?.supportAccess?.active && (
+                                    <button
+                                        onClick={() => void exitSupportAccess()}
+                                        className="w-full flex items-center gap-2 p-2 text-sm text-amber-700 hover:bg-amber-50 rounded-md transition-colors font-medium"
+                                    >
+                                        <ShieldAlert className="h-4 w-4" />
+                                        Exit Support Access
+                                    </button>
+                                )}
                                 <button
                                     onClick={logout}
                                     className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"
