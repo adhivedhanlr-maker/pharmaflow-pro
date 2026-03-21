@@ -18,6 +18,18 @@ export class UsersController {
 
     @Get('me')
     getProfile(@Request() req: any) {
+        if (req.user?.supportAccess?.active) {
+            return {
+                id: req.user.userId,
+                username: req.user.username,
+                name: req.user.name || req.user.supportAccess.actorName,
+                role: req.user.role,
+                tenantId: req.user.tenantId,
+                canGenerateInvoice: false,
+                isOnDuty: false,
+                supportAccess: req.user.supportAccess,
+            };
+        }
         return this.usersService.findOne(req.user.userId, req.user.tenantId);
     }
 

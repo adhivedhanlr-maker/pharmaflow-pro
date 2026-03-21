@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
 
 export function isAdminLikeRole(role?: string | null) {
-    return role === Role.ADMIN || role === Role.DEVELOPER;
+    return role === Role.ADMIN || role === 'DEVELOPER';
 }
 
 export function hasRequiredRole(userRole: string | null | undefined, requiredRoles: Role[]) {
@@ -13,5 +13,5 @@ export function hasRequiredRole(userRole: string | null | undefined, requiredRol
         return true;
     }
 
-    return userRole === Role.DEVELOPER && requiredRoles.includes(Role.ADMIN);
+    return userRole === 'DEVELOPER' && requiredRoles.includes(Role.ADMIN);
 }

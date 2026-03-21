@@ -1,6 +1,9 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { isAdminLikeRole } from '../auth/role-access.util';
+import { JwtService } from '@nestjs/jwt';
+import { AuditAction, AuditLogService } from '../audit/audit-log.service';
+import { randomUUID } from 'crypto';
 
 type BrandingResponse = {
     id?: string;
@@ -17,7 +20,11 @@ type BrandingResponse = {
 
 @Injectable()
 export class TenantBrandingService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly jwtService: JwtService,
+        private readonly auditLogService: AuditLogService,
+    ) { }
 
     async resolveBranding(host?: string | null): Promise<BrandingResponse> {
         const normalizedHost = this.normalizeHost(host);
@@ -174,6 +181,131 @@ export class TenantBrandingService {
         if (!tenant?.isDefault) {
             throw new ForbiddenException('Only the platform tenant can manage clients');
         }
+    }
+
+    async startSupportAccess(params: {
+        actorUserId: string;
+        actorRole: string;
+        actorTenantId?: string;
+        targetTenantId: string;
+        reason: string;
+        returnUrl: string;
+        ipAddress?: string;
+        userAgent?: string;
+    }) {
+        const actor = await this.prisma.user.findFirst({
+            where: {
+                id: params.actorUserId,
+                ...(params.actorTenantId ? { tenantId: params.actorTenantId } : {}),
+            },
+            select: {
+                id: true,
+                username: true,
+                name: true,
+                role: true,
+                tenantId: true,
+            },
+        });
+
+        if (!actor) {
+            throw new ForbiddenException('Support actor not found');
+        }
+
+        const targetTenant = await this.getTenantById(params.targetTenantId);
+        if (!targetTenant || !targetTenant.isActive) {
+            throw new ForbiddenException('Target tenant not available');
+        }
+
+        const sessionId = randomUUID();
+        const startedAt = new Date().toISOString();
+        const supportAccess = {
+            active: true,
+            sessionId,
+            actorUserId: actor.id,
+            actorName: actor.name,
+            actorRole: actor.role,
+            actorTenantId: actor.tenantId,
+            targetTenantId: targetTenant.id,
+            targetTenantName: targetTenant.companyName,
+            targetTenantSlug: targetTenant.slug,
+            targetTenantDomain: targetTenant.customDomain || `${targetTenant.slug}.pharmaflow.eflybe.com`,
+            reason: params.reason,
+            startedAt,
+            returnUrl: params.returnUrl,
+        };
+
+        const payload = {
+            sub: actor.id,
+            username: actor.username,
+            name: actor.name,
+            role: actor.role,
+            tenantId: targetTenant.id,
+            supportAccess,
+        };
+
+        await this.auditLogService.log({
+            userId: actor.id,
+            tenantId: targetTenant.id,
+            action: AuditAction.SUPPORT_ACCESS_START,
+            entity: 'TenantSupportSession',
+            entityId: sessionId,
+            details: {
+                actorRole: actor.role,
+                actorTenantId: actor.tenantId,
+                targetTenantId: targetTenant.id,
+                targetTenantName: targetTenant.companyName,
+                reason: params.reason,
+                returnUrl: params.returnUrl,
+                startedAt,
+            },
+            ipAddress: params.ipAddress,
+            userAgent: params.userAgent,
+        });
+
+        const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '2h' });
+        return {
+            accessToken,
+            user: {
+                id: actor.id,
+                username: actor.username,
+                name: actor.name,
+                role: actor.role,
+                tenantId: targetTenant.id,
+                supportAccess,
+            },
+            targetTenant,
+        };
+    }
+
+    async endSupportAccess(params: {
+        actorUserId: string;
+        tenantId?: string;
+        supportAccess?: any;
+        ipAddress?: string;
+        userAgent?: string;
+    }) {
+        if (!params.supportAccess?.active || !params.supportAccess?.sessionId) {
+            throw new ForbiddenException('No active support session');
+        }
+
+        await this.auditLogService.log({
+            userId: params.actorUserId,
+            tenantId: params.tenantId,
+            action: AuditAction.SUPPORT_ACCESS_END,
+            entity: 'TenantSupportSession',
+            entityId: params.supportAccess.sessionId,
+            details: {
+                endedAt: new Date().toISOString(),
+                reason: params.supportAccess.reason,
+                startedAt: params.supportAccess.startedAt,
+                targetTenantId: params.supportAccess.targetTenantId,
+                returnUrl: params.supportAccess.returnUrl,
+            },
+            ipAddress: params.ipAddress,
+            userAgent: params.userAgent,
+        });
+
+        return { success: true };
     }
 
     private async findTenant(host?: string | null) {

@@ -14,6 +14,21 @@ interface User {
     canGenerateInvoice?: boolean;
     lastLat?: number;
     lastLng?: number;
+    supportAccess?: {
+        active: boolean;
+        sessionId: string;
+        actorUserId: string;
+        actorName: string;
+        actorRole: string;
+        actorTenantId?: string | null;
+        targetTenantId: string;
+        targetTenantName: string;
+        targetTenantSlug: string;
+        targetTenantDomain: string;
+        reason: string;
+        startedAt: string;
+        returnUrl: string;
+    };
 }
 
 interface AuthContextType {
@@ -26,6 +41,8 @@ interface AuthContextType {
     testMode: boolean;
     switchRole: (role: string) => void;
     refreshUser: () => Promise<void>;
+    establishSession: (token: string, user: User) => void;
+    exitSupportAccess: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,12 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = (newToken: string, newUser: User) => {
         // Legacy login (if used)
+        establishSession(newToken, newUser);
+        router.push("/");
+    };
+
+    const establishSession = (newToken: string, newUser: User) => {
         setToken(newToken);
         setUser(newUser);
         localStorage.setItem("auth_token", newToken);
         localStorage.setItem("auth_user", JSON.stringify(newUser));
         document.cookie = `auth_token=${newToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
-        router.push("/");
     };
 
     const switchRole = (role: string) => {
@@ -130,8 +151,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const exitSupportAccess = async () => {
+        if (!user?.supportAccess?.active) {
+            return;
+        }
+
+        try {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+            await fetch(`${API_BASE}/tenant-branding/admin/support-access/exit`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        } catch (error) {
+            console.error("Failed to log support access exit:", error);
+        } finally {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("auth_user");
+            document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.href = user.supportAccess.returnUrl;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated, testMode, switchRole, refreshUser }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated, testMode, switchRole, refreshUser, establishSession, exitSupportAccess }}>
             {children}
         </AuthContext.Provider>
     );

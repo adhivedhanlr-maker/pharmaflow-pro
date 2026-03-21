@@ -32,8 +32,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 return {
                     userId: testUser.id,
                     username: testUser.username,
+                    name: testUser.name,
                     role: testUser.role,
                     tenantId: testUser.tenantId,
+                    supportAccess: testUser.supportAccess,
                 };
             } catch (error) {
                 throw new UnauthorizedException('Invalid test token');
@@ -44,8 +46,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         return {
             userId: payload.sub,
             username: payload.username,
+            name: payload.name,
             role: payload.role,
             tenantId: payload.tenantId,
+            supportAccess: payload.supportAccess,
         };
     }
 }

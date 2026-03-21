@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useAuth } from "@/context/auth-context";
-import { Menu, LogOut, User } from "lucide-react";
+import { Menu, LogOut, User, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -30,7 +30,7 @@ type ShellBranding = {
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { logout, isLoading } = useAuth();
+    const { logout, isLoading, user, exitSupportAccess } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState<ShellBranding | null>(null);
 
@@ -133,6 +133,31 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible print:h-auto">
+                    {user?.supportAccess?.active && (
+                        <div className="bg-amber-100 border-b border-amber-200 px-4 py-3 text-amber-950 no-print">
+                            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                <div className="flex items-start gap-2">
+                                    <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+                                    <div className="text-sm">
+                                        <p className="font-semibold">
+                                            Support Access Active: {user.supportAccess.actorName} is working inside {user.supportAccess.targetTenantName}
+                                        </p>
+                                        <p className="text-xs text-amber-800">
+                                            Reason: {user.supportAccess.reason} | Started: {new Date(user.supportAccess.startedAt).toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-amber-300 bg-white hover:bg-amber-50"
+                                    onClick={() => void exitSupportAccess()}
+                                >
+                                    Exit Support Access
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                     <div className="hidden md:block no-print">
                         <Header branding={branding} />
                     </div>

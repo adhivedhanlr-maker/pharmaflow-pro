@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Building2, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Building2, Loader2, LogIn, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -53,6 +53,9 @@ export default function TenantManagementPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [supportDialogTenant, setSupportDialogTenant] = useState<Tenant | null>(null);
+    const [supportReason, setSupportReason] = useState("");
+    const [startingSupportAccess, setStartingSupportAccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [isPlatformHost, setIsPlatformHost] = useState<boolean | null>(null);
@@ -188,6 +191,54 @@ export default function TenantManagementPage() {
         }
     };
 
+    const getTenantAccessUrl = (tenant: Tenant) => {
+        if (tenant.customDomain) {
+            return `${window.location.protocol}//${tenant.customDomain}`;
+        }
+
+        const host = window.location.host;
+        const parts = host.split(".");
+        if (parts.length >= 2 && host !== "localhost:3000" && host !== "127.0.0.1:3000") {
+            return `${window.location.protocol}//${tenant.slug}.${host}`;
+        }
+
+        return window.location.origin;
+    };
+
+    const startSupportAccess = async () => {
+        if (!supportDialogTenant) return;
+
+        setStartingSupportAccess(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${API_BASE}/tenant-branding/admin/${supportDialogTenant.id}/support-access`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    reason: supportReason.trim(),
+                    returnUrl: `${window.location.origin}/admin/tenants`,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error(data?.message || "Failed to start support access");
+            }
+
+            const targetBaseUrl = getTenantAccessUrl(supportDialogTenant);
+            const targetUrl = `${targetBaseUrl}/login?support_token=${encodeURIComponent(data.accessToken)}`;
+            window.location.href = targetUrl;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to start support access");
+        } finally {
+            setStartingSupportAccess(false);
+        }
+    };
+
     return (
         <RoleGate
             allowedRoles={["ADMIN"]}
@@ -288,6 +339,48 @@ export default function TenantManagementPage() {
                             </form>
                         </DialogContent>
                     </Dialog>
+                    <Dialog
+                        open={!!supportDialogTenant}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                setSupportDialogTenant(null);
+                                setSupportReason("");
+                            }
+                        }}
+                    >
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Access Client</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium">
+                                        Entering support access for {supportDialogTenant?.companyName}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        This starts a temporary audited support session with admin-level access inside the client portal.
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="supportReason">Support Reason</Label>
+                                    <Input
+                                        id="supportReason"
+                                        placeholder="Example: Investigating stock sync issue"
+                                        value={supportReason}
+                                        onChange={(e) => setSupportReason(e.target.value)}
+                                    />
+                                </div>
+                                <Button
+                                    className="w-full gap-2"
+                                    onClick={() => void startSupportAccess()}
+                                    disabled={startingSupportAccess || supportReason.trim().length === 0}
+                                >
+                                    {startingSupportAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+                                    Start Support Access
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 {error && (
@@ -336,6 +429,16 @@ export default function TenantManagementPage() {
                                         <p><span className="font-medium text-slate-700">Created:</span> {new Date(tenant.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-2"
+                                            onClick={() => setSupportDialogTenant(tenant)}
+                                        >
+                                            <LogIn className="h-4 w-4" />
+                                            Access Client
+                                        </Button>
                                         {!tenant.isDefault && tenant.userCount === 0 && (
                                             <Button
                                                 type="button"

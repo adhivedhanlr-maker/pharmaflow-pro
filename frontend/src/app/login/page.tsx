@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ const DEFAULT_BRANDING: TenantBranding = {
 };
 
 export default function LoginPage() {
+    const searchParams = useSearchParams();
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -43,7 +45,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [branding, setBranding] = useState<TenantBranding>(DEFAULT_BRANDING);
-    const { login } = useAuth();
+    const { login, establishSession } = useAuth();
 
     useEffect(() => {
         const fetchBranding = async () => {
@@ -71,6 +73,36 @@ export default function LoginPage() {
     }, []);
 
     useEffect(() => {
+        const supportToken = searchParams.get("support_token");
+        if (!supportToken) {
+            return;
+        }
+
+        try {
+            const [, payload] = supportToken.split(".");
+            if (!payload) {
+                throw new Error("Invalid support token");
+            }
+
+            const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+            const paddedPayload = normalizedPayload + "=".repeat((4 - (normalizedPayload.length % 4)) % 4);
+            const decodedPayload = JSON.parse(window.atob(paddedPayload));
+            establishSession(supportToken, {
+                id: decodedPayload.sub,
+                username: decodedPayload.username,
+                name: decodedPayload.name,
+                role: decodedPayload.role,
+                tenantId: decodedPayload.tenantId,
+                supportAccess: decodedPayload.supportAccess,
+            });
+            window.location.replace("/");
+        } catch (error) {
+            console.error("Failed to initialize support access:", error);
+            setError("Support access link is invalid or expired.");
+        }
+    }, [searchParams, establishSession]);
+
+    useEffect(() => {
         document.title = branding.requiresSetup
             ? `${branding.companyName} Setup`
             : `${branding.companyName} Login`;
@@ -88,33 +120,6 @@ export default function LoginPage() {
 
         favicon.href = branding.faviconUrl;
     }, [branding]);
-
-    const handleQuickLogin = async (roleUsername: string) => {
-        setUsername(roleUsername);
-        setPassword("Admin@123");
-        setError(null);
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${API_BASE}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: roleUsername, password: "Admin@123" }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                login(data.access_token, data.user);
-            } else {
-                setError(data.message || "Quick login failed");
-            }
-        } catch (err) {
-            setError("Network error. Please check your connection.");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleBootstrapAdmin = async (e: React.FormEvent) => {
         e.preventDefault();
