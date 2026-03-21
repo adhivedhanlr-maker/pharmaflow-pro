@@ -51,7 +51,19 @@ export class PartiesService {
 
     async createCustomer(data: any, tenantId?: string) {
         try {
-            return await this.prisma.customer.create({ data: { ...data, tenantId } });
+            const { name, gstin, phone, address, latitude, longitude, creditLimit } = data;
+            return await this.prisma.customer.create({ 
+                data: { 
+                    name, 
+                    gstin, 
+                    phone, 
+                    address, 
+                    latitude, 
+                    longitude, 
+                    creditLimit: creditLimit || 0,
+                    tenantId 
+                } 
+            });
         } catch (error) {
             console.error('Error creating customer:', error);
             throw new BadRequestException(`Failed to create customer: ${error.message}`);
@@ -109,16 +121,22 @@ export class PartiesService {
 
     async createSupplier(data: any, tenantId?: string) {
         try {
+            const { name, gstin, phone, address, latitude, longitude } = data;
+            
             // Ensure latitude and longitude are numbers or null, never NaN
-            if (data.latitude !== undefined && data.latitude !== null && isNaN(data.latitude)) {
-                data.latitude = null;
-            }
-            if (data.longitude !== undefined && data.longitude !== null && isNaN(data.longitude)) {
-                data.longitude = null;
-            }
+            const lat = (latitude !== undefined && latitude !== null && !isNaN(latitude)) ? latitude : null;
+            const lng = (longitude !== undefined && longitude !== null && !isNaN(longitude)) ? longitude : null;
             
             return await this.prisma.supplier.create({ 
-                data: { ...data, tenantId } 
+                data: { 
+                    name, 
+                    gstin, 
+                    phone, 
+                    address, 
+                    latitude: lat, 
+                    longitude: lng, 
+                    tenantId 
+                } 
             });
         } catch (error) {
             console.error('Error creating supplier:', error);
