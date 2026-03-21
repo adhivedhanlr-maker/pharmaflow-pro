@@ -226,16 +226,18 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                             <div className="relative">
                                 <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                                 <Input
-                                    placeholder="Search location or type address"
+                                    placeholder={isCustomer ? "Search location or type address" : "Address"}
                                     className="pl-8"
                                     value={formData.address}
-                                    onChange={e => handleNominatimSearch(e.target.value)}
+                                    onChange={e => isCustomer
+                                        ? handleNominatimSearch(e.target.value)
+                                        : setFormData({ ...formData, address: e.target.value })}
                                 />
-                                {isSearching && (
+                                {isCustomer && isSearching && (
                                     <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-slate-300" />
                                 )}
 
-                                {searchResults.length > 0 && (
+                                {isCustomer && searchResults.length > 0 && (
                                     <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                                         {searchResults.map((res: any, idx: number) => (
                                             <button
