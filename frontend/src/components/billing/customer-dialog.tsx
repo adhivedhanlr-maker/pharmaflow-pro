@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Building2, User, MapPin, Search, Map as MapIcon, LocateFixed } from "lucide-react";
+import { Loader2, Plus, Building2, User, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 const PharmacyMapPicker = dynamic(() => import("./pharmacy-map-picker"), {
@@ -107,13 +107,21 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
 
         try {
             const endpoint = isCustomer ? "customers" : "suppliers";
+            const payload = isCustomer
+                ? formData
+                : {
+                    name: formData.name,
+                    gstin: formData.gstin,
+                    phone: formData.phone,
+                    address: formData.address,
+                };
             const response = await fetch(`${API_BASE}/parties/${endpoint}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
@@ -154,15 +162,17 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <label className="text-sm font-medium">Name</label>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 text-[10px] text-blue-600 hover:text-blue-700 p-0"
-                                onClick={() => setMapPickerOpen(true)}
-                            >
-                                <MapIcon className="h-3 w-3 mr-1" /> Search on Map
-                            </Button>
+                            {isCustomer && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-[10px] text-blue-600 hover:text-blue-700 p-0"
+                                    onClick={() => setMapPickerOpen(true)}
+                                >
+                                    <MapIcon className="h-3 w-3 mr-1" /> Search on Map
+                                </Button>
+                            )}
                         </div>
                         <div className="relative">
                             <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -249,54 +259,56 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                         </div>
                     </div>
 
-                    <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold uppercase text-slate-500">GPS Coordinates</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-[10px] bg-white"
-                                onClick={() => {
-                                    if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition((pos) => {
-                                            setFormData({
-                                                ...formData,
-                                                latitude: pos.coords.latitude,
-                                                longitude: pos.coords.longitude
+                    {isCustomer && (
+                        <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold uppercase text-slate-500">GPS Coordinates</label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-[10px] bg-white"
+                                    onClick={() => {
+                                        if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition((pos) => {
+                                                setFormData({
+                                                    ...formData,
+                                                    latitude: pos.coords.latitude,
+                                                    longitude: pos.coords.longitude
+                                                });
                                             });
-                                        });
-                                    }
-                                }}
-                            >
-                                <MapPin className="h-3 w-3 mr-1" /> Detect My Location
-                            </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-[10px] text-slate-400">Latitude</label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    placeholder="0.0000"
-                                    className="h-8 text-xs font-mono"
-                                    value={formData.latitude || ""}
-                                    onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
-                                />
+                                        }
+                                    }}
+                                >
+                                    <MapPin className="h-3 w-3 mr-1" /> Detect My Location
+                                </Button>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] text-slate-400">Longitude</label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    placeholder="0.0000"
-                                    className="h-8 text-xs font-mono"
-                                    value={formData.longitude || ""}
-                                    onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
-                                />
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-slate-400">Latitude</label>
+                                    <Input
+                                        type="number"
+                                        step="any"
+                                        placeholder="0.0000"
+                                        className="h-8 text-xs font-mono"
+                                        value={formData.latitude || ""}
+                                        onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-slate-400">Longitude</label>
+                                    <Input
+                                        type="number"
+                                        step="any"
+                                        placeholder="0.0000"
+                                        className="h-8 text-xs font-mono"
+                                        value={formData.longitude || ""}
+                                        onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="flex justify-end pt-4">
                         <Button type="submit" disabled={isLoading}>
@@ -307,14 +319,16 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 </form>
             </DialogContent>
 
-            <Dialog open={mapPickerOpen} onOpenChange={setMapPickerOpen}>
-                <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden border-none shadow-2xl">
-                    <PharmacyMapPicker
-                        initialSearch={formData.name}
-                        onSelect={selectPharmacy}
-                    />
-                </DialogContent>
-            </Dialog>
+            {isCustomer && (
+                <Dialog open={mapPickerOpen} onOpenChange={setMapPickerOpen}>
+                    <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden border-none shadow-2xl">
+                        <PharmacyMapPicker
+                            initialSearch={formData.name}
+                            onSelect={selectPharmacy}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </Dialog>
     );
 }

@@ -130,7 +130,7 @@ export class PartiesService {
 
     async createSupplier(data: any, tenantId?: string) {
         try {
-            const { name, gstin, phone, address, latitude, longitude } = data;
+            const { name, gstin, phone, address } = data;
 
             return await this.prisma.supplier.create({ 
                 data: { 
@@ -138,8 +138,6 @@ export class PartiesService {
                     gstin, 
                     phone, 
                     address, 
-                    latitude: this.normalizeCoordinate(latitude), 
-                    longitude: this.normalizeCoordinate(longitude), 
                     tenantId 
                 } 
             });

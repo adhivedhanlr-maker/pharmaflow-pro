@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Building2, User, MapPin, Search, Map as MapIcon, Plus } from "lucide-react";
+import { Loader2, Building2, User, Map as MapIcon, Plus } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +29,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
         name: "",
         gstin: "",
         phone: "",
-        address: "",
-        latitude: null as number | null,
-        longitude: null as number | null
+        address: ""
     });
 
     const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -62,9 +60,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
         setFormData({
             ...formData,
             name: place.display_name.split(',')[0],
-            address: place.display_name,
-            latitude: parseFloat(place.lat),
-            longitude: parseFloat(place.lon)
+            address: place.display_name
         });
         setSearchResults([]);
     };
@@ -98,7 +94,12 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    name: formData.name,
+                    gstin: formData.gstin,
+                    phone: formData.phone,
+                    address: formData.address,
+                }),
             });
 
                 if (response.ok) {
@@ -108,9 +109,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                         name: "",
                         gstin: "",
                         phone: "",
-                        address: "",
-                        latitude: null,
-                        longitude: null
+                        address: ""
                     });
                     onOpenChange(false);
                 } else {
@@ -131,7 +130,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                 <DialogHeader>
                     <DialogTitle>Add New Supplier</DialogTitle>
                     <DialogDescription>
-                        Enter supplier details. Use location search for accuracy.
+                        Enter supplier details.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
@@ -215,60 +214,6 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                                 value={formData.address}
                                 onChange={e => setFormData({ ...formData, address: e.target.value })}
                             />
-                        </div>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold uppercase text-slate-500">GPS Coordinates</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-[10px] bg-white"
-                                onClick={() => {
-                                    if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition((pos) => {
-                                            setFormData({
-                                                ...formData,
-                                                latitude: pos.coords.latitude,
-                                                longitude: pos.coords.longitude
-                                            });
-                                        });
-                                    }
-                                }}
-                            >
-                                <MapPin className="h-3 w-3 mr-1" /> Detect My Location
-                            </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-[10px] text-slate-400">Latitude</label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    placeholder="0.0000"
-                                    className="h-8 text-xs font-mono"
-                                    value={formData.latitude ?? ""}
-                                    onChange={e => {
-                                        const val = e.target.value === "" ? null : parseFloat(e.target.value);
-                                        setFormData({ ...formData, latitude: isNaN(val as number) ? null : val });
-                                    }}
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] text-slate-400">Longitude</label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    placeholder="0.0000"
-                                    className="h-8 text-xs font-mono"
-                                    value={formData.longitude ?? ""}
-                                    onChange={e => {
-                                        const val = e.target.value === "" ? null : parseFloat(e.target.value);
-                                        setFormData({ ...formData, longitude: isNaN(val as number) ? null : val });
-                                    }}
-                                />
-                            </div>
                         </div>
                     </div>
 
