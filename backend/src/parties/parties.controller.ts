@@ -54,7 +54,7 @@ export class PartiesController {
     }
 
     @Post('suppliers')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     createSupplier(@Body() data: any, @Request() req: any) {
         return this.partiesService.createSupplier(data, req.user.tenantId);
     }
@@ -72,13 +72,13 @@ export class PartiesController {
     }
 
     @Put('suppliers/:id')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     updateSupplier(@Param('id') id: string, @Body() data: any, @Request() req: any) {
         return this.partiesService.updateSupplier(id, data, req.user.tenantId);
     }
 
     @Delete('suppliers/:id')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     deleteSupplier(@Param('id') id: string, @Request() req: any) {
         return this.partiesService.deleteSupplier(id, req.user.tenantId);
     }

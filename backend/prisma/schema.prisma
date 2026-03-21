@@ -158,6 +158,8 @@ model Supplier {
   gstin          String?
   address        String?
   phone          String?
+  latitude       Float?
+  longitude      Float?
   currentBalance Float           @default(0)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
