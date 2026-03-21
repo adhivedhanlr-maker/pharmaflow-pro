@@ -49,11 +49,22 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const { token, user: currentUser } = useAuth();
 
     // Form state
     const [formData, setFormData] = useState({
+        username: "",
+        password: "",
+        name: "",
+        role: "BILLING_OPERATOR",
+        canGenerateInvoice: false,
+    });
+
+    const [editFormData, setEditFormData] = useState({
         username: "",
         password: "",
         name: "",
@@ -145,6 +156,59 @@ export default function UsersPage() {
             }
         } catch (error) {
             console.error("Failed to delete user:", error);
+        }
+    };
+
+    const openEditDialog = (user: User) => {
+        setEditingUserId(user.id);
+        setEditFormData({
+            username: user.username,
+            password: "",
+            name: user.name,
+            role: user.role,
+            canGenerateInvoice: user.canGenerateInvoice,
+        });
+        setIsEditDialogOpen(true);
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUserId) return;
+
+        setIsUpdating(true);
+        try {
+            const payload = {
+                username: editFormData.username,
+                name: editFormData.name,
+                role: editFormData.role,
+                canGenerateInvoice: editFormData.role === "SALES_REP" ? editFormData.canGenerateInvoice : false,
+                ...(editFormData.password ? { password: editFormData.password } : {}),
+            };
+
+            const response = await fetch(`${API_BASE}/users/${editingUserId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                toast.success("User updated successfully");
+                setIsEditDialogOpen(false);
+                setEditingUserId(null);
+                fetchUsers();
+            } else {
+                toast.error(result.message || "Failed to update user");
+            }
+        } catch (error) {
+            toast.error("Network error. Please check if backend is running.");
+            console.error("Failed to update user:", error);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -266,6 +330,89 @@ export default function UsersPage() {
                             </form>
                         </DialogContent>
                     </Dialog>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Edit User</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleUpdateUser} className="space-y-5 pt-4">
+                                <div className="space-y-1.5">
+                                    <Label className="text-sm font-medium">Full Name</Label>
+                                    <Input
+                                        placeholder="Enter full name"
+                                        value={editFormData.name}
+                                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                        required
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-sm font-medium">Username</Label>
+                                    <Input
+                                        placeholder="Choose a unique username"
+                                        value={editFormData.username}
+                                        onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+                                        required
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-sm font-medium">New Password</Label>
+                                    <Input
+                                        type="password"
+                                        placeholder="Leave blank to keep current password"
+                                        value={editFormData.password}
+                                        onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-sm font-medium">Access Role</Label>
+                                    <Select
+                                        value={editFormData.role}
+                                        onValueChange={(val) => setEditFormData({
+                                            ...editFormData,
+                                            role: val,
+                                            canGenerateInvoice: val === "SALES_REP" ? editFormData.canGenerateInvoice : false,
+                                        })}
+                                    >
+                                        <SelectTrigger className="h-10">
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ADMIN">System Administrator</SelectItem>
+                                            <SelectItem value="BILLING_OPERATOR">Billing Operator</SelectItem>
+                                            <SelectItem value="WAREHOUSE_MANAGER">Warehouse Manager</SelectItem>
+                                            <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                                            <SelectItem value="SALES_REP">Sales Representative</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {editFormData.role === "SALES_REP" && (
+                                    <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50/50">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Invoice Permission</Label>
+                                            <p className="text-xs text-slate-500">Allow this user to generate invoices</p>
+                                        </div>
+                                        <Switch
+                                            checked={editFormData.canGenerateInvoice}
+                                            onCheckedChange={(checked) => setEditFormData({ ...editFormData, canGenerateInvoice: checked })}
+                                        />
+                                    </div>
+                                )}
+
+                                <Button type="submit" className="w-full h-11 bg-indigo-600 hover:bg-indigo-700" disabled={isUpdating}>
+                                    {isUpdating ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : "Save Changes"}
+                                </Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <Card className="shadow-sm border-slate-200 overflow-hidden">
@@ -339,11 +486,9 @@ export default function UsersPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-white shadow-none transition-all"
-                                                        asChild
+                                                        onClick={() => openEditDialog(u)}
                                                     >
-                                                        <a href={`/users/${u.id}`}>
-                                                            <Edit2 className="h-4 w-4" />
-                                                        </a>
+                                                        <Edit2 className="h-4 w-4" />
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
