@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Building2, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PLATFORM_HOSTS = new Set([
@@ -65,7 +66,7 @@ export default function TenantManagementPage() {
             return;
         }
 
-        if (token && user?.role === "ADMIN" && isPlatformHost) {
+        if (token && isAdminLikeRole(user?.role) && isPlatformHost) {
             fetchTenants();
         } else if (!isPlatformHost) {
             router.replace("/");
@@ -77,7 +78,7 @@ export default function TenantManagementPage() {
             return;
         }
 
-        if (user && (!isPlatformHost || user.role !== "ADMIN")) {
+        if (user && (!isPlatformHost || !isAdminLikeRole(user.role))) {
             router.replace("/");
         }
     }, [user, isPlatformHost, router]);

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
+import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PUBLIC_VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -24,7 +25,7 @@ export function usePushNotifications() {
 
     useEffect(() => {
         const initPush = async () => {
-            if (!token || user?.role !== "ADMIN" || !PUBLIC_VAPID_KEY) {
+            if (!token || !isAdminLikeRole(user?.role) || !PUBLIC_VAPID_KEY) {
                 return;
             }
 

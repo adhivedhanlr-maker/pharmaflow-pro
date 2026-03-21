@@ -15,6 +15,7 @@ import { UserCog, Shield, Package, TrendingUp, Calculator, Users } from "lucide-
 
 const ROLES = [
     { value: "ADMIN", label: "Admin", icon: Shield, color: "bg-red-500" },
+    { value: "DEVELOPER", label: "Developer", icon: Shield, color: "bg-slate-700" },
     { value: "BILLING_OPERATOR", label: "Billing Operator", icon: Calculator, color: "bg-blue-500" },
     { value: "WAREHOUSE_MANAGER", label: "Warehouse Manager", icon: Package, color: "bg-green-500" },
     { value: "SALES_REP", label: "Sales Rep", icon: TrendingUp, color: "bg-purple-500" },

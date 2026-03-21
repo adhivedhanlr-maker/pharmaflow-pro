@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './auth-context';
+import { isAdminLikeRole } from '@/lib/roles';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -39,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // Global listeners for notifications
         newSocket.on('new-requirement', (data) => {
-            if (user?.role === 'ADMIN' || user?.role === 'BILLING_OPERATOR') {
+            if (isAdminLikeRole(user?.role) || user?.role === 'BILLING_OPERATOR') {
                 console.log("New Sales Requirement:", data);
                 // Fallback to simple alert if toast is unavailable
                 if (typeof window !== 'undefined') {

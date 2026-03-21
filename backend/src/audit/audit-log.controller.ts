@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards, Req } from '@nestjs/common';
 import { AuditLogService } from './audit-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { isAdminLikeRole } from '../auth/role-access.util';
 
 @Controller('audit-logs')
 @UseGuards(JwtAuthGuard)
@@ -16,15 +17,15 @@ export class AuditLogController {
         @Query('endDate') endDate?: string,
         @Query('limit') limit?: string,
         @Query('offset') offset?: string,
-    ) {
+        ) {
         // Only admins can view all logs
         const user = req.user;
-        if (user.role !== 'ADMIN' && userId && userId !== user.userId) {
+        if (!isAdminLikeRole(user.role) && userId && userId !== user.userId) {
             return { logs: [], total: 0 };
         }
 
         return this.auditLogService.getLogs({
-            userId: userId || (user.role !== 'ADMIN' ? user.userId : undefined),
+            userId: userId || (!isAdminLikeRole(user.role) ? user.userId : undefined),
             action,
             startDate: startDate ? new Date(startDate) : undefined,
             endDate: endDate ? new Date(endDate) : undefined,

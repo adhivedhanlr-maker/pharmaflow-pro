@@ -33,6 +33,7 @@ import {
 import { RoleGate } from "@/components/auth/role-gate";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -73,7 +74,7 @@ export default function UsersPage() {
     });
 
     useEffect(() => {
-        if (token && currentUser?.role === "ADMIN") {
+        if (token && isAdminLikeRole(currentUser?.role)) {
             fetchUsers();
         }
     }, [token, currentUser]);
@@ -215,6 +216,7 @@ export default function UsersPage() {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case "ADMIN": return <Badge variant="default" className="bg-purple-600">Admin</Badge>;
+            case "DEVELOPER": return <Badge variant="default" className="bg-slate-900">Developer</Badge>;
             case "BILLING_OPERATOR": return <Badge variant="secondary">Billing</Badge>;
             case "WAREHOUSE_MANAGER": return <Badge variant="outline">Warehouse</Badge>;
             case "ACCOUNTANT": return <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">Accountant</Badge>;
@@ -298,6 +300,7 @@ export default function UsersPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="ADMIN">System Administrator</SelectItem>
+                                            <SelectItem value="DEVELOPER">Developer</SelectItem>
                                             <SelectItem value="BILLING_OPERATOR">Billing Operator</SelectItem>
                                             <SelectItem value="WAREHOUSE_MANAGER">Warehouse Manager</SelectItem>
                                             <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
@@ -381,6 +384,7 @@ export default function UsersPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="ADMIN">System Administrator</SelectItem>
+                                            <SelectItem value="DEVELOPER">Developer</SelectItem>
                                             <SelectItem value="BILLING_OPERATOR">Billing Operator</SelectItem>
                                             <SelectItem value="WAREHOUSE_MANAGER">Warehouse Manager</SelectItem>
                                             <SelectItem value="ACCOUNTANT">Accountant</SelectItem>

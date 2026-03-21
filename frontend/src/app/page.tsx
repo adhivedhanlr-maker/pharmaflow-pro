@@ -20,6 +20,7 @@ import { io } from "socket.io-client";
 import { cn } from "@/lib/utils";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import Link from "next/link";
+import { hasRoleAccess, isAdminLikeRole } from "@/lib/roles";
 
 interface Stats {
   salesToday: number;
@@ -51,7 +52,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStats();
-    if (user?.role === "ADMIN") {
+    if (isAdminLikeRole(user?.role)) {
       void fetchProfileCompleteness();
     }
 
@@ -186,7 +187,7 @@ export default function Dashboard() {
     },
   ];
 
-  const filteredStats = statConfig.filter(stat => user && stat.roles.includes(user.role));
+  const filteredStats = statConfig.filter(stat => user && hasRoleAccess(user.role, stat.roles));
 
   return (
     <div className="space-y-6">
@@ -209,7 +210,7 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {user?.role === "ADMIN" && profileAlertMessage && (
+      {isAdminLikeRole(user?.role) && profileAlertMessage && (
         <Alert className="border-amber-200 bg-amber-50 text-amber-900">
           <ShieldAlert className="h-4 w-4 !text-amber-700" />
           <AlertTitle>Complete distributor profile</AlertTitle>

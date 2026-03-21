@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { isAdminLikeRole } from '../auth/role-access.util';
 
 type BrandingResponse = {
     id?: string;
@@ -165,7 +166,7 @@ export class TenantBrandingService {
     }
 
     async assertPlatformAdmin(user: { tenantId?: string; role?: string }) {
-        if (!user?.tenantId || user.role !== 'ADMIN') {
+        if (!user?.tenantId || !isAdminLikeRole(user.role)) {
             throw new ForbiddenException('Platform admin access required');
         }
 

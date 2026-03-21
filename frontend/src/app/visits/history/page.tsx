@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Map as MapIcon, Calendar, Clock, Navigation } from "lucide-react";
 import { format, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
+import { isAdminLikeRole } from "@/lib/roles";
 
 // Leaflet CSS needs to be imported globally or in the component
 import "leaflet/dist/leaflet.css";
@@ -88,7 +89,7 @@ export default function RouteHistoryPage() {
     }, []);
 
     useEffect(() => {
-        if (token && user?.role === 'ADMIN') {
+        if (token && isAdminLikeRole(user?.role)) {
             fetchReps();
         } else if (user) {
             setSelectedRepId(user.id);
@@ -160,7 +161,7 @@ export default function RouteHistoryPage() {
     const polylinePositions = routePath.map(log => [log.latitude, log.longitude]);
 
     // Fallback center
-    const selectedRepData = user?.role === 'ADMIN' ? reps.find(r => r.id === selectedRepId) : user;
+    const selectedRepData = isAdminLikeRole(user?.role) ? reps.find(r => r.id === selectedRepId) : user;
 
     const center: [number, number] = routePath.length > 0
         ? [routePath[0].latitude, routePath[0].longitude]
@@ -179,7 +180,7 @@ export default function RouteHistoryPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                    {user?.role === 'ADMIN' && (
+                    {isAdminLikeRole(user?.role) && (
                         <div className="w-full sm:w-[200px]">
                             <Select value={selectedRepId} onValueChange={setSelectedRepId}>
                                 <SelectTrigger>

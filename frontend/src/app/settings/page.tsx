@@ -25,6 +25,7 @@ import {
 import TwoFactorSetup from "@/components/settings/two-factor-setup";
 import { RoleGate } from "@/components/auth/role-gate";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -47,7 +48,7 @@ export default function SettingsPage() {
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
 
     useEffect(() => {
-        if (token && user?.role === "ADMIN") {
+        if (token && isAdminLikeRole(user?.role)) {
             fetchProfile();
         }
     }, [token, user]);

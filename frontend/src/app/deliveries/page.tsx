@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { io } from "socket.io-client";
 import { DeliveryVerificationDialog } from "@/components/sales/delivery-verification-dialog";
+import { isAdminLikeRole } from "@/lib/roles";
 
 interface DeliveryItem {
     id: string;
@@ -56,7 +57,7 @@ export default function DeliveriesPage() {
     useEffect(() => {
         if (token) {
             fetchDeliveries();
-            if (user?.role === 'ADMIN') {
+            if (isAdminLikeRole(user?.role)) {
                 fetchReps();
             }
         }
@@ -199,7 +200,7 @@ export default function DeliveriesPage() {
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium">{invoice.rep?.name || "Unassigned"}</span>
-                                {showAction && user?.role === 'ADMIN' && (
+                                {showAction && isAdminLikeRole(user?.role) && (
                                     <Button
                                         variant="ghost"
                                         size="icon"

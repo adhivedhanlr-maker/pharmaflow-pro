@@ -91,6 +91,7 @@ export default function UserProfilePage() {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case "ADMIN": return <Badge variant="default" className="bg-purple-600">Admin</Badge>;
+            case "DEVELOPER": return <Badge variant="default" className="bg-slate-900">Developer</Badge>;
             case "BILLING_OPERATOR": return <Badge variant="secondary">Billing</Badge>;
             case "WAREHOUSE_MANAGER": return <Badge variant="outline">Warehouse</Badge>;
             case "ACCOUNTANT": return <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">Accountant</Badge>;

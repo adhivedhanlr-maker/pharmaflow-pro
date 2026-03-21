@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { isAdminLikeRole } from '../auth/role-access.util';
 import { CheckInDto } from './dto/check-in.dto';
 
 @Controller('visits')
@@ -48,7 +49,7 @@ export class VisitsController {
         @Query('repId') repId?: string
     ) {
         // If rep, force their own ID. If admin, allow passing repId (or default to self if they want to see their own)
-        const targetRepId = req.user.role === Role.ADMIN ? (repId || req.user.userId) : req.user.userId;
+        const targetRepId = isAdminLikeRole(req.user.role) ? (repId || req.user.userId) : req.user.userId;
         return this.visitsService.getRoute(targetRepId, req.user?.tenantId, date);
     }
 
@@ -59,7 +60,7 @@ export class VisitsController {
         @Query('date') date: string,
         @Query('repId') repId?: string
     ) {
-        const targetRepId = req.user.role === Role.ADMIN ? (repId || req.user.userId) : req.user.userId;
+        const targetRepId = isAdminLikeRole(req.user.role) ? (repId || req.user.userId) : req.user.userId;
         return this.visitsService.getRoutePath(targetRepId, req.user?.tenantId, date);
     }
 }

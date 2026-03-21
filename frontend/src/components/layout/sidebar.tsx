@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useShortcut } from "@/context/shortcut-context";
 import { Badge } from "@/components/ui/badge";
+import { hasRoleAccess, isAdminLikeRole } from "@/lib/roles";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"], hint: "D" },
@@ -81,7 +82,7 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
 
   const filteredMenuItems = menuItems.filter(item =>
     user &&
-    item.roles.includes(user.role) &&
+    hasRoleAccess(user.role, item.roles) &&
     (item.href !== "/admin/tenants" || (hostname !== null && PLATFORM_HOSTS.has(hostname)))
   );
 
@@ -156,7 +157,7 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
           );
         })}
       </nav>
-      {user?.role === "ADMIN" && (
+      {isAdminLikeRole(user?.role) && (
         <div className="px-4 py-2 border-t">
           <Link
             href="/settings"

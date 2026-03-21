@@ -3,6 +3,7 @@ import { RoutesService } from './routes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { isAdminLikeRole } from '../auth/role-access.util';
 
 @Controller('routes')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,7 +19,7 @@ export class RoutesController {
     @Get()
     findAll(@Request() req: any, @Query('date') date?: string, @Query('repId') repId?: string) {
         // If admin, can filter by repId. If rep, force own id.
-        const userId = req.user.role === 'ADMIN' ? (repId || undefined) : req.user.userId;
+        const userId = isAdminLikeRole(req.user.role) ? (repId || undefined) : req.user.userId;
         return this.routesService.findAll(userId, req.user.tenantId, date);
     }
 
