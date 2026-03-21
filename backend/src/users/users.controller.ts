@@ -46,6 +46,7 @@ export class UsersController {
     }
 
     @Post()
+    @Roles(Role.ADMIN)
     create(@Body() data: any, @Request() req: any) {
         return this.usersService.create(data, req.user.tenantId);
     }

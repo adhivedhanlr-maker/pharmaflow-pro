@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { SalesGateway } from '../sales/sales.gateway';
@@ -63,21 +63,28 @@ export class UsersService {
 
     async create(data: any, tenantId?: string) {
         const hashedPassword = await bcrypt.hash(data.password, 10);
-        return this.prisma.user.create({
-            data: {
-                ...data,
-                password: hashedPassword,
-                tenantId,
-            },
-            select: {
-                id: true,
-                username: true,
-                name: true,
-                role: true,
-                tenantId: true,
-                canGenerateInvoice: true,
-            },
-        });
+        try {
+            return await this.prisma.user.create({
+                data: {
+                    ...data,
+                    password: hashedPassword,
+                    tenantId,
+                },
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                    role: true,
+                    tenantId: true,
+                    canGenerateInvoice: true,
+                },
+            });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException('Username already exists');
+            }
+            throw error;
+        }
     }
 
     async update(id: string, data: any, tenantId?: string) {
@@ -167,8 +174,7 @@ export class UsersService {
                         hourlyRate: true,
                         overtimeRate: true,
                         paymentMethod: true,
-                        monthlySalary: true
-
+                        monthlySalary: true,
                     }
                 }
             }
@@ -187,8 +193,7 @@ export class UsersService {
                         hourlyRate: true,
                         overtimeRate: true,
                         paymentMethod: true,
-                        monthlySalary: true
-
+                        monthlySalary: true,
                     }
                 }
             }
