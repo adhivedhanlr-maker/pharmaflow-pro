@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -54,7 +54,7 @@ export class PartiesService {
             return await this.prisma.customer.create({ data: { ...data, tenantId } });
         } catch (error) {
             console.error('Error creating customer:', error);
-            throw error;
+            throw new BadRequestException(`Failed to create customer: ${error.message}`);
         }
     }
 
@@ -110,15 +110,19 @@ export class PartiesService {
     async createSupplier(data: any, tenantId?: string) {
         try {
             // Ensure latitude and longitude are numbers or null, never NaN
-            if (data.latitude && isNaN(data.latitude)) data.latitude = null;
-            if (data.longitude && isNaN(data.longitude)) data.longitude = null;
+            if (data.latitude !== undefined && data.latitude !== null && isNaN(data.latitude)) {
+                data.latitude = null;
+            }
+            if (data.longitude !== undefined && data.longitude !== null && isNaN(data.longitude)) {
+                data.longitude = null;
+            }
             
             return await this.prisma.supplier.create({ 
                 data: { ...data, tenantId } 
             });
         } catch (error) {
             console.error('Error creating supplier:', error);
-            throw error;
+            throw new BadRequestException(`Failed to create supplier: ${error.message}`);
         }
     }
 

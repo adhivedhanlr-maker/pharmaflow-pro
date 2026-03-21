@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Building2, User, MapPin, Search, Map as MapIcon, Plus } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+import { cn } from "@/lib/utils";
 
 interface AddSupplierDialogProps {
     open: boolean;
@@ -74,6 +75,18 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
 
         if (!token) {
             alert("Authentication Error: You are not logged in or session expired.");
+            setIsLoading(false);
+            return;
+        }
+
+        if (formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin)) {
+            alert("Invalid GSTIN format. Expected 15 characters (e.g. 27ABCDE1234F1Z5)");
+            setIsLoading(false);
+            return;
+        }
+
+        if (formData.phone && !/^[0-9]{10}$/.test(formData.phone)) {
+            alert("Phone number must be exactly 10 digits.");
             setIsLoading(false);
             return;
         }
@@ -165,10 +178,17 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                             <Building2 className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="27XXXXX..."
-                                className="pl-8 uppercase"
+                                className={cn(
+                                    "pl-8 uppercase",
+                                    formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin) && "border-red-500 ring-red-100"
+                                )}
                                 value={formData.gstin}
                                 onChange={e => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
+                                maxLength={15}
                             />
+                            {formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin) && (
+                                <p className="text-[10px] text-red-500 mt-1 pl-1">Invalid GSTIN format</p>
+                            )}
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -176,9 +196,17 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                             <label className="text-sm font-medium">Phone</label>
                             <Input
                                 placeholder="9876543210"
+                                className={cn(
+                                    formData.phone && !/^[0-9]{10}$/.test(formData.phone) && "border-red-500"
+                                )}
                                 value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                maxLength={10}
+                                required
                             />
+                            {formData.phone && formData.phone.length !== 10 && (
+                                <p className="text-[10px] text-red-500 mt-1">{formData.phone.length}/10 digits</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">City/Address</label>
