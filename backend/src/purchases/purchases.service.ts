@@ -103,10 +103,14 @@ export class PurchasesService {
                     });
                 }
 
-                const itemTotal = item.quantity * item.purchasePrice;
-                const itemGst = (itemTotal * product.gstRate) / 100;
+                const freeQty = item.freeQty || 0;
+                const discountPct = item.discountPct || 0;
+                const itemGross = item.quantity * item.purchasePrice;
+                const itemDiscount = (itemGross * discountPct) / 100;
+                const itemTaxable = itemGross - itemDiscount;
+                const itemGst = (itemTaxable * product.gstRate) / 100;
 
-                totalAmount += itemTotal;
+                totalAmount += itemTaxable;
                 totalGst += itemGst;
 
                 purchaseItems.push({
@@ -114,10 +118,12 @@ export class PurchasesService {
                     tenantId,
                     batchId: batch.id,
                     quantity: item.quantity,
+                    freeQty,
+                    discountPct,
                     purchasePrice: item.purchasePrice,
                     gstRate: product.gstRate,
                     gstAmount: itemGst,
-                    totalAmount: itemTotal + itemGst,
+                    totalAmount: itemTaxable + itemGst,
                 });
             }
 

@@ -54,6 +54,8 @@ interface PurchaseItem {
     batchNumber: string;
     expiryDate: string; // YYYY-MM-DD
     quantity: number;
+    freeQty: number;
+    discountPct: number;
     purchasePrice: number;
     salePrice: number;
     ptr: number;
@@ -277,6 +279,8 @@ export default function PurchasesPage() {
             batchNumber: "",
             expiryDate: "",
             quantity: 1,
+            freeQty: 0,
+            discountPct: 0,
             purchasePrice: 0,
             salePrice: 0,
             ptr: 0,
@@ -360,6 +364,8 @@ export default function PurchasesPage() {
                         batchNumber: item.batchNumber,
                         expiryDate: new Date(item.expiryDate).toISOString(),
                         quantity: item.quantity,
+                        freeQty: item.freeQty,
+                        discountPct: item.discountPct,
                         purchasePrice: item.purchasePrice,
                         salePrice: item.salePrice,
                         ptr: item.ptr,
@@ -767,6 +773,8 @@ export default function PurchasesPage() {
                                     <TableHead className="w-[100px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
                                     <TableHead className="w-[120px] text-[10px] font-bold uppercase">EXPIRY</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">QTY</TableHead>
+                                    <TableHead className="text-right text-[10px] font-bold uppercase">FREE</TableHead>
+                                    <TableHead className="text-right text-[10px] font-bold uppercase">DISC%</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">MRP</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">PTR</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">PTS</TableHead>
@@ -777,7 +785,7 @@ export default function PurchasesPage() {
                             <TableBody>
                                 {items.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={12} className="text-center py-12 text-muted-foreground italic text-sm">
+                                        <TableCell colSpan={14} className="text-center py-12 text-muted-foreground italic text-sm">
                                             Click 'Add Item' to start recording purchase entry.
                                         </TableCell>
                                     </TableRow>
@@ -854,6 +862,34 @@ export default function PurchasesPage() {
                                                 onChange={(e) => {
                                                     const val = e.target.value === "" ? 0 : parseInt(e.target.value);
                                                     updateItem(item.id, 'quantity', isNaN(val) ? 0 : val);
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Input
+                                                type="number"
+                                                className="h-8 w-14 ml-auto text-right text-[11px] font-bold text-emerald-600"
+                                                value={item.freeQty === 0 ? "" : item.freeQty}
+                                                placeholder="0"
+                                                min="0"
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                    updateItem(item.id, 'freeQty', isNaN(val) ? 0 : val);
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Input
+                                                type="number"
+                                                className="h-8 w-14 ml-auto text-right text-[11px] font-bold text-amber-600"
+                                                value={item.discountPct === 0 ? "" : item.discountPct}
+                                                placeholder="0"
+                                                min="0"
+                                                max="100"
+                                                step="0.1"
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'discountPct', isNaN(val) ? 0 : val);
                                                 }}
                                             />
                                         </TableCell>
