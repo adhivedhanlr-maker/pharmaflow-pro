@@ -39,10 +39,17 @@ export default function SettingsPage() {
     const [formData, setFormData] = useState({
         companyName: "",
         gstin: "",
+        panNo: "",
+        dlNo: "",
+        fssaiNo: "",
         email: "",
         phone: "",
         address: "",
-        logoUrl: ""
+        logoUrl: "",
+        bankName: "",
+        bankBranch: "",
+        bankAccountNo: "",
+        bankIfsc: "",
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
@@ -75,10 +82,17 @@ export default function SettingsPage() {
             setFormData({
                 companyName,
                 gstin: profileData?.gstin || "",
+                panNo: profileData?.panNo || "",
+                dlNo: profileData?.dlNo || "",
+                fssaiNo: profileData?.fssaiNo || "",
                 email: profileData?.email || "",
                 phone: profileData?.phone || "",
                 address: profileData?.address || "",
-                logoUrl
+                logoUrl,
+                bankName: profileData?.bankName || "",
+                bankBranch: profileData?.bankBranch || "",
+                bankAccountNo: profileData?.bankAccountNo || "",
+                bankIfsc: profileData?.bankIfsc || "",
             });
 
             if (logoUrl) {
@@ -133,9 +147,16 @@ export default function SettingsPage() {
                 body: JSON.stringify({
                     companyName: formData.companyName,
                     gstin: formData.gstin,
+                    panNo: formData.panNo,
+                    dlNo: formData.dlNo,
+                    fssaiNo: formData.fssaiNo,
                     email: formData.email,
                     phone: formData.phone,
-                    address: formData.address
+                    address: formData.address,
+                    bankName: formData.bankName,
+                    bankBranch: formData.bankBranch,
+                    bankAccountNo: formData.bankAccountNo,
+                    bankIfsc: formData.bankIfsc,
                 })
             });
 
@@ -268,6 +289,34 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
 
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">PAN</label>
+                                            <Input
+                                                placeholder="ABCDE1234F"
+                                                className="uppercase font-mono"
+                                                value={formData.panNo}
+                                                onChange={(e) => setFormData({ ...formData, panNo: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Drug Licence No. (DL)</label>
+                                            <Input
+                                                placeholder="DL No."
+                                                value={formData.dlNo}
+                                                onChange={(e) => setFormData({ ...formData, dlNo: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">FSSAI No.</label>
+                                            <Input
+                                                placeholder="FSSAI Licence No."
+                                                value={formData.fssaiNo}
+                                                onChange={(e) => setFormData({ ...formData, fssaiNo: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">Contact Email</label>
@@ -305,6 +354,28 @@ export default function SettingsPage() {
                                                 value={formData.address}
                                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 border-t pt-4 mt-2">
+                                        <label className="text-sm font-semibold text-slate-600">Bank Details (for invoice footer)</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Bank Name</label>
+                                                <Input placeholder="e.g. CANARA BANK" value={formData.bankName} onChange={(e) => setFormData({ ...formData, bankName: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Branch</label>
+                                                <Input placeholder="Branch name" value={formData.bankBranch} onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Account Number</label>
+                                                <Input placeholder="Account No." className="font-mono" value={formData.bankAccountNo} onChange={(e) => setFormData({ ...formData, bankAccountNo: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">IFSC Code</label>
+                                                <Input placeholder="CNRB0000724" className="uppercase font-mono" value={formData.bankIfsc} onChange={(e) => setFormData({ ...formData, bankIfsc: e.target.value })} />
+                                            </div>
                                         </div>
                                     </div>
 

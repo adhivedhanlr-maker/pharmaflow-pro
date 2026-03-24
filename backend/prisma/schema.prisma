@@ -135,6 +135,10 @@ model Customer {
   gstin          String?
   address        String?
   phone          String?
+  email          String?
+  state          String?
+  dlNo           String?
+  fssaiNo        String?
   latitude       Float?
   longitude      Float?
   creditLimit    Float           @default(0)
@@ -362,12 +366,19 @@ model BusinessProfile {
   userId      String          @unique
   tenantId    String?
   tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
-  companyName String
-  gstin       String?
-  email       String?
-  phone       String?
-  address     String?
-  logoUrl     String?
+  companyName   String
+  gstin         String?
+  email         String?
+  phone         String?
+  address       String?
+  logoUrl       String?
+  panNo         String?
+  dlNo          String?
+  fssaiNo       String?
+  bankName      String?
+  bankBranch    String?
+  bankAccountNo String?
+  bankIfsc      String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

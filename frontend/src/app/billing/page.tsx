@@ -21,11 +21,17 @@ interface BillingItem {
     id: string;
     productId: string;
     name: string;
+    company?: string;
+    packing?: string;
+    hsnCode?: string;
     batchId: string;
     batchNumber: string;
+    expiryDate?: string;
     quantity: number;
-    unitPrice: number;
     freeQuantity: number;
+    mrp?: number;
+    unitPrice: number;
+    discountPct?: number;
     gstRate: number;
     gstAmount: number;
     total: number;
@@ -34,6 +40,9 @@ interface BillingItem {
 interface Product {
     id: string;
     name: string;
+    company?: string;
+    packing?: string;
+    hsnCode?: string;
     gstRate: number;
     batches: Batch[];
 }
@@ -43,13 +52,20 @@ interface Batch {
     batchNumber: string;
     currentStock: number;
     salePrice: number;
+    mrp?: number;
     expiryDate: string;
 }
 
 interface Customer {
     id: string;
     name: string;
-    gstin: string;
+    gstin?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    state?: string;
+    dlNo?: string;
+    fssaiNo?: string;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -126,6 +142,14 @@ export default function BillingPage() {
                 email: profile?.email || "",
                 phone: profile?.phone || "",
                 logoUrl: profile?.logoUrl || branding?.logoUrl || "",
+                gstin: profile?.gstin || "",
+                panNo: profile?.panNo || "",
+                dlNo: profile?.dlNo || "",
+                fssaiNo: profile?.fssaiNo || "",
+                bankName: profile?.bankName || "",
+                bankBranch: profile?.bankBranch || "",
+                bankAccountNo: profile?.bankAccountNo || "",
+                bankIfsc: profile?.bankIfsc || "",
             });
         } catch (error) {
             console.error("Failed to fetch business profile:", error);
@@ -278,11 +302,17 @@ export default function BillingPage() {
                 id: Math.random().toString(36).slice(2, 11),
                 productId: product.id,
                 name: product.name,
+                company: product.company || "",
+                packing: product.packing || "",
+                hsnCode: product.hsnCode || "",
                 batchId: defaultBatch.id,
                 batchNumber: defaultBatch.batchNumber,
+                expiryDate: defaultBatch.expiryDate,
                 quantity: 1,
                 freeQuantity: 0,
+                mrp: defaultBatch.mrp || 0,
                 unitPrice: defaultBatch.salePrice,
+                discountPct: 0,
                 gstRate: product.gstRate,
                 gstAmount: (defaultBatch.salePrice * product.gstRate) / 100,
                 total: defaultBatch.salePrice,
@@ -342,7 +372,16 @@ export default function BillingPage() {
 
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     const printCustomer = selectedCustomer
-        ? { name: selectedCustomer.name, address: "Address on file", gstin: selectedCustomer.gstin }
+        ? {
+            name: selectedCustomer.name,
+            address: selectedCustomer.address || "",
+            gstin: selectedCustomer.gstin || "",
+            phone: selectedCustomer.phone || "",
+            email: selectedCustomer.email || "",
+            state: selectedCustomer.state || "",
+            dlNo: selectedCustomer.dlNo || "",
+            fssaiNo: selectedCustomer.fssaiNo || "",
+        }
         : { name: "", address: "" };
 
     return (
@@ -583,13 +622,20 @@ export default function BillingPage() {
                 date={new Date()}
                 businessProfile={businessProfile}
                 customer={printCustomer}
+                paymentMethod={paymentMethod}
                 items={items.map(item => ({
                     id: item.id,
                     name: item.name,
+                    company: item.company,
+                    packing: item.packing,
+                    hsnCode: item.hsnCode,
                     batchNumber: item.batchNumber,
+                    expiryDate: item.expiryDate,
                     quantity: item.quantity,
-                    unitPrice: item.unitPrice,
                     freeQuantity: item.freeQuantity || 0,
+                    mrp: item.mrp || 0,
+                    unitPrice: item.unitPrice,
+                    discountPct: item.discountPct || 0,
                     gstRate: item.gstRate,
                     gstAmount: item.gstAmount,
                     total: item.total

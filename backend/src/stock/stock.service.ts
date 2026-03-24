@@ -12,15 +12,25 @@ export class StockService {
         });
     }
 
-    async updateStockManual(batchId: string, quantity: number, reason: string) {
+    async updateStockManual(batchId: string, quantity: number, reason: string, pricing?: {
+        salePrice?: number;
+        purchasePrice?: number;
+        mrp?: number;
+        ptr?: number;
+        pts?: number;
+    }) {
         const batch = await this.prisma.batch.findUnique({ where: { id: batchId } });
         if (!batch) throw new NotFoundException('Batch not found');
 
-        // In a real system, we'd log this adjustment in a StockAdjustment table
         return this.prisma.batch.update({
             where: { id: batchId },
             data: {
                 currentStock: quantity,
+                ...(pricing?.salePrice !== undefined && { salePrice: pricing.salePrice }),
+                ...(pricing?.purchasePrice !== undefined && { purchasePrice: pricing.purchasePrice }),
+                ...(pricing?.mrp !== undefined && { mrp: pricing.mrp }),
+                ...(pricing?.ptr !== undefined && { ptr: pricing.ptr }),
+                ...(pricing?.pts !== undefined && { pts: pricing.pts }),
             },
             include: { product: true },
         });

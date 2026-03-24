@@ -35,22 +35,78 @@ const DEFAULT_BRANDING: TenantBranding = {
     requiresSetup: false,
 };
 
+const PLATFORM_HOSTS = new Set([
+    process.env.NEXT_PUBLIC_PLATFORM_HOST,
+    "pharmaflow.eflybe.com",
+    "localhost",
+    "127.0.0.1",
+].filter(Boolean) as string[]);
+
+const DEV_QUICK_LOGINS = [
+    { label: "Admin", username: "admin", color: "text-red-600" },
+    { label: "Developer", username: "developer", color: "text-slate-700" },
+    { label: "Billing", username: "billing1", color: "text-blue-600" },
+    { label: "Warehouse", username: "warehouse1", color: "text-green-600" },
+    { label: "Accountant", username: "accountant1", color: "text-orange-600" },
+    { label: "Sales Rep", username: "sales1", color: "text-purple-600" },
+];
+
 export default function LoginPage() {
     const searchParams = useSearchParams();
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [isPlatformHost, setIsPlatformHost] = useState(false);
     const [twoFactorCode, setTwoFactorCode] = useState("");
     const [requires2FA, setRequires2FA] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [branding, setBranding] = useState<TenantBranding>(DEFAULT_BRANDING);
+    const [isPlatform, setIsPlatform] = useState(false);
     const { login, establishSession } = useAuth();
+
+    useEffect(() => {
+        setIsPlatform(PLATFORM_HOSTS.has(window.location.hostname));
+    }, []);
+
+    const handleQuickLogin = async (quickUsername: string) => {
+        setUsername(quickUsername);
+        setPassword("Admin@123");
+        setError(null);
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: quickUsername, password: "Admin@123" }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                login(data.access_token, data.user);
+            } else {
+                setError(data.message || "Quick login failed");
+            }
+        } catch {
+            setError("Network error. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchBranding = async () => {
             try {
                 const host = window.location.host;
+                const hostname = window.location.hostname;
+                const platformHosts = [
+                    process.env.NEXT_PUBLIC_PLATFORM_HOST,
+                    "pharmaflow.eflybe.com",
+                    "localhost",
+                    "127.0.0.1"
+                ].filter(Boolean);
+
+                setIsPlatformHost(platformHosts.includes(hostname));
+
                 const response = await fetch(
                     `${API_BASE}/public/tenant-branding?host=${encodeURIComponent(host)}`
                 );
@@ -232,10 +288,10 @@ export default function LoginPage() {
                             </div>
                             <div className="text-left">
                                 <span className="text-xl font-bold tracking-tight text-slate-800 block">
-                                    {branding.companyName}
+                                    {isPlatformHost ? "PharmaFlow Pro" : branding.companyName}
                                 </span>
                                 <span className="text-xs font-medium uppercase tracking-[0.24em] text-slate-500">
-                                    Client Portal
+                                    {isPlatformHost ? "Developer Login" : "Client Portal"}
                                 </span>
                             </div>
                         </div>
@@ -253,7 +309,11 @@ export default function LoginPage() {
                 <Card className="border-white/50 bg-white/95 backdrop-blur shadow-2xl shadow-slate-900/20">
                     <CardHeader>
                         <CardTitle className="text-lg">
-                            {branding.requiresSetup ? "First Admin Setup" : "Staff Login"}
+                            {branding.requiresSetup 
+                                ? "First Admin Setup" 
+                                : isPlatformHost 
+                                    ? "Platform Access" 
+                                    : "Staff Login"}
                         </CardTitle>
                         <CardDescription>
                             {branding.requiresSetup
@@ -322,52 +382,77 @@ export default function LoginPage() {
                                 </Button>
                             </form>
                         ) : !requires2FA ? (
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                {error && (
-                                    <Alert variant="destructive" className="py-2 text-xs">
-                                        <AlertDescription>{error}</AlertDescription>
-                                    </Alert>
-                                )}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Username</label>
-                                    <div className="relative">
-                                        <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                        <Input
-                                            className="pl-10"
-                                            placeholder="Enter username"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Password</label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                        <Input
-                                            type="password"
-                                            className="pl-10"
-                                            placeholder="Enter password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full h-11 text-sm font-semibold"
-                                    style={{ backgroundColor: branding.primaryColor }}
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        "Sign In"
+                            <>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {error && (
+                                        <Alert variant="destructive" className="py-2 text-xs">
+                                            <AlertDescription>{error}</AlertDescription>
+                                        </Alert>
                                     )}
-                                </Button>
-                            </form>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Username</label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                className="pl-10"
+                                                placeholder="Enter username"
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Password</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                type="password"
+                                                className="pl-10"
+                                                placeholder="Enter password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-11 text-sm font-semibold"
+                                        style={{ backgroundColor: branding.primaryColor }}
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            "Sign In"
+                                        )}
+                                    </Button>
+                                </form>
+
+                                {isPlatform && (
+                                    <div className="mt-6 pt-5 border-t border-slate-100">
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-3">
+                                            Developer Quick Access
+                                        </p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {DEV_QUICK_LOGINS.map((entry) => (
+                                                <Button
+                                                    key={entry.username}
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className={`text-[11px] h-8 bg-white hover:bg-slate-50 border-slate-200 font-medium ${entry.color}`}
+                                                    onClick={() => handleQuickLogin(entry.username)}
+                                                    disabled={loading}
+                                                >
+                                                    {entry.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <form onSubmit={handleVerify2FA} className="space-y-4">
                                 {error && (

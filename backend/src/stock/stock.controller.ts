@@ -20,9 +20,23 @@ export class StockController {
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
     updateStockManual(
         @Param('id') id: string,
-        @Body() data: { quantity: number; reason: string },
+        @Body() data: {
+            quantity: number;
+            reason: string;
+            salePrice?: number;
+            purchasePrice?: number;
+            mrp?: number;
+            ptr?: number;
+            pts?: number;
+        },
     ) {
-        return this.stockService.updateStockManual(id, data.quantity, data.reason);
+        return this.stockService.updateStockManual(id, data.quantity, data.reason, {
+            salePrice: data.salePrice,
+            purchasePrice: data.purchasePrice,
+            mrp: data.mrp,
+            ptr: data.ptr,
+            pts: data.pts,
+        });
     }
 
     @Get('alerts')
