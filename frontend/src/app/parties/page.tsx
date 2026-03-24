@@ -96,6 +96,24 @@ export default function PartiesPage() {
         }
     };
 
+    const handleResetBalance = async (id: string, name: string, type: "customers" | "suppliers") => {
+        if (!confirm(`Reset balance for "${name}" to ₹0? This cannot be undone.`)) return;
+        try {
+            const response = await fetch(`${API_BASE}/parties/${type}/${id}/reset-balance`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                fetchParties();
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                alert(errorData.message || 'Failed to reset balance.');
+            }
+        } catch {
+            alert('Failed to reset balance.');
+        }
+    };
+
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 
@@ -232,6 +250,14 @@ export default function PartiesPage() {
                                                                 <Edit className="mr-2 h-4 w-4" />
                                                                 Edit
                                                             </DropdownMenuItem>
+                                                            {p.currentBalance !== 0 && (
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleResetBalance(p.id, p.name, "customers")}
+                                                                    className="text-amber-600"
+                                                                >
+                                                                    Reset Balance to ₹0
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem
                                                                 onClick={() => handleDelete(p.id, p.name)}
                                                                 className="text-red-600"
@@ -298,6 +324,14 @@ export default function PartiesPage() {
                                                                 <Edit className="mr-2 h-4 w-4" />
                                                                 Edit
                                                             </DropdownMenuItem>
+                                                            {p.currentBalance !== 0 && (
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleResetBalance(p.id, p.name, "suppliers")}
+                                                                    className="text-amber-600"
+                                                                >
+                                                                    Reset Balance to ₹0
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem
                                                                 onClick={() => handleDelete(p.id, p.name)}
                                                                 className="text-red-600"

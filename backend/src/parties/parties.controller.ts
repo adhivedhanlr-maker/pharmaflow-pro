@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { PartiesService } from './parties.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -83,6 +83,18 @@ export class PartiesController {
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     updateSupplier(@Param('id') id: string, @Body() data: any, @Request() req: any) {
         return this.partiesService.updateSupplier(id, data, req.user.tenantId);
+    }
+
+    @Patch('suppliers/:id/reset-balance')
+    @Roles(Role.ADMIN)
+    resetSupplierBalance(@Param('id') id: string, @Request() req: any) {
+        return this.partiesService.resetSupplierBalance(id, req.user.tenantId);
+    }
+
+    @Patch('customers/:id/reset-balance')
+    @Roles(Role.ADMIN)
+    resetCustomerBalance(@Param('id') id: string, @Request() req: any) {
+        return this.partiesService.resetCustomerBalance(id, req.user.tenantId);
     }
 
     @Delete('suppliers/:id')

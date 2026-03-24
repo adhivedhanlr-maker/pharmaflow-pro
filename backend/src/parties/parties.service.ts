@@ -181,6 +181,22 @@ export class PartiesService {
         return this.prisma.customer.delete({ where: { id: customer.id } });
     }
 
+    async resetSupplierBalance(id: string, tenantId?: string) {
+        const supplier = await this.findSupplierById(id, tenantId);
+        return this.prisma.supplier.update({
+            where: { id: supplier.id },
+            data: { currentBalance: 0 },
+        });
+    }
+
+    async resetCustomerBalance(id: string, tenantId?: string) {
+        const customer = await this.findCustomerById(id, tenantId);
+        return this.prisma.customer.update({
+            where: { id: customer.id },
+            data: { currentBalance: 0 },
+        });
+    }
+
     async deleteSupplier(id: string, tenantId?: string) {
         const supplier = await this.findSupplierById(id, tenantId);
 
