@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -20,5 +20,11 @@ export class PurchasesController {
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
     findAll(@Request() req: any) {
         return this.purchasesService.findAll(req.user.tenantId);
+    }
+
+    @Delete(':id')
+    @Roles(Role.ADMIN)
+    deletePurchase(@Param('id') id: string, @Request() req: any) {
+        return this.purchasesService.deletePurchase(id, req.user.tenantId);
     }
 }

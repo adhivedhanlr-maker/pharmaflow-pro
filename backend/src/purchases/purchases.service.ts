@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -155,6 +155,36 @@ export class PurchasesService {
             where: tenantId ? { tenantId } : undefined,
             include: { supplier: true, items: { include: { product: true, batch: true } } },
             orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async deletePurchase(id: string, tenantId?: string) {
+        const purchase = await this.prisma.purchase.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
+            include: { items: true },
+        });
+        if (!purchase) throw new NotFoundException('Purchase not found');
+
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Reverse stock for each item
+            for (const item of purchase.items) {
+                if (item.batchId) {
+                    await tx.batch.update({
+                        where: { id: item.batchId },
+                        data: { currentStock: { decrement: item.quantity } },
+                    });
+                }
+            }
+
+            // 2. Reverse supplier balance
+            await tx.supplier.update({
+                where: { id: purchase.supplierId },
+                data: { currentBalance: { decrement: purchase.netAmount } },
+            });
+
+            // 3. Delete purchase items then purchase
+            await tx.purchaseItem.deleteMany({ where: { purchaseId: purchase.id } });
+            return tx.purchase.delete({ where: { id: purchase.id } });
         });
     }
 }

@@ -18,6 +18,13 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
     Plus,
     Save,
     FileDown,
@@ -30,7 +37,8 @@ import {
     FileText,
     FileUp,
     FileSearch,
-    Upload
+    Upload,
+    History,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -91,6 +99,17 @@ const PURCHASE_DRAFT_STORAGE_KEY = "purchase_draft_v2";
 const SUPPORTED_INVOICE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 const MAX_INVOICE_UPLOAD_SIZE = 10 * 1024 * 1024;
 
+interface PurchaseRecord {
+    id: string;
+    billNumber: string;
+    createdAt: string;
+    netAmount: number;
+    totalAmount: number;
+    gstAmount: number;
+    supplier: { id: string; name: string };
+    items: { id: string; quantity: number; purchasePrice: number; product: { name: string } | null; batch: { batchNumber: string } | null }[];
+}
+
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
@@ -103,6 +122,11 @@ export default function PurchasesPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [gstPercent, setGstPercent] = useState(5); // Default to 5% as per user request
+
+    // History state
+    const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // UI Feedback State
     const [error, setError] = useState<string | null>(null);
@@ -199,6 +223,47 @@ export default function PurchasesPage() {
             setError("Failed to load suppliers or products. Please check backend connection.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHistory = async () => {
+        setHistoryLoading(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`${API_BASE}/purchases`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPurchaseHistory(Array.isArray(data) ? data : []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch purchase history:", e);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const handleDeletePurchase = async (id: string, billNo: string) => {
+        if (!confirm(`Delete purchase bill "${billNo}"? This will reverse the stock and supplier balance. This cannot be undone.`)) return;
+        setDeletingId(id);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`${API_BASE}/purchases/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setSuccess(`Purchase "${billNo}" deleted. Stock and balance reversed.`);
+                fetchHistory();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                setError(err.message || 'Failed to delete purchase.');
+            }
+        } catch {
+            setError('Network error. Failed to delete purchase.');
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -473,8 +538,86 @@ export default function PurchasesPage() {
                 </div>
             }
         >
-            <div 
-                className="p-6 space-y-6 max-w-7xl mx-auto relative min-h-[85vh]"
+            <div className="p-6 space-y-4 max-w-7xl mx-auto">
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+                {success && (
+                    <Alert className="border-green-200 bg-green-50 text-green-800">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertTitle className="text-green-800">Success</AlertTitle>
+                        <AlertDescription>{success}</AlertDescription>
+                    </Alert>
+                )}
+            <Tabs defaultValue="entry" onValueChange={(v) => { if (v === 'history') fetchHistory(); }}>
+                <TabsList>
+                    <TabsTrigger value="entry">New Entry (GRN)</TabsTrigger>
+                    <TabsTrigger value="history"><History className="h-3.5 w-3.5 mr-1.5" />Purchase History</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="history" className="mt-4">
+                    <Card>
+                        <CardHeader className="py-3 px-4 border-b">
+                            <CardTitle className="text-sm font-bold">Purchase History</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50/50">
+                                        <TableHead className="text-[10px] font-bold uppercase">Date</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase">Bill No</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase">Supplier</TableHead>
+                                        <TableHead className="text-[10px] font-bold uppercase">Items</TableHead>
+                                        <TableHead className="text-right text-[10px] font-bold uppercase">Net Amount</TableHead>
+                                        <TableHead className="w-[80px]"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {historyLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10">
+                                                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : purchaseHistory.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No purchase records found.</TableCell>
+                                        </TableRow>
+                                    ) : purchaseHistory.map((p) => (
+                                        <TableRow key={p.id}>
+                                            <TableCell className="text-xs">{new Date(p.createdAt).toLocaleDateString('en-IN')}</TableCell>
+                                            <TableCell className="font-mono text-xs font-bold">{p.billNumber}</TableCell>
+                                            <TableCell className="text-sm font-medium">{p.supplier?.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-xs">{p.items?.length || 0} items</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono font-bold">₹{p.netAmount?.toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive hover:bg-red-50"
+                                                    disabled={deletingId === p.id}
+                                                    onClick={() => handleDeletePurchase(p.id, p.billNumber)}
+                                                >
+                                                    {deletingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="entry">
+            <div
+                className="space-y-6 relative min-h-[85vh]"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -496,11 +639,7 @@ export default function PurchasesPage() {
                         </div>
                     </div>
                 )}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Purchase Entry (GRN)</h1>
-                        <p className="text-muted-foreground">Record stock arrival from suppliers.</p>
-                    </div>
+                <div className="flex items-center justify-end">
                     <div className="flex gap-2">
                         <input
                             type="file"
@@ -530,22 +669,6 @@ export default function PurchasesPage() {
                         </Button>
                     </div>
                 </div>
-
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-
-                {success && (
-                    <Alert className="border-green-200 bg-green-50 text-green-800">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <AlertTitle className="text-green-800">Success</AlertTitle>
-                        <AlertDescription>{success}</AlertDescription>
-                    </Alert>
-                )}
 
                 <div className="flex flex-col lg:flex-row gap-4">
                     <Card className="flex-1">
@@ -804,14 +927,17 @@ export default function PurchasesPage() {
                     {/* Removed redundant bottom total section as requested */}
                 </Card>
 
-                <AddSupplierDialog 
-                    open={showSupplierDialog} 
+                <AddSupplierDialog
+                    open={showSupplierDialog}
                     onOpenChange={setShowSupplierDialog}
                     onSuccess={(newSup) => {
                         setSuppliers(prev => [...prev, newSup]);
                         setSelectedSupplierId(newSup.id);
                     }}
                 />
+            </div>
+                </TabsContent>
+            </Tabs>
             </div>
         </RoleGate>
     );
