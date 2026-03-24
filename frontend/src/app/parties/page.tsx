@@ -111,11 +111,13 @@ export default function PartiesPage() {
             if (response.ok) {
                 fetchParties();
             } else {
-                alert('Failed to delete. This party may have associated transactions.');
+                const errorData = await response.json().catch(() => ({}));
+                const backendMessage = errorData.message || (typeof errorData === 'string' ? errorData : null);
+                alert(backendMessage || 'Failed to delete. This party may have associated transactions.');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Delete error:', error);
-            alert('Failed to delete party');
+            alert(error?.message || 'Failed to delete party');
         }
     };
 

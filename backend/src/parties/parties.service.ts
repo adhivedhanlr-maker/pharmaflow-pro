@@ -153,22 +153,48 @@ export class PartiesService {
     }
 
     async deleteCustomer(id: string, tenantId?: string) {
-        // Check if customer has any sales
         const customer = await this.findCustomerById(id, tenantId);
+        
+        // 1. Check Balance
+        if (Math.abs(customer.currentBalance) > 0.01) {
+            throw new BadRequestException(`Cannot delete customer with outstanding balance (₹${customer.currentBalance.toLocaleString()}). Please clear the balance first.`);
+        }
+
+        // 2. Check Sales
         const salesCount = await this.prisma.sale.count({ where: { customerId: customer.id, ...(tenantId ? { tenantId } : {}) } });
         if (salesCount > 0) {
-            throw new Error('Cannot delete customer with existing sales transactions');
+            throw new BadRequestException('Cannot delete customer with existing sales transactions.');
         }
+
+        // 3. Check Visits
+        const visitsCount = await this.prisma.visit.count({ where: { customerId: customer.id, ...(tenantId ? { tenantId } : {}) } });
+        if (visitsCount > 0) {
+            throw new BadRequestException('Cannot delete customer with recorded visits.');
+        }
+
+        // 4. Check Orders
+        const ordersCount = await this.prisma.order.count({ where: { customerId: customer.id, ...(tenantId ? { tenantId } : {}) } });
+        if (ordersCount > 0) {
+            throw new BadRequestException('Cannot delete customer with existing orders.');
+        }
+
         return this.prisma.customer.delete({ where: { id: customer.id } });
     }
 
     async deleteSupplier(id: string, tenantId?: string) {
-        // Check if supplier has any purchases
         const supplier = await this.findSupplierById(id, tenantId);
+
+        // 1. Check Balance
+        if (Math.abs(supplier.currentBalance) > 0.01) {
+            throw new BadRequestException(`Cannot delete supplier with outstanding balance (₹${supplier.currentBalance.toLocaleString()}). Please clear the balance first.`);
+        }
+
+        // 2. Check Purchases
         const purchasesCount = await this.prisma.purchase.count({ where: { supplierId: supplier.id, ...(tenantId ? { tenantId } : {}) } });
         if (purchasesCount > 0) {
-            throw new Error('Cannot delete supplier with existing purchase transactions');
+            throw new BadRequestException('Cannot delete supplier with existing purchase transactions.');
         }
+
         return this.prisma.supplier.delete({ where: { id: supplier.id } });
     }
 
