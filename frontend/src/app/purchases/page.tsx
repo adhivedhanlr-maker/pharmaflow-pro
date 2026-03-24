@@ -142,7 +142,7 @@ export default function PurchasesPage() {
             const draft = JSON.parse(savedDraft);
             setSelectedSupplierId(draft.selectedSupplierId || "");
             setBillNumber(draft.billNumber || "");
-            setItems(Array.isArray(draft.items) ? draft.items : []);
+            setItems(Array.isArray(draft.items) ? draft.items.map((i: any) => ({ freeQty: 0, discountPct: 0, ...i })) : []);
         } catch (error) {
             console.error("Failed to restore purchase draft:", error);
         }
@@ -480,6 +480,8 @@ export default function PurchasesPage() {
                     batchNumber: item.batch || "",
                     expiryDate: item.expiry || "",
                     quantity: item.quantity || 1,
+                    freeQty: 0,
+                    discountPct: 0,
                     purchasePrice: item.ptr || 0,
                     salePrice: item.mrp || 0,
                     ptr: item.ptr || 0,
