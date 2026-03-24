@@ -79,14 +79,19 @@ interface Supplier {
 interface ExtractedInvoiceItem {
     name?: string;
     composition?: string;
+    hsn?: string;
     pack?: string;
     batch?: string;
     expiry?: string;
     quantity?: number;
+    free?: number;
+    pts?: number;
     ptr?: number;
     mrp?: number;
-    pts?: number;
+    discount?: number;
+    gstPercent?: number;
     nr?: number;
+    amount?: number;
 }
 
 interface ExtractedInvoiceResponse {
@@ -471,6 +476,8 @@ export default function PurchasesPage() {
                     item.name!.toLowerCase().includes(p.name.toLowerCase())
                 );
 
+                // Purchase price = PTS (what stockist pays). Fallback to PTR if PTS not present.
+                const purchasePrice = item.pts || item.ptr || 0;
                 return {
                     id: Math.random().toString(36).substr(2, 9),
                     productId: product?.id || "",
@@ -480,9 +487,9 @@ export default function PurchasesPage() {
                     batchNumber: item.batch || "",
                     expiryDate: item.expiry || "",
                     quantity: item.quantity || 1,
-                    freeQty: 0,
-                    discountPct: 0,
-                    purchasePrice: item.ptr || 0,
+                    freeQty: item.free || 0,
+                    discountPct: item.discount || 0,
+                    purchasePrice,
                     salePrice: item.mrp || 0,
                     ptr: item.ptr || 0,
                     pts: item.pts || 0,
