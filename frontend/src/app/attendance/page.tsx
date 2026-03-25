@@ -118,7 +118,7 @@ export default function AttendancePage() {
 
     return (
         <RoleGate allowedRoles={["ADMIN"]}>
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4 md:space-y-6 pb-24 md:pb-0">
                 <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Attendance & Payroll</h1>

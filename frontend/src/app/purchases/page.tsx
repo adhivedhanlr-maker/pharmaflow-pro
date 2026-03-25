@@ -553,7 +553,7 @@ export default function PurchasesPage() {
                 </div>
             }
         >
-            <div className="p-6 space-y-4 max-w-7xl mx-auto">
+            <div className="p-3 sm:p-6 space-y-4 max-w-7xl mx-auto pb-24 md:pb-6">
                 {error && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -580,6 +580,7 @@ export default function PurchasesPage() {
                             <CardTitle className="text-sm font-bold">Purchase History</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
+                            <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50/50">
@@ -626,6 +627,7 @@ export default function PurchasesPage() {
                                     ))}
                                 </TableBody>
                             </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -654,35 +656,30 @@ export default function PurchasesPage() {
                         </div>
                     </div>
                 )}
-                <div className="flex items-center justify-end">
-                    <div className="flex gap-2">
-                        <input
-                            type="file"
-                            id="invoice-upload"
-                            className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png,.webp"
-                            onChange={handleInvoiceUpload}
-                            disabled={isUploading}
-                        />
-                        <Button 
-                            variant="outline" 
-                            className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
-                            onClick={() => document.getElementById('invoice-upload')?.click()}
-                            disabled={isUploading}
-                        >
-                            {isUploading ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <FileText className="h-4 w-4 mr-2" />
-                            )}
-                            Upload Invoice
-                        </Button>
-                        <Button variant="outline"><FileDown className="mr-2 h-4 w-4" /> Import CSV</Button>
-                        <Button onClick={handleSave} disabled={isUploading || isSaving}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Purchase
-                        </Button>
-                    </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                    <input
+                        type="file"
+                        id="invoice-upload"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        onChange={handleInvoiceUpload}
+                        disabled={isUploading}
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                        onClick={() => document.getElementById('invoice-upload')?.click()}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
+                        Upload Invoice
+                    </Button>
+                    <Button variant="outline" size="sm"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
+                    <Button size="sm" onClick={handleSave} disabled={isUploading || isSaving}>
+                        {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                        Save Purchase
+                    </Button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-4">

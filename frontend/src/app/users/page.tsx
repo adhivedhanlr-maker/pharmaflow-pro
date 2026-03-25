@@ -241,8 +241,8 @@ export default function UsersPage() {
                 </div>
             }
         >
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
+            <div className="space-y-6 pb-24 md:pb-0">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-medium">User Management</h1>
                         <p className="text-slate-500 text-sm">Create and manage staff access levels</p>
@@ -419,12 +419,12 @@ export default function UsersPage() {
                     </Dialog>
                 </div>
 
-                <Card className="shadow-sm border-slate-200 overflow-hidden">
+                <Card className="shadow-sm border-slate-200">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
                         <CardTitle className="text-lg font-semibold text-slate-800">System Users</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
+                    <CardContent className="p-0 overflow-x-auto">
+                        <Table className="min-w-[600px]">
                             <TableHeader className="bg-slate-50/30">
                                 <TableRow>
                                     <TableHead className="px-6">Name</TableHead>

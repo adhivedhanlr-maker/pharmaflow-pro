@@ -190,8 +190,8 @@ export default function Dashboard() {
   const filteredStats = statConfig.filter(stat => user && hasRoleAccess(user.role, stat.roles));
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 pb-24 md:pb-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
           <p className="text-muted-foreground">
@@ -203,7 +203,7 @@ export default function Dashboard() {
           variant="outline"
           onClick={fetchStats}
           disabled={loading}
-          className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+          className="hover:bg-blue-50 hover:text-blue-600 transition-colors self-start sm:self-auto"
         >
           <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
           Refresh

@@ -165,11 +165,11 @@ export default function PartiesPage() {
                 </div>
             }
         >
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="space-y-4 pb-24 md:pb-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Parties Management</h1>
-                        <p className="text-muted-foreground">Manage your customers and suppliers database.</p>
+                        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Parties Management</h1>
+                        <p className="text-muted-foreground text-sm hidden sm:block">Manage your customers and suppliers database.</p>
                     </div>
                     <CustomerDialog
                         type={activeTab === "customers" ? "customer" : "supplier"}
@@ -177,20 +177,19 @@ export default function PartiesPage() {
                     />
                 </div>
 
-                <Tabs defaultValue="customers" onValueChange={setActiveTab} className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <TabsList>
-                            <TabsTrigger value="customers">Customers</TabsTrigger>
-                            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+                <Tabs defaultValue="customers" onValueChange={setActiveTab} className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <TabsList className="w-full sm:w-auto">
+                            <TabsTrigger value="customers" className="flex-1 sm:flex-none">Customers</TabsTrigger>
+                            <TabsTrigger value="suppliers" className="flex-1 sm:flex-none">Suppliers</TabsTrigger>
                         </TabsList>
-
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
+                        <div className="flex items-center gap-2 flex-1">
+                            <div className="relative flex-1">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="search"
                                     placeholder="Search parties..."
-                                    className="pl-8 w-[250px] lg:w-[350px]"
+                                    className="pl-8 w-full"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -204,74 +203,86 @@ export default function PartiesPage() {
                     <TabsContent value="customers" className="m-0">
                         <Card>
                             <CardContent className="p-0">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Customer Name</TableHead>
-                                            <TableHead>GSTIN</TableHead>
-                                            <TableHead>Phone</TableHead>
-                                            <TableHead className="text-right">Credit Limit</TableHead>
-                                            <TableHead className="text-right">Balance</TableHead>
-                                            <TableHead className="w-[50px]"></TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {loading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell>
-                                            </TableRow>
-                                        ) : filteredParties.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No customers found.</TableCell>
-                                            </TableRow>
-                                        ) : filteredParties.map((p) => (
-                                            <TableRow key={p.id}>
-                                                <TableCell>
-                                                    <div className="font-medium text-primary">{p.name}</div>
-                                                    <div className="text-xs text-muted-foreground">{p.address}</div>
-                                                </TableCell>
-                                                <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
-                                                <TableCell>{p.phone || "N/A"}</TableCell>
-                                                <TableCell className="text-right font-mono">₹{p.creditLimit?.toLocaleString() || "0"}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Badge variant={p.currentBalance > 0 ? "destructive" : "outline"} className="font-mono">
+                                {/* Mobile cards */}
+                                <div className="md:hidden divide-y">
+                                    {loading ? (
+                                        <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                                    ) : filteredParties.length === 0 ? (
+                                        <div className="py-10 text-center text-muted-foreground text-sm">No customers found.</div>
+                                    ) : filteredParties.map((p) => (
+                                        <div key={p.id} className="p-3 flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-sm text-slate-900 truncate">{p.name}</p>
+                                                <p className="text-xs text-slate-500">{p.phone || "No phone"}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge variant={p.currentBalance > 0 ? "destructive" : "outline"} className="text-xs font-mono">
                                                         ₹{p.currentBalance.toLocaleString()}
                                                     </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleEdit(p)}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            {p.currentBalance !== 0 && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => handleResetBalance(p.id, p.name, "customers")}
-                                                                    className="text-amber-600"
-                                                                >
-                                                                    Reset Balance to ₹0
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem
-                                                                onClick={() => handleDelete(p.id, p.name)}
-                                                                className="text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
+                                                    {p.creditLimit ? <span className="text-xs text-slate-400">Limit: ₹{p.creditLimit.toLocaleString()}</span> : null}
+                                                </div>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                    {p.currentBalance !== 0 && (
+                                                        <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "customers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Desktop table */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Customer Name</TableHead>
+                                                <TableHead>GSTIN</TableHead>
+                                                <TableHead>Phone</TableHead>
+                                                <TableHead className="text-right">Credit Limit</TableHead>
+                                                <TableHead className="text-right">Balance</TableHead>
+                                                <TableHead className="w-[50px]"></TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {loading ? (
+                                                <TableRow><TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                                            ) : filteredParties.length === 0 ? (
+                                                <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No customers found.</TableCell></TableRow>
+                                            ) : filteredParties.map((p) => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell>
+                                                        <div className="font-medium text-primary">{p.name}</div>
+                                                        <div className="text-xs text-muted-foreground">{p.address}</div>
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
+                                                    <TableCell>{p.phone || "N/A"}</TableCell>
+                                                    <TableCell className="text-right font-mono">₹{p.creditLimit?.toLocaleString() || "0"}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Badge variant={p.currentBalance > 0 ? "destructive" : "outline"} className="font-mono">₹{p.currentBalance.toLocaleString()}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                                {p.currentBalance !== 0 && <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "customers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>}
+                                                                <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -279,73 +290,76 @@ export default function PartiesPage() {
                     <TabsContent value="suppliers" className="m-0">
                         <Card>
                             <CardContent className="p-0">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Supplier Name</TableHead>
-                                            <TableHead>GSTIN</TableHead>
-                                            <TableHead>Phone</TableHead>
-                                            <TableHead>Address</TableHead>
-                                            <TableHead className="text-right">Balance</TableHead>
-                                            <TableHead className="w-[50px]"></TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {loading ? (
+                                {/* Mobile cards */}
+                                <div className="md:hidden divide-y">
+                                    {loading ? (
+                                        <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+                                    ) : filteredParties.length === 0 ? (
+                                        <div className="py-10 text-center text-muted-foreground text-sm">No suppliers found.</div>
+                                    ) : filteredParties.map((p) => (
+                                        <div key={p.id} className="p-3 flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-sm text-slate-900 truncate">{p.name}</p>
+                                                <p className="text-xs text-slate-500 truncate">{p.address || p.phone || "No details"}</p>
+                                                <span className={`text-xs font-mono font-bold ${p.currentBalance > 0 ? "text-red-600" : "text-slate-500"}`}>
+                                                    Balance: ₹{p.currentBalance.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                    {p.currentBalance !== 0 && <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "suppliers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>}
+                                                    <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Desktop table */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell>
+                                                <TableHead>Supplier Name</TableHead>
+                                                <TableHead>GSTIN</TableHead>
+                                                <TableHead>Phone</TableHead>
+                                                <TableHead>Address</TableHead>
+                                                <TableHead className="text-right">Balance</TableHead>
+                                                <TableHead className="w-[50px]"></TableHead>
                                             </TableRow>
-                                        ) : filteredParties.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No suppliers found.</TableCell>
-                                            </TableRow>
-                                        ) : filteredParties.map((p) => (
-                                            <TableRow key={p.id}>
-                                                <TableCell>
-                                                    <div className="font-medium text-primary">{p.name}</div>
-                                                </TableCell>
-                                                <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
-                                                <TableCell>{p.phone || "N/A"}</TableCell>
-                                                <TableCell className="text-xs">{p.address}</TableCell>
-                                                <TableCell className="text-right font-mono">
-                                                    <span className={p.currentBalance > 0 ? "text-red-600 font-bold" : ""}>
-                                                        ₹{p.currentBalance.toLocaleString()}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleEdit(p)}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            {p.currentBalance !== 0 && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => handleResetBalance(p.id, p.name, "suppliers")}
-                                                                    className="text-amber-600"
-                                                                >
-                                                                    Reset Balance to ₹0
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem
-                                                                onClick={() => handleDelete(p.id, p.name)}
-                                                                className="text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {loading ? (
+                                                <TableRow><TableCell colSpan={6} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                                            ) : filteredParties.length === 0 ? (
+                                                <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No suppliers found.</TableCell></TableRow>
+                                            ) : filteredParties.map((p) => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell><div className="font-medium text-primary">{p.name}</div></TableCell>
+                                                    <TableCell className="font-mono text-xs uppercase">{p.gstin}</TableCell>
+                                                    <TableCell>{p.phone || "N/A"}</TableCell>
+                                                    <TableCell className="text-xs">{p.address}</TableCell>
+                                                    <TableCell className="text-right font-mono"><span className={p.currentBalance > 0 ? "text-red-600 font-bold" : ""}>₹{p.currentBalance.toLocaleString()}</span></TableCell>
+                                                    <TableCell>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                                {p.currentBalance !== 0 && <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "suppliers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>}
+                                                                <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

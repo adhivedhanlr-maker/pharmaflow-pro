@@ -136,7 +136,7 @@ export default function SalesHistoryPage() {
 
     return (
         <RoleGate allowedRoles={["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"]}>
-            <div className="space-y-6">
+            <div className="space-y-6 pb-24 md:pb-0">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Sales History</h1>
@@ -160,75 +160,114 @@ export default function SalesHistoryPage() {
 
                 <Card>
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Invoice #</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Payment</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
+                        {/* Mobile card view */}
+                        <div className="md:hidden divide-y">
+                            {loading ? (
+                                <div className="flex justify-center py-10">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : filteredSales.length === 0 ? (
+                                <p className="text-center py-10 text-muted-foreground text-sm">No invoices found.</p>
+                            ) : filteredSales.map((sale) => (
+                                <div key={sale.id} className="p-4 flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-mono font-semibold text-sm text-slate-900">{sale.invoiceNumber}</span>
+                                            <Badge
+                                                variant={sale.paymentMethod === "CREDIT" ? "secondary" : "default"}
+                                                className={cn(
+                                                    "text-[10px] font-bold uppercase",
+                                                    sale.paymentMethod === "UPI" && "bg-indigo-500 hover:bg-indigo-600",
+                                                    sale.paymentMethod === "CARD" && "bg-amber-500 hover:bg-amber-600"
+                                                )}
+                                            >
+                                                {sale.paymentMethod || (sale.isCash ? "CASH" : "CREDIT")}
+                                            </Badge>
+                                        </div>
+                                        <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{sale.customer.name}</p>
+                                        <p className="text-xs text-muted-foreground">{format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <span className="font-bold text-slate-900 text-sm">₹{sale.netAmount.toLocaleString()}</span>
+                                        <Button variant="ghost" size="sm" onClick={() => handlePrint(sale)} className="h-8 w-8 p-0">
+                                            <Printer className="h-4 w-4 text-slate-500" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Desktop table view */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
-                                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                                        </TableCell>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Invoice #</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Payment</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ) : filteredSales.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                            No invoices found.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredSales.map((sale) => (
-                                        <TableRow key={sale.id}>
-                                            <TableCell className="text-muted-foreground text-xs">
-                                                {format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}
-                                            </TableCell>
-                                            <TableCell className="font-mono font-medium">
-                                                {sale.invoiceNumber}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {sale.customer.name}
-                                                <div className="text-[10px] text-muted-foreground truncate max-w-[150px]">
-                                                    {sale.customer.address}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant={sale.paymentMethod === "CREDIT" ? "secondary" : "default"}
-                                                    className={cn(
-                                                        "text-[10px] font-bold uppercase",
-                                                        sale.paymentMethod === "UPI" && "bg-indigo-500 hover:bg-indigo-600",
-                                                        sale.paymentMethod === "CARD" && "bg-amber-500 hover:bg-amber-600"
-                                                    )}
-                                                >
-                                                    {sale.paymentMethod || (sale.isCash ? "CASH" : "CREDIT")}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right font-bold text-slate-900">
-                                                ₹{sale.netAmount.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handlePrint(sale)}
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    <Printer className="h-4 w-4 text-slate-500 hover:text-blue-600" />
-                                                </Button>
+                                </TableHeader>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-24 text-center">
+                                                <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : filteredSales.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                                No invoices found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredSales.map((sale) => (
+                                            <TableRow key={sale.id}>
+                                                <TableCell className="text-muted-foreground text-xs">
+                                                    {format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}
+                                                </TableCell>
+                                                <TableCell className="font-mono font-medium">
+                                                    {sale.invoiceNumber}
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {sale.customer.name}
+                                                    <div className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                                                        {sale.customer.address}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        variant={sale.paymentMethod === "CREDIT" ? "secondary" : "default"}
+                                                        className={cn(
+                                                            "text-[10px] font-bold uppercase",
+                                                            sale.paymentMethod === "UPI" && "bg-indigo-500 hover:bg-indigo-600",
+                                                            sale.paymentMethod === "CARD" && "bg-amber-500 hover:bg-amber-600"
+                                                        )}
+                                                    >
+                                                        {sale.paymentMethod || (sale.isCash ? "CASH" : "CREDIT")}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-slate-900">
+                                                    ₹{sale.netAmount.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handlePrint(sale)}
+                                                        className="h-8 w-8 p-0"
+                                                    >
+                                                        <Printer className="h-4 w-4 text-slate-500 hover:text-blue-600" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
 

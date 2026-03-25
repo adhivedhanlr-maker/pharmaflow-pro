@@ -117,15 +117,15 @@ export default function ReportsPage() {
                 </div>
             }
         >
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="space-y-6 pb-24 md:pb-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Business Reports</h1>
                         <p className="text-muted-foreground">Financial analytics and inventory forecasting.</p>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline"><Calendar className="mr-2 h-4 w-4" /> Lifetime</Button>
-                        <Button onClick={() => window.print()}><FileDown className="mr-2 h-4 w-4" /> Export Report</Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm"><Calendar className="mr-2 h-4 w-4" /> Lifetime</Button>
+                        <Button size="sm" onClick={() => window.print()}><FileDown className="mr-2 h-4 w-4" /> Export Report</Button>
                     </div>
                 </div>
 
@@ -195,8 +195,8 @@ export default function ReportsPage() {
                             <CardHeader>
                                 <CardTitle className="text-sm font-bold text-red-600">Critical Expiry Alerts (Next 30 Days)</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <Table>
+                            <CardContent className="overflow-x-auto">
+                                <Table className="min-w-[550px]">
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">
                                             <TableHead>Product</TableHead>
@@ -237,8 +237,8 @@ export default function ReportsPage() {
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium">Recent Transactions</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <Table>
+                            <CardContent className="overflow-x-auto">
+                                <Table className="min-w-[500px]">
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">
                                             <TableHead>Date</TableHead>

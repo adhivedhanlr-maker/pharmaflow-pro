@@ -254,16 +254,16 @@ export default function StockPage() {
                 </div>
             }
         >
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="space-y-4 md:space-y-6 pb-24 md:pb-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Inventory Management</h1>
                         <p className="text-muted-foreground">Manage batches and your product master database.</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {activeTab === "products" ? (
-                            <AddProductDialog 
-                                onProductAdded={fetchStock} 
+                            <AddProductDialog
+                                onProductAdded={fetchStock}
                                 triggerLabel="Add Product"
                                 triggerClassName="bg-blue-600 hover:bg-blue-700 text-white shadow-md border-none h-10 px-4"
                             />
@@ -278,12 +278,12 @@ export default function StockPage() {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                        <TabsList className="bg-slate-100 p-1 h-11">
-                            <TabsTrigger value="batches" className="h-9 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">Stock Batches</TabsTrigger>
-                            <TabsTrigger value="products" className="h-9 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm">Product Master</TabsTrigger>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <TabsList className="bg-slate-100 p-1 h-11 w-full sm:w-auto">
+                            <TabsTrigger value="batches" className="h-9 px-4 sm:px-6 flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:shadow-sm">Stock Batches</TabsTrigger>
+                            <TabsTrigger value="products" className="h-9 px-4 sm:px-6 flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:shadow-sm">Product Master</TabsTrigger>
                         </TabsList>
-                        <div className="relative flex-1 max-w-md">
+                        <div className="relative w-full sm:flex-1 sm:max-w-md">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder={activeTab === "batches" ? "Search batch or product..." : "Search product master..."}
@@ -295,8 +295,8 @@ export default function StockPage() {
                     </div>
 
                     <TabsContent value="batches" className="mt-0">
-                        <Card className="border shadow-sm overflow-hidden">
-                            <CardContent className="p-0">
+                        <Card className="border shadow-sm">
+                            <CardContent className="p-0 overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">
@@ -370,8 +370,8 @@ export default function StockPage() {
                     </TabsContent>
 
                     <TabsContent value="products" className="mt-0">
-                        <Card className="border shadow-sm overflow-hidden">
-                            <CardContent className="p-0">
+                        <Card className="border shadow-sm">
+                            <CardContent className="p-0 overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">

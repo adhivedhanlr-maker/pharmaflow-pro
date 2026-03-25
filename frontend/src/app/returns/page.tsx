@@ -159,12 +159,10 @@ export default function ReturnsPage() {
     }, 0);
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Returns & Reversals</h1>
-                    <p className="text-muted-foreground">Process sales returns (Credit Notes) and purchase returns (Debit Notes).</p>
-                </div>
+        <div className="space-y-6 pb-24 md:pb-0">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight">Returns & Reversals</h1>
+                <p className="text-muted-foreground">Process sales returns (Credit Notes) and purchase returns (Debit Notes).</p>
             </div>
 
             {error && (
@@ -184,12 +182,12 @@ export default function ReturnsPage() {
             )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-[400px] grid-cols-2">
+                <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
                     <TabsTrigger value="sales">Sales Returns</TabsTrigger>
                     <TabsTrigger value="purchase">Purchase Returns</TabsTrigger>
                 </TabsList>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -200,7 +198,7 @@ export default function ReturnsPage() {
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         />
                     </div>
-                    <Button onClick={handleSearch} disabled={loading}>
+                    <Button onClick={handleSearch} disabled={loading} className="w-full sm:w-auto">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
                         Find Transaction
                     </Button>
@@ -210,16 +208,16 @@ export default function ReturnsPage() {
                     {transaction ? (
                         <Card>
                             <CardHeader className="pb-3 border-b">
-                                <CardTitle className="text-lg font-bold flex items-center justify-between">
+                                <CardTitle className="text-lg font-bold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                                     <span className="flex items-center">
                                         <RefreshCw className="mr-2 h-5 w-5 text-blue-600" />
                                         Sales Return - {transaction.invoiceNumber}
                                     </span>
-                                    <span className="text-sm text-muted-foreground">Customer: {transaction.customer?.name}</span>
+                                    <span className="text-sm text-muted-foreground font-normal">Customer: {transaction.customer?.name}</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
-                                <Table>
+                            <CardContent className="p-0 overflow-x-auto">
+                                <Table className="min-w-[600px]">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Product</TableHead>
@@ -259,11 +257,11 @@ export default function ReturnsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
-                                <div className="p-4 border-t bg-slate-50 flex justify-between items-center">
+                                <div className="p-4 border-t bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                                     <div className="text-lg font-bold">
                                         Total Return Amount: <span className="text-red-600">₹{totalReturnAmount.toFixed(2)}</span>
                                     </div>
-                                    <Button onClick={handleSubmitReturn} disabled={loading}>
+                                    <Button onClick={handleSubmitReturn} disabled={loading} className="w-full sm:w-auto">
                                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                                         Process Credit Note
                                     </Button>
@@ -284,16 +282,16 @@ export default function ReturnsPage() {
                     {transaction ? (
                         <Card>
                             <CardHeader className="pb-3 border-b">
-                                <CardTitle className="text-lg font-bold flex items-center justify-between">
+                                <CardTitle className="text-lg font-bold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                                     <span className="flex items-center">
                                         <ArrowLeftRight className="mr-2 h-5 w-5 text-orange-600" />
                                         Purchase Return - {transaction.billNumber}
                                     </span>
-                                    <span className="text-sm text-muted-foreground">Supplier: {transaction.supplier?.name}</span>
+                                    <span className="text-sm text-muted-foreground font-normal">Supplier: {transaction.supplier?.name}</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
-                                <Table>
+                            <CardContent className="p-0 overflow-x-auto">
+                                <Table className="min-w-[600px]">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Product</TableHead>
@@ -333,11 +331,11 @@ export default function ReturnsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
-                                <div className="p-4 border-t bg-slate-50 flex justify-between items-center">
+                                <div className="p-4 border-t bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                                     <div className="text-lg font-bold">
                                         Total Return Amount: <span className="text-red-600">₹{totalReturnAmount.toFixed(2)}</span>
                                     </div>
-                                    <Button onClick={handleSubmitReturn} disabled={loading}>
+                                    <Button onClick={handleSubmitReturn} disabled={loading} className="w-full sm:w-auto">
                                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                                         Process Debit Note
                                     </Button>
