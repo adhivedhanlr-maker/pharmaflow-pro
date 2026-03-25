@@ -88,7 +88,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
         const companyName = businessProfile?.companyName || "PharmaFlow";
         const companyAddress = businessProfile?.address || "";
         const logoUrl = businessProfile?.logoUrl
-            ? (businessProfile.logoUrl.startsWith("http")
+            ? (businessProfile.logoUrl.startsWith("http") || businessProfile.logoUrl.startsWith("data:")
                 ? businessProfile.logoUrl
                 : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${businessProfile.logoUrl}`)
             : null;
@@ -205,7 +205,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                     <th style={thStyle}>Qty</th>
                                     <th style={thStyle}>Free</th>
                                     <th style={thStyle}>MRP</th>
-                                    <th style={thStyle}>Rate</th>
+                                    <th style={thStyle}>PTR</th>
                                     <th style={thStyle}>Disc%</th>
                                     <th style={thStyle}>GST%</th>
                                     <th style={{ ...thStyle, textAlign: "right" as const }}>Taxable</th>
