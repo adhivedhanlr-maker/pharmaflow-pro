@@ -245,8 +245,7 @@ function BillingContent() {
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
         const gst = items.reduce((acc, item) => acc + item.gstAmount, 0);
-        const bulkDiscount = items.reduce((acc, item) => acc + ((item.freeQuantity || 0) * item.unitPrice), 0);
-        const discount = bulkDiscount + extraDiscount;
+        const discount = extraDiscount;
         return { subtotal, gst, discount, net: Math.max(0, subtotal + gst - discount) };
     }, [items, extraDiscount]);
 
