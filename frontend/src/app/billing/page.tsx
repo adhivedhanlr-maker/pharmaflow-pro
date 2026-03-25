@@ -52,6 +52,8 @@ interface Batch {
     batchNumber: string;
     currentStock: number;
     salePrice: number;
+    ptr?: number;
+    pts?: number;
     mrp?: number;
     expiryDate: string;
 }
@@ -101,6 +103,7 @@ function BillingContent() {
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [scannerOpen, setScannerOpen] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("CASH");
+    const [customerType, setCustomerType] = useState<"PHARMACY" | "DISTRIBUTOR">("PHARMACY");
     const [extraDiscount, setExtraDiscount] = useState(0);
     const searchParams = useSearchParams();
 
@@ -113,6 +116,7 @@ function BillingContent() {
             setSelectedCustomerId(draft.selectedCustomerId || "");
             setItems(Array.isArray(draft.items) ? draft.items : []);
             setPaymentMethod(draft.paymentMethod || "CASH");
+            setCustomerType(draft.customerType === "DISTRIBUTOR" ? "DISTRIBUTOR" : "PHARMACY");
             setExtraDiscount(typeof draft.extraDiscount === "number" ? draft.extraDiscount : 0);
         } catch (error) {
             console.error("Failed to restore billing draft:", error);
@@ -226,10 +230,11 @@ function BillingContent() {
             selectedCustomerId,
             items,
             paymentMethod,
+            customerType,
             extraDiscount,
         };
         localStorage.setItem(BILLING_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-    }, [selectedCustomerId, items, paymentMethod, extraDiscount]);
+    }, [selectedCustomerId, items, paymentMethod, customerType, extraDiscount]);
 
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
@@ -300,10 +305,16 @@ function BillingContent() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     });
 
+    const getBatchPrice = (batch: Batch) => {
+        if (customerType === "PHARMACY") return batch.ptr || batch.salePrice;
+        return batch.pts || batch.salePrice;
+    };
+
     const addItem = (product: Product) => {
         const defaultBatch = product.batches[0];
         if (!defaultBatch) return;
 
+        const unitPrice = getBatchPrice(defaultBatch);
         setItems([
             ...items,
             {
@@ -319,11 +330,11 @@ function BillingContent() {
                 quantity: 1,
                 freeQuantity: 0,
                 mrp: defaultBatch.mrp || 0,
-                unitPrice: defaultBatch.salePrice,
+                unitPrice,
                 discountPct: 0,
                 gstRate: product.gstRate,
-                gstAmount: (defaultBatch.salePrice * product.gstRate) / 100,
-                total: defaultBatch.salePrice,
+                gstAmount: (unitPrice * product.gstRate) / 100,
+                total: unitPrice,
             }
         ]);
     };
@@ -341,7 +352,7 @@ function BillingContent() {
                 const batch = product?.batches.find(b => b.id === value);
                 if (batch) {
                     updated.batchNumber = batch.batchNumber;
-                    updated.unitPrice = batch.salePrice;
+                    updated.unitPrice = getBatchPrice(batch);
                 }
             }
             updated.total = updated.quantity * updated.unitPrice;
@@ -638,6 +649,16 @@ function BillingContent() {
                                         )}
                                     </div>
                                     <div className="space-y-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer Type</p>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            {(["PHARMACY", "DISTRIBUTOR"] as const).map(type => (
+                                                <Button key={type} variant={customerType === type ? "default" : "outline"} size="sm" className={cn("h-8 text-[10px] font-bold", customerType === type ? "bg-emerald-600 text-white" : "text-slate-600")} onClick={() => setCustomerType(type)}>
+                                                    {type === "PHARMACY" ? "Pharmacy (PTR)" : "Distributor (PTS)"}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Mode</p>
                                         <div className="grid grid-cols-4 gap-1.5">
                                             {["CASH", "UPI", "CARD", "CREDIT"].map(mode => (
@@ -697,6 +718,28 @@ function BillingContent() {
                                         </div>
                                     </div>
 
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer Type</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(["PHARMACY", "DISTRIBUTOR"] as const).map(type => (
+                                                <Button
+                                                    key={type}
+                                                    variant={customerType === type ? "default" : "outline"}
+                                                    size="sm"
+                                                    className={cn(
+                                                        "h-9 text-[11px] font-bold rounded-lg transition-all",
+                                                        customerType === type
+                                                            ? "bg-emerald-600 hover:bg-emerald-700 text-white border-transparent"
+                                                            : "text-slate-600 border-slate-200 hover:bg-slate-50"
+                                                    )}
+                                                    onClick={() => setCustomerType(type)}
+                                                >
+                                                    {type === "PHARMACY" ? "Pharmacy (PTR)" : "Distributor (PTS)"}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Mode</label>
                                         <div className="grid grid-cols-2 gap-2">
@@ -739,6 +782,7 @@ function BillingContent() {
                 businessProfile={businessProfile}
                 customer={printCustomer}
                 paymentMethod={paymentMethod}
+                customerType={customerType}
                 items={items.map(item => ({
                     id: item.id,
                     name: item.name,

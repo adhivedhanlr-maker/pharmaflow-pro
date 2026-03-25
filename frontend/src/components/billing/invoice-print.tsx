@@ -81,10 +81,11 @@ interface InvoicePrintProps {
         discount?: number;
         net: number;
     };
+    customerType?: "PHARMACY" | "DISTRIBUTOR";
 }
 
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
-    ({ invoiceNumber, date, customer, items, totals, businessProfile, paymentMethod = "CASH", preview = false }, ref) => {
+    ({ invoiceNumber, date, customer, items, totals, businessProfile, paymentMethod = "CASH", preview = false, customerType = "PHARMACY" }, ref) => {
         const companyName = businessProfile?.companyName || "PharmaFlow";
         const companyAddress = businessProfile?.address || "";
         const logoUrl = businessProfile?.logoUrl
@@ -205,7 +206,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                     <th style={thStyle}>Qty</th>
                                     <th style={thStyle}>Free</th>
                                     <th style={thStyle}>MRP</th>
-                                    <th style={thStyle}>PTR</th>
+                                    <th style={thStyle}>{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}</th>
                                     <th style={thStyle}>Disc%</th>
                                     <th style={thStyle}>GST%</th>
                                     <th style={{ ...thStyle, textAlign: "right" as const }}>Taxable</th>
