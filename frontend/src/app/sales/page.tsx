@@ -168,7 +168,7 @@ export default function SalesHistoryPage() {
         setSelectedInvoice(sale);
         setTimeout(() => {
             if (printRef.current) {
-                printInvoiceNewWindow(printRef.current, sale.invoiceNumber);
+                printInvoiceNewWindow(printRef.current, sale.invoiceNumber, sale.customer.name);
             }
             setSelectedInvoice(null);
         }, 200);

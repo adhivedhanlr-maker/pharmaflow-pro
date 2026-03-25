@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, useRef } from "react";
+import { flushSync } from "react-dom";
 import { printInvoiceNewWindow } from "@/lib/print-invoice";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,6 +110,7 @@ function BillingContent() {
     const [customerType, setCustomerType] = useState<"PHARMACY" | "DISTRIBUTOR">("PHARMACY");
     const [extraDiscount, setExtraDiscount] = useState(0);
     const printRef = useRef<HTMLDivElement>(null);
+    const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState("");
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -393,13 +395,56 @@ function BillingContent() {
         }
     };
 
-    const handlePrint = () => {
-        if (!selectedCustomerId || items.length === 0) {
-            alert("Please select a customer and add items before printing.");
-            return;
-        }
-        if (printRef.current) {
-            printInvoiceNewWindow(printRef.current, "DRAFT");
+    const handlePrint = async () => {
+        if (!selectedCustomerId) return alert("Please select a customer");
+        if (items.length === 0) return alert("Please add items to the invoice");
+
+        setIsSaving(true);
+        try {
+            const response = await fetch(`${API_BASE}/sales/invoices`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                    customerId: selectedCustomerId,
+                    customerType,
+                    items: items.map(item => ({
+                        productId: item.productId,
+                        batchId: item.batchId,
+                        quantity: item.quantity,
+                        freeQuantity: item.freeQuantity || 0,
+                        unitPrice: item.unitPrice,
+                    })),
+                    paymentMethod,
+                    discountAmount: totals.discount,
+                }),
+            });
+
+            if (response.ok) {
+                const savedInvoice = await response.json();
+                const invoiceNo = savedInvoice.invoiceNumber || "INV";
+                const customerName = customers.find(c => c.id === selectedCustomerId)?.name || "";
+
+                // Force DOM to re-render with real invoice number before grabbing HTML
+                flushSync(() => setCurrentInvoiceNumber(invoiceNo));
+
+                if (printRef.current) {
+                    printInvoiceNewWindow(printRef.current, invoiceNo, customerName);
+                }
+
+                setItems([]);
+                setSelectedCustomerId("");
+                setPaymentMethod("CASH");
+                setExtraDiscount(0);
+                setCurrentInvoiceNumber("");
+                localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        } catch {
+            alert("Failed to save invoice");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -801,7 +846,7 @@ function BillingContent() {
             <InvoicePrint
                 ref={printRef}
                 preview={true}
-                invoiceNumber="DRAFT-001"
+                invoiceNumber={currentInvoiceNumber || "DRAFT"}
                 date={new Date()}
                 businessProfile={businessProfile}
                 customer={printCustomer}

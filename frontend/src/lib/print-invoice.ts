@@ -1,18 +1,27 @@
 /**
  * Opens the invoice in a new browser window and triggers print.
  * Works reliably on both desktop and mobile (mobile can save as PDF from the print dialog).
+ * The PDF filename is set to: "CustomerName (InvoiceNumber)" via the window <title>.
  */
-export function printInvoiceNewWindow(element: HTMLElement, invoiceNumber: string) {
+export function printInvoiceNewWindow(
+    element: HTMLElement,
+    invoiceNumber: string,
+    customerName?: string
+) {
     const win = window.open("", "_blank");
     if (!win) {
         alert("Popup blocked. Please allow popups for this site to print invoices.");
         return;
     }
 
+    const title = customerName
+        ? `${customerName} (${invoiceNumber})`
+        : `Invoice - ${invoiceNumber}`;
+
     win.document.write(`<!DOCTYPE html>
 <html>
 <head>
-  <title>Invoice - ${invoiceNumber}</title>
+  <title>${title}</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
