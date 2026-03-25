@@ -39,6 +39,8 @@ import {
     FileSearch,
     Upload,
     History,
+    Edit2,
+    X,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -114,7 +116,15 @@ interface PurchaseRecord {
     totalAmount: number;
     gstAmount: number;
     supplier: { id: string; name: string };
-    items: { id: string; quantity: number; purchasePrice: number; product: { name: string } | null; batch: { batchNumber: string } | null }[];
+    items: {
+        id: string;
+        quantity: number;
+        freeQty: number;
+        discountPct: number;
+        purchasePrice: number;
+        product: { id: string; name: string; composition?: string; packing?: string } | null;
+        batch: { id: string; batchNumber: string; expiryDate: string; salePrice: number; ptr: number; pts: number; nr: number } | null;
+    }[];
 }
 
 export default function PurchasesPage() {
@@ -134,6 +144,8 @@ export default function PurchasesPage() {
     const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState("entry");
 
     // UI Feedback State
     const [error, setError] = useState<string | null>(null);
@@ -274,6 +286,40 @@ export default function PurchasesPage() {
         }
     };
 
+    const handleEditPurchase = (p: PurchaseRecord) => {
+        setEditingPurchaseId(p.id);
+        setSelectedSupplierId(p.supplier.id);
+        setBillNumber(p.billNumber);
+        setItems(p.items.map(item => ({
+            id: Math.random().toString(36).substr(2, 9),
+            productId: item.product?.id || "",
+            name: item.product?.name || "",
+            composition: item.product?.composition || "",
+            packing: item.product?.packing || "",
+            batchNumber: item.batch?.batchNumber || "",
+            expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
+            quantity: item.quantity,
+            freeQty: item.freeQty || 0,
+            discountPct: item.discountPct || 0,
+            purchasePrice: item.purchasePrice,
+            salePrice: item.batch?.salePrice || 0,
+            ptr: item.batch?.ptr || 0,
+            pts: item.batch?.pts || 0,
+            nr: item.batch?.nr || 0,
+        })));
+        setActiveTab("entry");
+        setError(null);
+        setSuccess(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPurchaseId(null);
+        setSelectedSupplierId("");
+        setBillNumber("");
+        setItems([]);
+        localStorage.removeItem(PURCHASE_DRAFT_STORAGE_KEY);
+    };
+
     const addItem = () => {
         const newItem: PurchaseItem = {
             id: Math.random().toString(36).substr(2, 9),
@@ -352,8 +398,11 @@ export default function PurchasesPage() {
 
         setIsSaving(true);
         try {
-            const response = await fetch(`${API_BASE}/purchases`, {
-                method: "POST",
+            const url = editingPurchaseId
+                ? `${API_BASE}/purchases/${editingPurchaseId}`
+                : `${API_BASE}/purchases`;
+            const response = await fetch(url, {
+                method: editingPurchaseId ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${localStorage.getItem('auth_token')}`
@@ -381,10 +430,11 @@ export default function PurchasesPage() {
             });
 
             if (response.ok) {
-                setSuccess("Purchase recorded successfully! Stock has been updated.");
+                setSuccess(editingPurchaseId ? "Purchase updated successfully! Stock has been adjusted." : "Purchase recorded successfully! Stock has been updated.");
                 setItems([]);
                 setBillNumber("");
                 setSelectedSupplierId("");
+                setEditingPurchaseId(null);
                 localStorage.removeItem(PURCHASE_DRAFT_STORAGE_KEY);
                 fetchData();
             } else {
@@ -568,12 +618,21 @@ export default function PurchasesPage() {
                         <AlertDescription>{success}</AlertDescription>
                     </Alert>
                 )}
-            <Tabs defaultValue="entry" onValueChange={(v) => { if (v === 'history') fetchHistory(); }}>
+            <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v === 'history') fetchHistory(); }}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-1">
                     <TabsList className="w-full sm:w-auto">
-                        <TabsTrigger value="entry" className="flex-1 sm:flex-none">New Entry (GRN)</TabsTrigger>
-                        <TabsTrigger value="history" className="flex-1 sm:flex-none"><History className="h-3.5 w-3.5 mr-1.5" />Purchase History</TabsTrigger>
+                        <TabsTrigger value="entry" className="flex-1 sm:flex-none">
+                            {editingPurchaseId ? <><Edit2 className="h-3.5 w-3.5 mr-1.5" />Edit Entry</> : "New Entry (GRN)"}
+                        </TabsTrigger>
+                        <TabsTrigger value="history" className="flex-1 sm:flex-none" onClick={() => { if (editingPurchaseId) handleCancelEdit(); }}>
+                            <History className="h-3.5 w-3.5 mr-1.5" />Purchase History
+                        </TabsTrigger>
                     </TabsList>
+                    {editingPurchaseId && (
+                        <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                            Editing purchase — changes will replace the original
+                        </span>
+                    )}
                 </div>
 
                 <TabsContent value="history" className="mt-4">
@@ -591,7 +650,7 @@ export default function PurchasesPage() {
                                         <TableHead className="text-[10px] font-bold uppercase">Supplier</TableHead>
                                         <TableHead className="text-[10px] font-bold uppercase">Items</TableHead>
                                         <TableHead className="text-right text-[10px] font-bold uppercase">Net Amount</TableHead>
-                                        <TableHead className="w-[80px]"></TableHead>
+                                        <TableHead className="w-[90px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -615,15 +674,27 @@ export default function PurchasesPage() {
                                             </TableCell>
                                             <TableCell className="text-right font-mono font-bold">₹{p.netAmount?.toLocaleString()}</TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-destructive hover:bg-red-50"
-                                                    disabled={deletingId === p.id}
-                                                    onClick={() => handleDeletePurchase(p.id, p.billNumber)}
-                                                >
-                                                    {deletingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                        onClick={() => handleEditPurchase(p)}
+                                                        title="Edit purchase"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:bg-red-50"
+                                                        disabled={deletingId === p.id}
+                                                        onClick={() => handleDeletePurchase(p.id, p.billNumber)}
+                                                        title="Delete purchase"
+                                                    >
+                                                        {deletingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -659,7 +730,9 @@ export default function PurchasesPage() {
                     </div>
                 )}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
-                    <p className="text-sm text-muted-foreground hidden sm:block">Record a new goods receipt (GRN)</p>
+                    <p className="text-sm text-muted-foreground hidden sm:block">
+                        {editingPurchaseId ? "Editing existing purchase — save to replace" : "Record a new goods receipt (GRN)"}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         <input
                             type="file"
@@ -679,10 +752,17 @@ export default function PurchasesPage() {
                             {isUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
                             Upload Invoice
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1 sm:flex-none"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
-                        <Button size="sm" onClick={handleSave} disabled={isUploading || isSaving} className="w-full sm:w-auto">
+                        {!editingPurchaseId && (
+                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
+                        )}
+                        {editingPurchaseId && (
+                            <Button variant="outline" size="sm" onClick={handleCancelEdit} className="flex-1 sm:flex-none border-slate-300">
+                                <X className="mr-1.5 h-4 w-4" /> Cancel Edit
+                            </Button>
+                        )}
+                        <Button size="sm" onClick={handleSave} disabled={isUploading || isSaving} className={`w-full sm:w-auto ${editingPurchaseId ? "bg-amber-600 hover:bg-amber-700" : ""}`}>
                             {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-                            Save Purchase
+                            {editingPurchaseId ? "Update Purchase" : "Save Purchase"}
                         </Button>
                     </div>
                 </div>
