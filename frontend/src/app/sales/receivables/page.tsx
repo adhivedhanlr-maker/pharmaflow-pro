@@ -49,6 +49,7 @@ interface SaleItem {
     batch?: {
         batchNumber: string;
         mrp?: number;
+        salePrice?: number;
         ptr?: number;
         pts?: number;
         expiryDate?: string;
@@ -285,7 +286,7 @@ export default function ReceivablesPage() {
                                 hsnCode: item.product.hsnCode,
                                 batchNumber: item.batch?.batchNumber || "N/A",
                                 expiryDate: item.batch?.expiryDate,
-                                mrp: item.batch?.mrp,
+                                mrp: item.batch?.mrp || item.batch?.salePrice,
                                 ptr: item.batch?.ptr,
                                 quantity: item.quantity,
                                 unitPrice: item.unitPrice,

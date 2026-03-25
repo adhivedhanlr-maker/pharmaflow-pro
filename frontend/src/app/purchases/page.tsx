@@ -866,6 +866,7 @@ export default function PurchasesPage() {
                                     <TableHead className="text-right text-[10px] font-bold uppercase">QTY</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">FREE</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">DISC%</TableHead>
+                                    <TableHead className="text-right text-[10px] font-bold uppercase">RATE</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">MRP</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">PTR</TableHead>
                                     <TableHead className="text-right text-[10px] font-bold uppercase">PTS</TableHead>
@@ -876,7 +877,7 @@ export default function PurchasesPage() {
                             <TableBody>
                                 {items.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={14} className="text-center py-12 text-muted-foreground italic text-sm">
+                                        <TableCell colSpan={15} className="text-center py-12 text-muted-foreground italic text-sm">
                                             Click 'Add Item' to start recording purchase entry.
                                         </TableCell>
                                     </TableRow>
@@ -995,6 +996,20 @@ export default function PurchasesPage() {
                                                 onChange={(e) => {
                                                     const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                                                     updateItem(item.id, 'purchasePrice', isNaN(val) ? 0 : val);
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Input
+                                                type="number"
+                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-slate-700"
+                                                value={item.salePrice === 0 ? "" : item.salePrice}
+                                                placeholder="0.00"
+                                                min="0"
+                                                step="0.01"
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'salePrice', isNaN(val) ? 0 : val);
                                                 }}
                                             />
                                         </TableCell>

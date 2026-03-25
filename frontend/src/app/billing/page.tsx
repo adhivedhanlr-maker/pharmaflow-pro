@@ -331,7 +331,7 @@ function BillingContent() {
                 expiryDate: defaultBatch.expiryDate,
                 quantity: 1,
                 freeQuantity: 0,
-                mrp: defaultBatch.mrp || 0,
+                mrp: defaultBatch.mrp || defaultBatch.salePrice || 0,
                 ptr: defaultBatch.ptr || 0,
                 pts: defaultBatch.pts || 0,
                 unitPrice,
@@ -356,6 +356,7 @@ function BillingContent() {
                 const batch = product?.batches.find(b => b.id === value);
                 if (batch) {
                     updated.batchNumber = batch.batchNumber;
+                    updated.mrp = batch.mrp || batch.salePrice || 0;
                     updated.ptr = batch.ptr || 0;
                     updated.pts = batch.pts || 0;
                     updated.unitPrice = getBatchPrice(batch);
