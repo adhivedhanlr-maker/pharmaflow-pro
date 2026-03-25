@@ -193,6 +193,7 @@ model Sale {
   discountAmount Float             @default(0)
   isCash         Boolean           @default(true)
   paymentMethod  SalePaymentMethod @default(CASH)
+  customerType   String?           @default("PHARMACY")
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   items          SaleItem[]
@@ -245,12 +246,13 @@ model SaleItem {
   product     Product         @relation(fields: [productId], references: [id])
   batchId     String
   batch       Batch           @relation(fields: [batchId], references: [id])
-  quantity    Int
-  unitPrice   Float
-  gstRate     Float
-  gstAmount   Float
-  totalAmount Float
-  returns     SaleReturnItem[]
+  quantity     Int
+  freeQuantity Int    @default(0)
+  unitPrice    Float
+  gstRate      Float
+  gstAmount    Float
+  totalAmount  Float
+  returns      SaleReturnItem[]
 
   @@index([tenantId])
 }

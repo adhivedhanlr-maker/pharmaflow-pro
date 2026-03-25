@@ -15,7 +15,7 @@ export class SalesService {
     ) { }
 
     async createInvoice(data: any, userId?: string, tenantId?: string) {
-        const { customerId, items, discountAmount = 0 } = data;
+        const { customerId, items, discountAmount = 0, customerType } = data;
         const finalPaymentMethod = data.paymentMethod || (data.isCash === false ? 'CREDIT' : 'CASH');
         const isCash = finalPaymentMethod !== 'CREDIT';
 
@@ -60,29 +60,35 @@ export class SalesService {
                     });
                 }
 
-                if (!batch || batch.currentStock < item.quantity) {
+                // 3. Calculate Item Totals
+                const freeQty = item.freeQuantity || 0;
+                const billedQty = item.quantity;
+                const stockQty = billedQty + freeQty;
+
+                if (!batch || batch.currentStock < stockQty) {
                     throw new BadRequestException(`Insufficient stock for product ${product.name}`);
                 }
-
-                // 3. Calculate Item Totals
-                const itemTotal = item.quantity * batch.salePrice;
+                // Use frontend unitPrice (PTR for pharmacy, PTS for distributor); fallback to salePrice
+                const unitPrice = item.unitPrice ?? batch.salePrice;
+                const itemTotal = billedQty * unitPrice;
                 const itemGst = (itemTotal * product.gstRate) / 100;
 
                 totalAmount += itemTotal;
                 totalGst += itemGst;
 
-                // 4. Update Stock
+                // 4. Update Stock (billed + free)
                 await tx.batch.update({
                     where: { id: batch.id },
-                    data: { currentStock: { decrement: item.quantity } },
+                    data: { currentStock: { decrement: stockQty } },
                 });
 
                 invoiceItems.push({
                     productId: product.id,
                     tenantId,
                     batchId: batch.id,
-                    quantity: item.quantity,
-                    unitPrice: batch.salePrice,
+                    quantity: billedQty,
+                    freeQuantity: freeQty,
+                    unitPrice,
                     gstRate: product.gstRate,
                     gstAmount: itemGst,
                     totalAmount: itemTotal + itemGst,
@@ -117,6 +123,7 @@ export class SalesService {
                     discountAmount,
                     isCash,
                     paymentMethod: finalPaymentMethod,
+                    customerType: customerType || 'PHARMACY',
                     deliveryOtp: otp,
                     items: {
                         create: invoiceItems,

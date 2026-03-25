@@ -36,6 +36,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface SaleItem {
     id: string;
     quantity: number;
+    freeQuantity?: number;
     unitPrice: number;
     totalAmount: number;
     gstAmount: number;
@@ -65,6 +66,7 @@ interface Sale {
     netAmount: number;
     discountAmount: number;
     paymentMethod: string;
+    customerType?: string;
     customer: {
         name: string;
         address: string;
@@ -278,6 +280,7 @@ export default function ReceivablesPage() {
                             date={new Date(selectedInvoice.createdAt)}
                             businessProfile={businessProfile}
                             customer={selectedInvoice.customer}
+                            customerType={selectedInvoice.customerType as "PHARMACY" | "DISTRIBUTOR" | undefined}
                             items={selectedInvoice.items.map(item => ({
                                 id: item.id,
                                 name: item.product.name,
@@ -289,6 +292,7 @@ export default function ReceivablesPage() {
                                 mrp: item.batch?.mrp || item.batch?.salePrice,
                                 ptr: item.batch?.ptr,
                                 quantity: item.quantity,
+                                freeQuantity: item.freeQuantity || 0,
                                 unitPrice: item.unitPrice,
                                 gstRate: item.product.gstRate,
                                 gstAmount: item.gstAmount,

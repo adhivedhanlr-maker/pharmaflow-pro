@@ -94,7 +94,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                 : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}${businessProfile.logoUrl}`)
             : null;
 
-        // Group items by GST rate for tax summary
+        // Group items by GST rate for tax summary (use billed qty only, not free)
         const gstGroups: Record<number, { taxable: number; sgst: number; cgst: number }> = {};
         items.forEach(item => {
             const taxable = item.quantity * item.unitPrice;
@@ -132,72 +132,90 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     : "hidden print:block p-4 bg-white text-black font-sans max-w-[210mm] mx-auto"}
                 style={{ fontFamily: "Arial, sans-serif", fontSize: "11px" }}
             >
-                {/* HEADER */}
+                {/* OUTER BORDER */}
                 <div style={{ border: "2px solid #000", marginBottom: "4px" }}>
-                    <div style={{ textAlign: "center", borderBottom: "1px solid #ccc", padding: "6px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+
+                    {/* ── HEADER: Logo + Company ── */}
+                    <div style={{ textAlign: "center", borderBottom: "1.5px solid #888", padding: "10px 12px 8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
                             {logoUrl && (
-                                <img src={logoUrl} alt="logo" style={{ height: "48px", width: "48px", objectFit: "contain" }}
+                                <img src={logoUrl} alt="logo"
+                                    style={{ height: "64px", width: "64px", objectFit: "contain" }}
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                             )}
                             <div>
-                                <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "1px" }}>{companyName}</div>
-                                <div style={{ fontSize: "10px" }}>{companyAddress}</div>
-                                {businessProfile?.phone && <div style={{ fontSize: "10px" }}>PH : {businessProfile.phone}</div>}
+                                <div style={{ fontSize: "22px", fontWeight: "900", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+                                    {companyName}
+                                </div>
+                                {companyAddress && (
+                                    <div style={{ fontSize: "10px", color: "#333", marginTop: "2px" }}>{companyAddress}</div>
+                                )}
+                                {businessProfile?.phone && (
+                                    <div style={{ fontSize: "10px", color: "#333" }}>Ph: {businessProfile.phone}</div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Seller compliance line */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", padding: "3px 8px", borderBottom: "1px solid #ccc", fontSize: "10px" }}>
-                        {businessProfile?.gstin && <span><b>GSTIN :</b> {businessProfile.gstin}</span>}
-                        {businessProfile?.panNo && <span><b>PAN :</b> {businessProfile.panNo}</span>}
-                        {businessProfile?.fssaiNo && <span><b>FSSAI :</b> {businessProfile.fssaiNo}</span>}
-                        {businessProfile?.dlNo && <span><b>DL No :</b> {businessProfile.dlNo}</span>}
-                        {businessProfile?.email && <span><b>E-Mail :</b> {businessProfile.email}</span>}
+                    {/* ── SELLER COMPLIANCE LINE ── */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", padding: "5px 12px", borderBottom: "1px solid #ccc", fontSize: "10px", backgroundColor: "#fafafa" }}>
+                        {businessProfile?.gstin && <span><b>GSTIN:</b> {businessProfile.gstin}</span>}
+                        {businessProfile?.panNo && <span><b>PAN:</b> {businessProfile.panNo}</span>}
+                        {businessProfile?.fssaiNo && <span><b>FSSAI:</b> {businessProfile.fssaiNo}</span>}
+                        {businessProfile?.dlNo && <span><b>DL No:</b> {businessProfile.dlNo}</span>}
+                        {businessProfile?.email && <span><b>Email:</b> {businessProfile.email}</span>}
                     </div>
 
-                    {/* Buyer + Invoice No block */}
+                    {/* ── BILL TO + INVOICE INFO ── */}
                     <div style={{ display: "flex", borderBottom: "1px solid #ccc" }}>
-                        {/* Buyer */}
-                        <div style={{ flex: 1, padding: "4px 8px", borderRight: "1px solid #ccc", fontSize: "10px" }}>
-                            <div style={{ fontWeight: "bold", fontSize: "11px" }}>{customer.name}</div>
-                            {customer.address && <div>{customer.address}</div>}
-                            {customer.phone && <div>Phone : {customer.phone}</div>}
-                            {customer.gstin && <div><b>GSTIN :</b> {customer.gstin}</div>}
-                            {customer.dlNo && <div><b>DL No :</b> {customer.dlNo}</div>}
-                            {customer.fssaiNo && <div><b>FSSAI :</b> {customer.fssaiNo}</div>}
-                            {customer.email && <div><b>Mail Id :</b> {customer.email}</div>}
-                            {customer.state && <div><b>State :</b> {customer.state}</div>}
+                        {/* Bill To */}
+                        <div style={{ flex: 1, padding: "8px 12px", borderRight: "1px solid #ccc" }}>
+                            <div style={{ fontSize: "9px", fontWeight: "bold", color: "#666", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
+                                Bill To
+                            </div>
+                            <div style={{ fontWeight: "bold", fontSize: "13px", marginBottom: "2px" }}>{customer.name}</div>
+                            {customer.address && <div style={{ fontSize: "10px", color: "#444", marginBottom: "1px" }}>{customer.address}</div>}
+                            {customer.phone && <div style={{ fontSize: "10px" }}>Ph: {customer.phone}</div>}
+                            {customer.gstin && <div style={{ fontSize: "10px" }}><b>GSTIN:</b> {customer.gstin}</div>}
+                            {customer.dlNo && <div style={{ fontSize: "10px" }}><b>DL No:</b> {customer.dlNo}</div>}
+                            {customer.fssaiNo && <div style={{ fontSize: "10px" }}><b>FSSAI:</b> {customer.fssaiNo}</div>}
+                            {customer.email && <div style={{ fontSize: "10px" }}><b>Email:</b> {customer.email}</div>}
+                            {customer.state && <div style={{ fontSize: "10px" }}><b>State:</b> {customer.state}</div>}
                         </div>
-                        {/* Invoice info */}
-                        <div style={{ width: "220px", padding: "4px 8px", fontSize: "10px" }}>
-                            <div style={{ textAlign: "center", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>TAX INVOICE</div>
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        {/* Invoice Meta */}
+                        <div style={{ width: "230px", padding: "8px 12px" }}>
+                            <div style={{ textAlign: "center", fontSize: "14px", fontWeight: "bold", marginBottom: "8px", letterSpacing: "1px" }}>
+                                TAX INVOICE
+                            </div>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
                                 <tbody>
                                     <tr>
-                                        <td style={{ fontWeight: "bold", paddingRight: "6px" }}>Inv No:</td>
-                                        <td style={{ fontFamily: "monospace" }}>{invoiceNumber}</td>
+                                        <td style={{ fontWeight: "bold", paddingBottom: "3px", paddingRight: "8px", whiteSpace: "nowrap" }}>Invoice No:</td>
+                                        <td style={{ fontFamily: "monospace", paddingBottom: "3px" }}>{invoiceNumber}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ fontWeight: "bold" }}>Inv Dt:</td>
-                                        <td>{format(date, "dd-MM-yyyy hh:mm aa")}</td>
+                                        <td style={{ fontWeight: "bold", paddingBottom: "3px" }}>Date:</td>
+                                        <td style={{ paddingBottom: "3px" }}>{format(date, "dd-MM-yyyy hh:mm aa")}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ fontWeight: "bold" }}>Pay Type:</td>
-                                        <td>{paymentMethod === "CASH" ? "CASH" : "CREDIT"}</td>
+                                        <td style={{ fontWeight: "bold", paddingBottom: "3px" }}>Payment:</td>
+                                        <td style={{ paddingBottom: "3px" }}>{paymentMethod === "CASH" ? "CASH" : "CREDIT"}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ fontWeight: "bold" }}>Customer:</td>
+                                        <td>{customerType === "DISTRIBUTOR" ? "Distributor" : "Pharmacy"}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    {/* Items table */}
-                    <div style={{ padding: "0 0 4px 0", overflowX: "auto" }}>
+                    {/* ── ITEMS TABLE ── */}
+                    <div style={{ overflowX: "auto" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                             <thead>
                                 <tr>
-                                    <th style={{ ...thStyle, width: "30px" }}>SNo</th>
+                                    <th style={{ ...thStyle, width: "28px" }}>SNo</th>
                                     <th style={{ ...thStyle, textAlign: "left" as const }}>Particulars</th>
                                     <th style={thStyle}>Packing</th>
                                     <th style={thStyle}>HSN</th>
@@ -229,10 +247,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.hsnCode || "-"}</td>
                                             <td style={{ ...tdStyle, fontFamily: "monospace", textAlign: "center" as const }}>{item.batchNumber}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{expFormatted}</td>
-                                            <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.quantity}</td>
+                                            <td style={{ ...tdStyle, textAlign: "center" as const, fontWeight: "bold" }}>{item.quantity}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.freeQuantity || 0}</td>
                                             <td style={{ ...tdStyle, textAlign: "right" as const }}>{(item.mrp || 0).toFixed(2)}</td>
-                                            <td style={{ ...tdStyle, textAlign: "right" as const }}>{item.unitPrice.toFixed(2)}</td>
+                                            <td style={{ ...tdStyle, textAlign: "right" as const, fontWeight: "bold" }}>{item.unitPrice.toFixed(2)}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{(item.discountPct || 0).toFixed(2)}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.gstRate}</td>
                                             <td style={{ ...tdStyle, textAlign: "right" as const }}>{taxable.toFixed(2)}</td>
@@ -243,18 +261,19 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </table>
                     </div>
 
-                    {/* Footer row: summary */}
+                    {/* ── FOOTER: GST SUMMARY + TOTALS ── */}
                     <div style={{ display: "flex", borderTop: "1px solid #ccc" }}>
                         {/* Tax breakdown */}
-                        <div style={{ flex: 1, padding: "4px 8px", borderRight: "1px solid #ccc", fontSize: "10px" }}>
+                        <div style={{ flex: 1, padding: "6px 10px", borderRight: "1px solid #ccc", fontSize: "10px" }}>
+                            <div style={{ fontWeight: "bold", marginBottom: "4px", fontSize: "10px" }}>GST Summary</div>
                             <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>
                                     <tr>
                                         <th style={thStyle}>Tax %</th>
-                                        <th style={thStyle}>Taxable Value</th>
-                                        <th style={thStyle}>SGST %</th>
+                                        <th style={thStyle}>Taxable</th>
+                                        <th style={thStyle}>SGST%</th>
                                         <th style={thStyle}>SGST Amt</th>
-                                        <th style={thStyle}>CGST %</th>
+                                        <th style={thStyle}>CGST%</th>
                                         <th style={thStyle}>CGST Amt</th>
                                     </tr>
                                 </thead>
@@ -272,70 +291,71 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 </tbody>
                             </table>
                             <div style={{ marginTop: "6px", fontSize: "10px" }}>
-                                <b>Tot Items:</b> {items.length} &nbsp;&nbsp;
-                                <b>Tot Qty:</b> {items.reduce((a, i) => a + i.quantity, 0)}
+                                <b>Total Items:</b> {items.length} &nbsp;&nbsp;
+                                <b>Total Qty:</b> {items.reduce((a, i) => a + i.quantity, 0)} &nbsp;&nbsp;
+                                <b>Total Free:</b> {items.reduce((a, i) => a + (i.freeQuantity || 0), 0)}
                             </div>
                         </div>
 
                         {/* Totals */}
-                        <div style={{ width: "220px", padding: "4px 8px", fontSize: "10px" }}>
+                        <div style={{ width: "230px", padding: "6px 12px", fontSize: "10px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <tbody>
                                     <tr>
-                                        <td style={{ paddingBottom: "2px" }}>Sub Total :</td>
-                                        <td style={{ textAlign: "right" as const }}>&#8377;{totals.subtotal.toFixed(2)}</td>
+                                        <td style={{ paddingBottom: "3px" }}>Sub Total :</td>
+                                        <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>&#8377;{totals.subtotal.toFixed(2)}</td>
                                     </tr>
                                     {(totals.discount || 0) > 0 && (
                                         <tr>
-                                            <td>Discount :</td>
-                                            <td style={{ textAlign: "right" as const }}>- &#8377;{(totals.discount || 0).toFixed(2)}</td>
+                                            <td style={{ paddingBottom: "3px" }}>Discount :</td>
+                                            <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>- &#8377;{(totals.discount || 0).toFixed(2)}</td>
                                         </tr>
                                     )}
                                     <tr>
-                                        <td>Taxable Amount :</td>
-                                        <td style={{ textAlign: "right" as const }}>&#8377;{taxableAmount.toFixed(2)}</td>
+                                        <td style={{ paddingBottom: "3px" }}>Taxable Amount :</td>
+                                        <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>&#8377;{taxableAmount.toFixed(2)}</td>
                                     </tr>
                                     <tr>
-                                        <td>SGST :</td>
-                                        <td style={{ textAlign: "right" as const }}>&#8377;{totalSgst.toFixed(2)}</td>
+                                        <td style={{ paddingBottom: "3px" }}>SGST :</td>
+                                        <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>&#8377;{totalSgst.toFixed(2)}</td>
                                     </tr>
                                     <tr>
-                                        <td>CGST :</td>
-                                        <td style={{ textAlign: "right" as const }}>&#8377;{totalCgst.toFixed(2)}</td>
+                                        <td style={{ paddingBottom: "3px" }}>CGST :</td>
+                                        <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>&#8377;{totalCgst.toFixed(2)}</td>
                                     </tr>
                                     <tr>
-                                        <td>Tax Amount :</td>
-                                        <td style={{ textAlign: "right" as const }}>&#8377;{totals.gst.toFixed(2)}</td>
+                                        <td style={{ paddingBottom: "3px" }}>Tax Amount :</td>
+                                        <td style={{ textAlign: "right" as const, paddingBottom: "3px" }}>&#8377;{totals.gst.toFixed(2)}</td>
                                     </tr>
                                     <tr style={{ borderTop: "2px solid #000", fontWeight: "bold" }}>
-                                        <td style={{ paddingTop: "4px", fontSize: "12px" }}>Net Payable :</td>
-                                        <td style={{ textAlign: "right" as const, fontSize: "12px", paddingTop: "4px" }}>&#8377;{totals.net.toFixed(2)}</td>
+                                        <td style={{ paddingTop: "5px", fontSize: "12px" }}>Net Payable :</td>
+                                        <td style={{ textAlign: "right" as const, fontSize: "12px", paddingTop: "5px" }}>&#8377;{totals.net.toFixed(2)}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    {/* Amount in words */}
-                    <div style={{ padding: "4px 8px", borderTop: "1px solid #ccc", fontSize: "10px" }}>
+                    {/* ── AMOUNT IN WORDS ── */}
+                    <div style={{ padding: "5px 12px", borderTop: "1px solid #ccc", fontSize: "10px" }}>
                         <b>Amount In Words :</b> {numberToWords(totals.net)}
                     </div>
 
-                    {/* Bank details + Signature */}
+                    {/* ── BANK DETAILS + SIGNATURE ── */}
                     <div style={{ display: "flex", borderTop: "1px solid #ccc" }}>
                         {(businessProfile?.bankName || businessProfile?.bankAccountNo) && (
-                            <div style={{ flex: 1, padding: "4px 8px", borderRight: "1px solid #ccc", fontSize: "10px" }}>
-                                <div style={{ fontWeight: "bold", marginBottom: "2px" }}>Bank Details</div>
+                            <div style={{ flex: 1, padding: "6px 12px", borderRight: "1px solid #ccc", fontSize: "10px" }}>
+                                <div style={{ fontWeight: "bold", marginBottom: "3px" }}>Bank Details</div>
                                 {businessProfile.bankName && <div>{businessProfile.bankName}</div>}
                                 {businessProfile.bankBranch && <div>Branch : {businessProfile.bankBranch}</div>}
-                                {businessProfile.bankAccountNo && <div>ACC NO.: {businessProfile.bankAccountNo}</div>}
+                                {businessProfile.bankAccountNo && <div>Acc No.: {businessProfile.bankAccountNo}</div>}
                                 {businessProfile.bankIfsc && <div>IFSC : {businessProfile.bankIfsc}</div>}
                             </div>
                         )}
-                        <div style={{ flex: 1, padding: "4px 8px", textAlign: "right" as const, fontSize: "10px" }}>
-                            <div style={{ marginBottom: "24px" }}>For</div>
-                            <div style={{ fontWeight: "bold" }}>{companyName}</div>
-                            <div style={{ marginTop: "20px", borderTop: "1px solid #555", paddingTop: "2px" }}>Authorised Signatory</div>
+                        <div style={{ flex: 1, padding: "6px 12px", textAlign: "right" as const, fontSize: "10px" }}>
+                            <div style={{ marginBottom: "28px" }}>For</div>
+                            <div style={{ fontWeight: "bold", fontSize: "11px" }}>{companyName}</div>
+                            <div style={{ marginTop: "24px", borderTop: "1px solid #555", paddingTop: "3px" }}>Authorised Signatory</div>
                             <div style={{ marginTop: "4px", fontSize: "9px", color: "#888" }}>E.&amp;O.E.</div>
                         </div>
                     </div>

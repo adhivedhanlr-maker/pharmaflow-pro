@@ -260,10 +260,13 @@ function BillingContent() {
                 },
                 body: JSON.stringify({
                     customerId: selectedCustomerId,
+                    customerType,
                     items: items.map(item => ({
                         productId: item.productId,
                         batchId: item.batchId,
-                        quantity: item.quantity + (item.freeQuantity || 0)
+                        quantity: item.quantity,
+                        freeQuantity: item.freeQuantity || 0,
+                        unitPrice: item.unitPrice,
                     })),
                     paymentMethod,
                     discountAmount: totals.discount,
