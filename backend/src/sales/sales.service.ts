@@ -424,4 +424,52 @@ export class SalesService {
 
         return `${year}-${month}-${day}-${hour}`;
     }
+
+    async deleteSale(id: string, tenantId?: string) {
+        const sale = await this.prisma.sale.findFirst({
+            where: { id, ...(tenantId ? { tenantId } : {}) },
+            include: {
+                items: true,
+                returns: { include: { items: true } },
+                deliveryProof: true,
+            },
+        });
+        if (!sale) throw new NotFoundException('Invoice not found');
+
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Delete sale return items then sale returns
+            for (const ret of sale.returns) {
+                await tx.saleReturnItem.deleteMany({ where: { saleReturnId: ret.id } });
+                // Also restore stock for returned items (they were added back, so remove again)
+            }
+            await tx.saleReturn.deleteMany({ where: { saleId: sale.id } });
+
+            // 2. Delete delivery proof
+            if (sale.deliveryProof) {
+                await tx.deliveryProof.delete({ where: { saleId: sale.id } });
+            }
+
+            // 3. Restore stock for each sold item
+            for (const item of sale.items) {
+                if (item.batchId) {
+                    await tx.batch.update({
+                        where: { id: item.batchId },
+                        data: { currentStock: { increment: item.quantity } },
+                    });
+                }
+            }
+
+            // 4. Reverse customer credit balance (only if it was a credit sale)
+            if (!sale.isCash) {
+                await tx.customer.update({
+                    where: { id: sale.customerId },
+                    data: { currentBalance: { decrement: sale.netAmount } },
+                });
+            }
+
+            // 5. Delete sale items then sale
+            await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
+            return tx.sale.delete({ where: { id: sale.id } });
+        });
+    }
 }

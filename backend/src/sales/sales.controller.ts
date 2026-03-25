@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, UseGuards, Request, Param, Query, Res } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, UseGuards, Request, Param, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { SalesService } from './sales.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -53,6 +53,12 @@ export class SalesController {
             body.deliveryInfo,
             req.user?.tenantId
         );
+    }
+
+    @Delete(':id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    deleteSale(@Param('id') id: string, @Request() req: any) {
+        return this.salesService.deleteSale(id, req.user?.tenantId);
     }
 
     @Patch(':id/assign-rep')
