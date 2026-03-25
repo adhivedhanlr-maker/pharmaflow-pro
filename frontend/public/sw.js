@@ -1,16 +1,11 @@
 const CACHE_NAME = 'pharmaflow-v1';
 const urlsToCache = [
     '/',
-    '/dashboard',
-    '/billing',
-    '/purchases',
-    '/stock',
-    '/parties',
-    '/inventory',
-    '/returns',
-    '/reports',
-    '/users',
-    '/settings',
+    '/login',
+    '/manifest.json',
+    '/logo.png',
+    '/icon-192x192.png',
+    '/icon-512x512.png',
 ];
 
 self.addEventListener('install', (event) => {
