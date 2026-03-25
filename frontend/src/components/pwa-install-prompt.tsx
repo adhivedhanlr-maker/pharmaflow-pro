@@ -18,16 +18,6 @@ export function PWAInstallPrompt() {
             e.preventDefault();
             setDeferredPrompt(e);
 
-            // Check if recently dismissed (e.g., last 24 hours)
-            const dismissed = localStorage.getItem('pwa-install-dismissed');
-            if (dismissed) {
-                const dismissedTime = parseInt(dismissed);
-                const oneDay = 24 * 60 * 60 * 1000;
-                if (Date.now() - dismissedTime < oneDay) {
-                    return; // Don't show if dismissed recently
-                }
-            }
-
             // Show prompt
             setShowInstallPrompt(true);
             setIsVisible(true);
