@@ -27,7 +27,8 @@ import {
     ShieldAlert,
     ArrowUpDown,
     ArrowDown,
-    ArrowUp
+    ArrowUp,
+    RefreshCw
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -270,8 +271,11 @@ export default function StockPage() {
                         ) : (
                             <AddStockDialog onSuccess={fetchStock} />
                         )}
-                        <Button variant="outline" onClick={fetchStock} className="border-slate-200">
-                            <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                        <Button variant="outline" onClick={fetchStock} className="border-slate-200 h-10 px-4">
+                            {loading
+                                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                : <RefreshCw className="h-4 w-4 mr-2" />
+                            }
                             Refresh
                         </Button>
                     </div>

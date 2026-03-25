@@ -9,7 +9,8 @@ import {
     FileText,
     Loader2,
     Calendar,
-    Download
+    Download,
+    Trash2
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -72,6 +73,7 @@ export default function SalesHistoryPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedInvoice, setSelectedInvoice] = useState<Sale | null>(null);
     const [businessProfile, setBusinessProfile] = useState<any>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const printRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +120,27 @@ export default function SalesHistoryPage() {
             }
         } catch (error) {
             console.error("Failed to fetch business profile:", error);
+        }
+    };
+
+    const handleDeleteSale = async (id: string, invoiceNumber: string) => {
+        if (!confirm(`Delete invoice "${invoiceNumber}"? This will reverse the stock. This cannot be undone.`)) return;
+        setDeletingId(id);
+        try {
+            const res = await fetch(`${API_BASE}/sales/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setSales(prev => prev.filter(s => s.id !== id));
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || "Failed to delete invoice.");
+            }
+        } catch {
+            alert("Network error. Failed to delete invoice.");
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -187,10 +210,13 @@ export default function SalesHistoryPage() {
                                         <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{sale.customer.name}</p>
                                         <p className="text-xs text-muted-foreground">{format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                    <div className="flex items-center gap-1 flex-shrink-0">
                                         <span className="font-bold text-slate-900 text-sm">₹{sale.netAmount.toLocaleString()}</span>
                                         <Button variant="ghost" size="sm" onClick={() => handlePrint(sale)} className="h-8 w-8 p-0">
                                             <Printer className="h-4 w-4 text-slate-500" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteSale(sale.id, sale.invoiceNumber)} disabled={deletingId === sale.id} className="h-8 w-8 p-0 text-destructive hover:bg-red-50">
+                                            {deletingId === sale.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                         </Button>
                                     </div>
                                 </div>
@@ -206,7 +232,7 @@ export default function SalesHistoryPage() {
                                         <TableHead>Customer</TableHead>
                                         <TableHead>Payment</TableHead>
                                         <TableHead className="text-right">Amount</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead className="text-right w-[90px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -253,14 +279,14 @@ export default function SalesHistoryPage() {
                                                     ₹{sale.netAmount.toLocaleString()}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handlePrint(sale)}
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        <Printer className="h-4 w-4 text-slate-500 hover:text-blue-600" />
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-0.5">
+                                                        <Button variant="ghost" size="sm" onClick={() => handlePrint(sale)} className="h-8 w-8 p-0">
+                                                            <Printer className="h-4 w-4 text-slate-500 hover:text-blue-600" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteSale(sale.id, sale.invoiceNumber)} disabled={deletingId === sale.id} className="h-8 w-8 p-0 text-destructive hover:bg-red-50">
+                                                            {deletingId === sale.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))

@@ -190,7 +190,7 @@ export function AddStockDialog({ onSuccess }: AddStockDialogProps) {
     return (
         <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (!val) resetForm(); }}>
             <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md border-none h-10 px-4">
                     <Plus className="mr-2 h-4 w-4" /> Add Stock
                 </Button>
             </DialogTrigger>

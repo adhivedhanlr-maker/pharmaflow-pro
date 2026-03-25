@@ -569,10 +569,12 @@ export default function PurchasesPage() {
                     </Alert>
                 )}
             <Tabs defaultValue="entry" onValueChange={(v) => { if (v === 'history') fetchHistory(); }}>
-                <TabsList>
-                    <TabsTrigger value="entry">New Entry (GRN)</TabsTrigger>
-                    <TabsTrigger value="history"><History className="h-3.5 w-3.5 mr-1.5" />Purchase History</TabsTrigger>
-                </TabsList>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-1">
+                    <TabsList className="w-full sm:w-auto">
+                        <TabsTrigger value="entry" className="flex-1 sm:flex-none">New Entry (GRN)</TabsTrigger>
+                        <TabsTrigger value="history" className="flex-1 sm:flex-none"><History className="h-3.5 w-3.5 mr-1.5" />Purchase History</TabsTrigger>
+                    </TabsList>
+                </div>
 
                 <TabsContent value="history" className="mt-4">
                     <Card>
@@ -656,33 +658,36 @@ export default function PurchasesPage() {
                         </div>
                     </div>
                 )}
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                    <input
-                        type="file"
-                        id="invoice-upload"
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png,.webp"
-                        onChange={handleInvoiceUpload}
-                        disabled={isUploading}
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
-                        onClick={() => document.getElementById('invoice-upload')?.click()}
-                        disabled={isUploading}
-                    >
-                        {isUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
-                        Upload Invoice
-                    </Button>
-                    <Button variant="outline" size="sm"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
-                    <Button size="sm" onClick={handleSave} disabled={isUploading || isSaving}>
-                        {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-                        Save Purchase
-                    </Button>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
+                    <p className="text-sm text-muted-foreground hidden sm:block">Record a new goods receipt (GRN)</p>
+                    <div className="flex flex-wrap gap-2">
+                        <input
+                            type="file"
+                            id="invoice-upload"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            onChange={handleInvoiceUpload}
+                            disabled={isUploading}
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 flex-1 sm:flex-none"
+                            onClick={() => document.getElementById('invoice-upload')?.click()}
+                            disabled={isUploading}
+                        >
+                            {isUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
+                            Upload Invoice
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 sm:flex-none"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
+                        <Button size="sm" onClick={handleSave} disabled={isUploading || isSaving} className="w-full sm:w-auto">
+                            {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                            Save Purchase
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <Card className="flex-1">
                         <CardHeader className="py-2 px-4 border-b bg-slate-50/50">
                             <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Bill Details</CardTitle>
@@ -728,7 +733,7 @@ export default function PurchasesPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="lg:w-80 bg-slate-50 border-dashed">
+                    <Card className="md:w-72 bg-slate-50 border-dashed">
                         <CardHeader className="py-2 px-4 border-b">
                             <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Summary</CardTitle>
                         </CardHeader>
@@ -759,11 +764,11 @@ export default function PurchasesPage() {
                 </div>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b">
-                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Item Entry Details</CardTitle>
-                        <div className="flex gap-2 items-center">
+                    <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b gap-2">
+                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight shrink-0">Item Entry Details</CardTitle>
+                        <div className="flex gap-2 items-center ml-auto">
                             <AddProductDialog onProductAdded={fetchData} />
-                            <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs">
+                            <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs whitespace-nowrap">
                                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Item
                             </Button>
                         </div>
