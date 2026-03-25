@@ -10,7 +10,7 @@ export function usePWARegistration() {
 
         const register = async () => {
             try {
-                await navigator.serviceWorker.register("/sw.js");
+                await navigator.serviceWorker.register("/sw.js", { scope: "/" });
             } catch (error) {
                 console.error("Failed to register service worker:", error);
             }
