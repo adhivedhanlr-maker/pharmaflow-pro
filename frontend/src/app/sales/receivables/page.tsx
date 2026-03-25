@@ -41,10 +41,17 @@ interface SaleItem {
     gstAmount: number;
     product: {
         name: string;
+        company?: string;
+        packing?: string;
+        hsnCode?: string;
         gstRate: number;
     };
     batch?: {
         batchNumber: string;
+        mrp?: number;
+        ptr?: number;
+        pts?: number;
+        expiryDate?: string;
     };
 }
 
@@ -107,12 +114,29 @@ export default function ReceivablesPage() {
 
     const fetchBusinessProfile = async () => {
         try {
-            const response = await fetch(`${API_BASE}/business-profile`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const text = await response.text();
-                if (text) setBusinessProfile(JSON.parse(text));
+            const [profileResponse, brandingResponse] = await Promise.all([
+                fetch(`${API_BASE}/business-profile`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`),
+            ]);
+            const profileText = profileResponse.ok ? await profileResponse.text() : "";
+            const profile = profileText ? JSON.parse(profileText) : null;
+            const branding = brandingResponse.ok ? await brandingResponse.json() : null;
+            if (profile || branding) {
+                setBusinessProfile({
+                    companyName: profile?.companyName || branding?.companyName || "",
+                    address: profile?.address || "",
+                    email: profile?.email || "",
+                    phone: profile?.phone || "",
+                    logoUrl: profile?.logoUrl || branding?.logoUrl || "",
+                    gstin: profile?.gstin || "",
+                    panNo: profile?.panNo || "",
+                    dlNo: profile?.dlNo || "",
+                    fssaiNo: profile?.fssaiNo || "",
+                    bankName: profile?.bankName || "",
+                    bankBranch: profile?.bankBranch || "",
+                    bankAccountNo: profile?.bankAccountNo || "",
+                    bankIfsc: profile?.bankIfsc || "",
+                });
             }
         } catch (error) {
             console.error("Failed to fetch business profile:", error);
@@ -256,7 +280,13 @@ export default function ReceivablesPage() {
                             items={selectedInvoice.items.map(item => ({
                                 id: item.id,
                                 name: item.product.name,
+                                company: item.product.company,
+                                packing: item.product.packing,
+                                hsnCode: item.product.hsnCode,
                                 batchNumber: item.batch?.batchNumber || "N/A",
+                                expiryDate: item.batch?.expiryDate,
+                                mrp: item.batch?.mrp,
+                                ptr: item.batch?.ptr,
                                 quantity: item.quantity,
                                 unitPrice: item.unitPrice,
                                 gstRate: item.product.gstRate,
