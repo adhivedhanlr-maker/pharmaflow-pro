@@ -533,8 +533,8 @@ function BillingContent() {
                                                     <TableHead>Batch</TableHead>
                                                     <TableHead className="text-right w-20">Qty</TableHead>
                                                     <TableHead className="text-right w-16">Free</TableHead>
+                                                    <TableHead className="text-right">MRP</TableHead>
                                                     <TableHead className="text-right text-emerald-700">{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}</TableHead>
-                                                    <TableHead className="text-right">Price</TableHead>
                                                     <TableHead className="text-right">GST</TableHead>
                                                     <TableHead className="text-right">Total</TableHead>
                                                     <TableHead className="w-10"></TableHead>
@@ -561,8 +561,8 @@ function BillingContent() {
                                                         </TableCell>
                                                         <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
                                                         <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
-                                                        <TableCell className="text-right font-mono text-sm text-emerald-600">{customerType === "DISTRIBUTOR" ? `₹${(item.pts || 0).toFixed(2)}` : `₹${(item.ptr || 0).toFixed(2)}`}</TableCell>
-                                                        <TableCell className="text-right font-mono text-sm">₹{item.unitPrice.toFixed(2)}</TableCell>
+                                                        <TableCell className="text-right font-mono text-sm text-slate-500">₹{(item.mrp || 0).toFixed(2)}</TableCell>
+                                                        <TableCell className="text-right font-mono text-sm text-emerald-600">₹{item.unitPrice.toFixed(2)}</TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
                                                         <TableCell className="text-right font-bold font-mono">₹{(item.total + item.gstAmount).toFixed(2)}</TableCell>
                                                         <TableCell>
@@ -617,10 +617,9 @@ function BillingContent() {
                                                             </div>
                                                         </div>
                                                         <p className="text-xs text-slate-400">
-                                                            ₹{item.unitPrice.toFixed(2)} × {item.quantity} + GST {item.gstRate}%
-                                                            <span className="ml-2 text-emerald-600 font-medium">
-                                                                {customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}: ₹{(customerType === "DISTRIBUTOR" ? (item.pts || 0) : (item.ptr || 0)).toFixed(2)}
-                                                            </span>
+                                                            <span className="text-emerald-600 font-medium">{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}: ₹{item.unitPrice.toFixed(2)}</span>
+                                                            <span className="ml-2">MRP: ₹{(item.mrp || 0).toFixed(2)}</span>
+                                                            <span className="ml-2">GST: {item.gstRate}%</span>
                                                         </p>
                                                     </div>
                                                 ))}
