@@ -35,6 +35,7 @@ export default function TrackingPage() {
 
     useEffect(() => {
         // Fix Leaflet marker icon issue in Next.js
+        // @ts-ignore
         const L = require("leaflet");
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({

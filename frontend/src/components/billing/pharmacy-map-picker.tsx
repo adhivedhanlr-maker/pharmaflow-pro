@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
 // Helper to fix Leaflet icon issue in Next.js
+// @ts-ignore
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
