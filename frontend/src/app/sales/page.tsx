@@ -136,6 +136,7 @@ export default function SalesHistoryPage() {
                     bankBranch: profile?.bankBranch || "",
                     bankAccountNo: profile?.bankAccountNo || "",
                     bankIfsc: profile?.bankIfsc || "",
+                    showLogo: profile?.showLogo ?? true,
                 });
             }
         } catch (error) {

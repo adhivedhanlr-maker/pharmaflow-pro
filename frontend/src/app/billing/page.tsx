@@ -168,6 +168,7 @@ function BillingContent() {
                 bankBranch: profile?.bankBranch || "",
                 bankAccountNo: profile?.bankAccountNo || "",
                 bankIfsc: profile?.bankIfsc || "",
+                showLogo: profile?.showLogo ?? true,
             });
         } catch (error) {
             console.error("Failed to fetch business profile:", error);

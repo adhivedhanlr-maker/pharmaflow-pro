@@ -25,23 +25,24 @@ export class PurchasesService {
                     product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
                     if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
-                    // Update existing product composition and packing if provided
-                    if (item.composition || item.packing) {
+                    // Update existing product composition, packing and hsnCode if provided
+                    if (item.composition || item.packing || item.hsnCode) {
                         product = await tx.product.update({
                             where: { id: product.id },
                             data: {
                                 composition: item.composition || product.composition,
                                 packing: item.packing || product.packing,
+                                hsnCode: item.hsnCode || product.hsnCode,
                             }
                         });
                     }
                 } else if (item.name) {
                     // Search by name
-                    product = await tx.product.findFirst({ 
-                        where: { 
+                    product = await tx.product.findFirst({
+                        where: {
                             name: { equals: item.name, mode: 'insensitive' },
-                            ...(tenantId ? { tenantId } : {}) 
-                        } 
+                            ...(tenantId ? { tenantId } : {})
+                        }
                     });
 
                     // If still not found, create it
@@ -51,8 +52,9 @@ export class PurchasesService {
                                 tenantId,
                                 name: item.name,
                                 composition: item.composition || "",
+                                hsnCode: item.hsnCode || "",
                                 packing: item.packing || "",
-                                gstRate: item.gstPercent || 12, // Default to 12% if unknown
+                                gstRate: item.gstPercent || 12,
                                 company: "General",
                                 mrp: item.salePrice || 0,
                             }
@@ -78,6 +80,7 @@ export class PurchasesService {
                         data: {
                             currentStock: { increment: item.quantity },
                             purchasePrice: item.purchasePrice,
+                            mrp: item.salePrice,
                             salePrice: item.salePrice,
                             ptr: item.ptr,
                             pts: item.pts,
@@ -95,6 +98,7 @@ export class PurchasesService {
                             expiryDate: new Date(item.expiryDate),
                             currentStock: item.quantity,
                             purchasePrice: item.purchasePrice,
+                            mrp: item.salePrice,
                             salePrice: item.salePrice,
                             ptr: item.ptr,
                             pts: item.pts,
@@ -204,17 +208,17 @@ export class PurchasesService {
                 if (item.productId) {
                     product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
                     if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
-                    if (item.composition || item.packing) {
+                    if (item.composition || item.packing || item.hsnCode) {
                         product = await tx.product.update({
                             where: { id: product.id },
-                            data: { composition: item.composition || product.composition, packing: item.packing || product.packing },
+                            data: { composition: item.composition || product.composition, hsnCode: item.hsnCode || product.hsnCode, packing: item.packing || product.packing },
                         });
                     }
                 } else if (item.name) {
                     product = await tx.product.findFirst({ where: { name: { equals: item.name, mode: 'insensitive' }, ...(tenantId ? { tenantId } : {}) } });
                     if (!product) {
                         product = await tx.product.create({
-                            data: { tenantId, name: item.name, composition: item.composition || '', packing: item.packing || '', gstRate: item.gstPercent || 12, company: 'General', mrp: item.salePrice || 0 },
+                            data: { tenantId, name: item.name, composition: item.composition || '', hsnCode: item.hsnCode || '', packing: item.packing || '', gstRate: item.gstPercent || 12, company: 'General', mrp: item.salePrice || 0 },
                         });
                     }
                 } else {
@@ -223,9 +227,9 @@ export class PurchasesService {
 
                 let batch = await tx.batch.findFirst({ where: { productId: product.id, batchNumber: item.batchNumber, ...(tenantId ? { tenantId } : {}) } });
                 if (batch) {
-                    batch = await tx.batch.update({ where: { id: batch.id }, data: { currentStock: { increment: item.quantity }, purchasePrice: item.purchasePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr, expiryDate: new Date(item.expiryDate) } });
+                    batch = await tx.batch.update({ where: { id: batch.id }, data: { currentStock: { increment: item.quantity }, purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr, expiryDate: new Date(item.expiryDate) } });
                 } else {
-                    batch = await tx.batch.create({ data: { tenantId, productId: product.id, batchNumber: item.batchNumber, expiryDate: new Date(item.expiryDate), currentStock: item.quantity, purchasePrice: item.purchasePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr } });
+                    batch = await tx.batch.create({ data: { tenantId, productId: product.id, batchNumber: item.batchNumber, expiryDate: new Date(item.expiryDate), currentStock: item.quantity, purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr } });
                 }
 
                 const freeQty = item.freeQty || 0;

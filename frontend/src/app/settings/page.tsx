@@ -50,6 +50,7 @@ export default function SettingsPage() {
         bankBranch: "",
         bankAccountNo: "",
         bankIfsc: "",
+        showLogo: true,
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
@@ -93,6 +94,7 @@ export default function SettingsPage() {
                 bankBranch: profileData?.bankBranch || "",
                 bankAccountNo: profileData?.bankAccountNo || "",
                 bankIfsc: profileData?.bankIfsc || "",
+                showLogo: profileData?.showLogo ?? true,
             });
 
             if (logoUrl) {
@@ -157,6 +159,7 @@ export default function SettingsPage() {
                     bankBranch: formData.bankBranch,
                     bankAccountNo: formData.bankAccountNo,
                     bankIfsc: formData.bankIfsc,
+                    showLogo: formData.showLogo,
                 })
             });
 
@@ -259,6 +262,15 @@ export default function SettingsPage() {
                                     <p className="text-[10px] text-slate-400 mt-2 text-center w-40">
                                         {logoHint}
                                     </p>
+                                    <label className="flex items-center gap-2 mt-3 cursor-pointer w-40">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.showLogo}
+                                            onChange={(e) => setFormData({ ...formData, showLogo: e.target.checked })}
+                                            className="h-4 w-4 rounded border-slate-300"
+                                        />
+                                        <span className="text-xs text-slate-600 font-medium">Show on invoice</span>
+                                    </label>
                                 </div>
 
                                 {/* Form Fields */}

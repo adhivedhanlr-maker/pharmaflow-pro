@@ -52,6 +52,7 @@ interface PurchaseItem {
     productId: string;
     name: string;
     composition: string;
+    hsnCode: string;
     packing: string;
     batchNumber: string;
     expiryDate: string; // YYYY-MM-DD
@@ -69,6 +70,7 @@ interface Product {
     id: string;
     name: string;
     composition?: string;
+    hsnCode?: string;
     packing?: string;
     gstRate: number;
 }
@@ -295,6 +297,7 @@ export default function PurchasesPage() {
             productId: item.product?.id || "",
             name: item.product?.name || "",
             composition: item.product?.composition || "",
+            hsnCode: (item.product as any)?.hsnCode || "",
             packing: item.product?.packing || "",
             batchNumber: item.batch?.batchNumber || "",
             expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
@@ -326,6 +329,7 @@ export default function PurchasesPage() {
             productId: "",
             name: "",
             composition: "",
+            hsnCode: "",
             packing: "",
             batchNumber: "",
             expiryDate: "",
@@ -354,9 +358,8 @@ export default function PurchasesPage() {
                     if (product) {
                         updated.name = product.name;
                         updated.composition = product.composition || "";
+                        updated.hsnCode = product.hsnCode || "";
                         updated.packing = product.packing || "";
-                        // If it's a newly added product, we might want to keep the invoice price/batch
-                        // unless specifically updated.
                     }
                 }
                 return updated;
@@ -414,6 +417,7 @@ export default function PurchasesPage() {
                         productId: item.productId || undefined,
                         name: item.name,
                         composition: item.composition,
+                        hsnCode: item.hsnCode,
                         packing: item.packing,
                         batchNumber: item.batchNumber,
                         expiryDate: new Date(item.expiryDate).toISOString(),
@@ -533,6 +537,7 @@ export default function PurchasesPage() {
                     productId: product?.id || "",
                     name: item.name || "",
                     composition: item.composition || "",
+                    hsnCode: item.hsn || "",
                     packing: item.pack || "",
                     batchNumber: item.batch || "",
                     expiryDate: item.expiry || "",
@@ -861,6 +866,7 @@ export default function PurchasesPage() {
                                     <TableHead className="w-12 text-center text-[10px] font-bold uppercase">S NO</TableHead>
                                     <TableHead className="w-[180px] text-[10px] font-bold uppercase">BRAND NAME</TableHead>
                                     <TableHead className="w-[180px] text-[10px] font-bold uppercase">COMPO</TableHead>
+                                    <TableHead className="w-[80px] text-[10px] font-bold uppercase">HSN</TableHead>
                                     <TableHead className="w-[100px] text-[10px] font-bold uppercase">PACKING</TableHead>
                                     <TableHead className="w-[100px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
                                     <TableHead className="w-[120px] text-[10px] font-bold uppercase">EXPIRY</TableHead>
@@ -878,7 +884,7 @@ export default function PurchasesPage() {
                             <TableBody>
                                 {items.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={15} className="text-center py-12 text-muted-foreground italic text-sm">
+                                        <TableCell colSpan={16} className="text-center py-12 text-muted-foreground italic text-sm">
                                             Click 'Add Item' to start recording purchase entry.
                                         </TableCell>
                                     </TableRow>
@@ -919,6 +925,14 @@ export default function PurchasesPage() {
                                                 value={item.composition}
                                                 placeholder="Composition"
                                                 onChange={(e) => updateItem(item.id, 'composition', e.target.value)}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                className="h-8 text-[11px] bg-slate-50 font-mono"
+                                                value={item.hsnCode}
+                                                placeholder="HSN"
+                                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                                             />
                                         </TableCell>
                                         <TableCell>

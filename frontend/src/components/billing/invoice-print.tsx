@@ -39,6 +39,7 @@ interface InvoicePrintProps {
         email?: string;
         phone?: string;
         logoUrl?: string;
+        showLogo?: boolean;
         gstin?: string;
         panNo?: string;
         dlNo?: string;
@@ -139,7 +140,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     {/* ── HEADER: Logo + Company ── */}
                     <div style={{ textAlign: "center", borderBottom: "1.5px solid #888", padding: "10px 12px 8px" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
-                            {logoUrl && (
+                            {logoUrl && businessProfile?.showLogo !== false && (
                                 <img src={logoUrl} alt="logo"
                                     style={{ height: "64px", width: "64px", objectFit: "contain" }}
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />

@@ -202,7 +202,7 @@ export class SalesService {
             },
             include: {
                 customer: true,
-                items: { include: { product: true } }
+                items: { include: { product: true, batch: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -456,12 +456,12 @@ export class SalesService {
                 await tx.deliveryProof.delete({ where: { saleId: sale.id } });
             }
 
-            // 3. Restore stock for each sold item
+            // 3. Restore stock for each sold item (billed qty + free qty)
             for (const item of sale.items) {
                 if (item.batchId) {
                     await tx.batch.update({
                         where: { id: item.batchId },
-                        data: { currentStock: { increment: item.quantity } },
+                        data: { currentStock: { increment: item.quantity + (item.freeQuantity || 0) } },
                     });
                 }
             }
