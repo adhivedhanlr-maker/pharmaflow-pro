@@ -618,7 +618,7 @@ function BillingContent() {
                                                         <p className="text-xs text-slate-400">
                                                             ₹{item.unitPrice.toFixed(2)} × {item.quantity} + GST {item.gstRate}%
                                                             <span className="ml-2 text-emerald-600 font-medium">
-                                                                {customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}: ₹{(customerType === "DISTRIBUTOR" ? item.pts : item.ptr || 0).toFixed(2)}
+                                                                {customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}: ₹{(customerType === "DISTRIBUTOR" ? (item.pts || 0) : (item.ptr || 0)).toFixed(2)}
                                                             </span>
                                                         </p>
                                                     </div>
