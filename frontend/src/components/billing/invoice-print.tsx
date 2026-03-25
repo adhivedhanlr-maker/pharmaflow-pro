@@ -69,6 +69,7 @@ interface InvoicePrintProps {
         quantity: number;
         freeQuantity?: number;
         mrp?: number;
+        ptr?: number;
         unitPrice: number;
         discountPct?: number;
         gstRate: number;
@@ -250,7 +251,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                             <td style={{ ...tdStyle, textAlign: "center" as const, fontWeight: "bold" }}>{item.quantity}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.freeQuantity || 0}</td>
                                             <td style={{ ...tdStyle, textAlign: "right" as const }}>{(item.mrp || 0).toFixed(2)}</td>
-                                            <td style={{ ...tdStyle, textAlign: "right" as const, fontWeight: "bold" }}>{item.unitPrice.toFixed(2)}</td>
+                                            <td style={{ ...tdStyle, textAlign: "right" as const, fontWeight: "bold" }}>{(item.ptr ?? item.unitPrice).toFixed(2)}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{(item.discountPct || 0).toFixed(2)}</td>
                                             <td style={{ ...tdStyle, textAlign: "center" as const }}>{item.gstRate}</td>
                                             <td style={{ ...tdStyle, textAlign: "right" as const }}>{taxable.toFixed(2)}</td>
@@ -359,6 +360,21 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             <div style={{ marginTop: "4px", fontSize: "9px", color: "#888" }}>E.&amp;O.E.</div>
                         </div>
                     </div>
+                </div>
+
+                {/* ── DECLARATION + TERMS ── */}
+                <div style={{ border: "2px solid #000", marginBottom: "4px", padding: "6px 12px", fontSize: "9px" }}>
+                    <div style={{ marginBottom: "4px" }}>
+                        <b>Declaration :</b> I/We hereby declare that this invoice shows the actual price of the goods described and that all particulars are true and correct to the best of our knowledge and belief. Subject to <b>Kasargod</b> Jurisdiction.
+                    </div>
+                    <div style={{ fontWeight: "bold", marginBottom: "3px" }}>Terms &amp; Conditions :</div>
+                    <ol style={{ margin: "0", paddingLeft: "16px", lineHeight: "1.6" }}>
+                        <li>Goods once sold will not be taken back or exchanged unless there is a quality issue or wrong supply.</li>
+                        <li>Claims, if any, must be made within <b>24 hours</b> of receipt of goods. No claims will be entertained thereafter.</li>
+                        <li>Interest at <b>18% per annum</b> will be charged on all overdue payments.</li>
+                        <li>All disputes are subject to <b>Kasargod</b> jurisdiction only.</li>
+                        <li>This invoice is computer-generated and is valid without signature unless otherwise stated.</li>
+                    </ol>
                 </div>
 
                 {/* Powered by */}

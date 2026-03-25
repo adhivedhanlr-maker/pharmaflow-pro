@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { printInvoiceNewWindow } from "@/lib/print-invoice";
 import { format } from "date-fns";
 import {
     Search,
@@ -87,11 +87,6 @@ export default function SalesHistoryPage() {
 
     const printRef = useRef<HTMLDivElement>(null);
 
-    const handlePrintRequest = useReactToPrint({
-        contentRef: printRef,
-        onAfterPrint: () => setSelectedInvoice(null), // Clear selection after print
-    });
-
     useEffect(() => {
         if (token) {
             fetchSales();
@@ -171,10 +166,12 @@ export default function SalesHistoryPage() {
 
     const handlePrint = (sale: Sale) => {
         setSelectedInvoice(sale);
-        // Small timeout to allow state to update and render the hidden component before printing
         setTimeout(() => {
-            handlePrintRequest();
-        }, 100);
+            if (printRef.current) {
+                printInvoiceNewWindow(printRef.current, sale.invoiceNumber);
+            }
+            setSelectedInvoice(null);
+        }, 200);
     };
 
     const filteredSales = sales.filter(s =>
@@ -322,11 +319,12 @@ export default function SalesHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {/* Hidden Print Container */}
-                <div style={{ display: "none" }}>
+                {/* Off-screen invoice container */}
+                <div style={{ position: "fixed", left: "-9999px", top: 0, width: "210mm", pointerEvents: "none", zIndex: -1 }}>
                     {selectedInvoice && (
                         <InvoicePrint
                             ref={printRef}
+                            preview={true}
                             invoiceNumber={selectedInvoice.invoiceNumber}
                             date={new Date(selectedInvoice.createdAt)}
                             businessProfile={businessProfile}

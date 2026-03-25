@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
+import { printInvoiceNewWindow } from "@/lib/print-invoice";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,7 @@ function BillingContent() {
     const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [customerType, setCustomerType] = useState<"PHARMACY" | "DISTRIBUTOR">("PHARMACY");
     const [extraDiscount, setExtraDiscount] = useState(0);
+    const printRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -396,7 +398,9 @@ function BillingContent() {
             alert("Please select a customer and add items before printing.");
             return;
         }
-        window.print();
+        if (printRef.current) {
+            printInvoiceNewWindow(printRef.current, "DRAFT");
+        }
     };
 
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -562,8 +566,8 @@ function BillingContent() {
                                                                 {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber} ({b.currentStock})</option>)}
                                                             </select>
                                                         </TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} /></TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-slate-500">₹{(item.mrp || 0).toFixed(2)}</TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-emerald-600">₹{item.unitPrice.toFixed(2)}</TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
@@ -608,11 +612,11 @@ function BillingContent() {
                                                         <div className="grid grid-cols-3 gap-2 text-xs">
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Qty</p>
-                                                                <Input type="number" min={0} className="h-8 text-right text-sm font-semibold" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} />
+                                                                <Input type="number" min={0} className="h-8 text-right text-sm font-semibold" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} />
                                                             </div>
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Free</p>
-                                                                <Input type="number" min={0} className="h-8 text-right text-sm text-green-700 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} />
+                                                                <Input type="number" min={0} className="h-8 text-right text-sm text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} />
                                                             </div>
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Total</p>
@@ -654,7 +658,7 @@ function BillingContent() {
                                             <span className="text-slate-500">Extra Discount</span>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">₹</span>
-                                                <Input type="number" min={0} className="h-7 w-20 text-right pl-5 pr-2 text-sm" value={extraDiscount} onChange={(e) => setExtraDiscount(Math.max(0, parseFloat(e.target.value) || 0))} />
+                                                <Input type="number" min={0} className="h-7 w-20 text-right pl-5 pr-2 text-sm" value={extraDiscount} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseFloat(e.target.value)); setExtraDiscount(isNaN(v) ? 0 : v); }} />
                                             </div>
                                         </div>
                                         {totals.discount > 0 && (
@@ -722,8 +726,9 @@ function BillingContent() {
                                                         type="number"
                                                         min={0}
                                                         className="h-8 w-24 bg-slate-50 border-slate-200 text-right pr-2 pl-6 text-sm font-bold focus:bg-white transition-all rounded-md"
-                                                        value={extraDiscount}
-                                                        onChange={(e) => setExtraDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                                                        value={extraDiscount === 0 ? "" : extraDiscount}
+                                                        placeholder="0"
+                                                        onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseFloat(e.target.value)); setExtraDiscount(isNaN(v) ? 0 : v); }}
                                                     />
                                                 </div>
                                             </div>
@@ -792,7 +797,10 @@ function BillingContent() {
                     </div>
                 </div>
             )}
+            <div style={{ position: "fixed", left: "-9999px", top: 0, width: "210mm", pointerEvents: "none", zIndex: -1 }}>
             <InvoicePrint
+                ref={printRef}
+                preview={true}
                 invoiceNumber="DRAFT-001"
                 date={new Date()}
                 businessProfile={businessProfile}
@@ -810,6 +818,7 @@ function BillingContent() {
                     quantity: item.quantity,
                     freeQuantity: item.freeQuantity || 0,
                     mrp: item.mrp || 0,
+                    ptr: customerType === "DISTRIBUTOR" ? (item.pts || item.unitPrice) : (item.ptr || item.unitPrice),
                     unitPrice: item.unitPrice,
                     discountPct: item.discountPct || 0,
                     gstRate: item.gstRate,
@@ -818,6 +827,7 @@ function BillingContent() {
                 }))}
                 totals={totals}
             />
+            </div>
             <BarcodeScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleBarcodeScan} />
         </RoleGate>
     );

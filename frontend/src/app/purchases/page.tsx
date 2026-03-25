@@ -828,8 +828,9 @@ export default function PurchasesPage() {
                                     <input 
                                         type="number" 
                                         className="w-8 bg-transparent border-none p-0 text-[10px] font-bold text-slate-600 focus:ring-0 text-center"
-                                        value={gstPercent}
-                                        onChange={(e) => setGstPercent(parseFloat(e.target.value) || 0)}
+                                        value={gstPercent === 0 ? "" : gstPercent}
+                                        placeholder="0"
+                                        onChange={(e) => { const v = e.target.value === "" ? 0 : parseFloat(e.target.value); setGstPercent(isNaN(v) ? 0 : v); }}
                                     />
                                     <span className="text-[10px] font-bold text-slate-400">%</span>
                                 </div>
