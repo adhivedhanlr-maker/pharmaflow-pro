@@ -2,8 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('auth_token')?.value || ''
     const { pathname } = request.nextUrl
+
+    // Allow public PWA assets without auth
+    if (
+        pathname === '/sw.js' ||
+        pathname.startsWith('/icon-') ||
+        pathname.startsWith('/screenshot-')
+    ) {
+        return NextResponse.next()
+    }
+
+    const token = request.cookies.get('auth_token')?.value || ''
 
     // Protected routes start with these prefixes
     const protectedRoutes = ['/', '/billing', '/stock', '/purchases', '/reports', '/parties', '/returns', '/settings']
