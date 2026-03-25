@@ -1,8 +1,11 @@
-const CACHE_NAME = 'pharmaflow-v1';
+const CACHE_NAME = 'pharmaflow-v2';
 const urlsToCache = [
     '/',
     '/login',
     '/manifest.json',
+];
+
+const BACKGROUND_CACHE = [
     '/logo.png',
     '/icon-192x192.png',
     '/icon-512x512.png',
@@ -10,9 +13,15 @@ const urlsToCache = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then((cache) => {
+            // First cache the critical path
+            return cache.addAll(urlsToCache).then(() => {
+                // Then fire and forget the background assets
+                cache.addAll(BACKGROUND_CACHE).catch(err => console.log('Background cache failed', err));
+                return self.skipWaiting();
+            });
+        })
     );
-    self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
