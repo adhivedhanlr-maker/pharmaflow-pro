@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const BILLING_DRAFT_STORAGE_KEY = "billing_draft_v1";
 
 export default function BillingPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-40"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>}>
+            <BillingContent />
+        </Suspense>
+    );
+}
+
+function BillingContent() {
     const { token, user } = useAuth();
     const canAccess = useMemo(() => {
         if (!user) return false;
@@ -408,23 +416,27 @@ export default function BillingPage() {
                     <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
                 </div>
             ) : (
-                <div className="space-y-6 no-print">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-4 no-print">
+                    {/* Header — stacks on mobile */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Generate Invoice</h1>
-                            <p className="text-muted-foreground">Create a new sales invoice for a customer.</p>
+                            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Generate Invoice</h1>
+                            <p className="text-muted-foreground text-sm hidden sm:block">Create a new sales invoice for a customer.</p>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Proforma</Button>
-                            <Button onClick={handleSave} disabled={isSaving}>
-                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Invoice (F12)
+                            <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1 sm:flex-none">
+                                <Printer className="h-4 w-4 sm:mr-2" />
+                                <span className="sm:inline">Print Proforma</span>
+                            </Button>
+                            <Button size="sm" onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none">
+                                {isSaving ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" /> : <Save className="h-4 w-4 sm:mr-2" />}
+                                <span className="sm:inline">Save Invoice (F12)</span>
                             </Button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pb-20 md:pb-0">
-                        <div className="lg:col-span-3 space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pb-24 md:pb-0">
+                        <div className="lg:col-span-3 space-y-4">
                             <Card>
                                 <CardHeader className="pb-3">
                                     <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Customer Details</CardTitle>
@@ -451,82 +463,90 @@ export default function BillingPage() {
                             </Card>
 
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                                    <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Invoice Items</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button size="sm" id="add-item-trigger"><Plus className="mr-2 h-4 w-4" /> Add Item (F2)</Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="p-0" side="bottom" align="end">
-                                                <Command>
-                                                    <CommandInput placeholder="Search product..." value={productSearch} onValueChange={setProductSearch} />
-                                                    <CommandList>
-                                                        {loadingProducts ? (
-                                                            <div className="py-6 text-center text-sm"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>
-                                                        ) : products.length === 0 ? (
-                                                            <CommandEmpty>Type to search products...</CommandEmpty>
-                                                        ) : (
-                                                            <CommandGroup>
-                                                                {products.map((p) => (
-                                                                    <CommandItem key={p.id} onSelect={() => addItem(p)} className="flex justify-between">
-                                                                        <span>{p.name}</span>
-                                                                        <span className="text-xs text-muted-foreground">GST: {p.gstRate}%</span>
-                                                                    </CommandItem>
-                                                                ))}
-                                                            </CommandGroup>
-                                                        )}
-                                                    </CommandList>
-                                                </Command>
-                                            </PopoverContent>
-                                        </Popover>
-                                        <Button size="sm" variant="outline" onClick={() => setScannerOpen(true)}>
-                                            <Camera className="mr-2 h-4 w-4" /> Scan Barcode
-                                        </Button>
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Invoice Items</CardTitle>
+                                        <div className="flex gap-2">
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button size="sm" id="add-item-trigger">
+                                                        <Plus className="h-4 w-4 sm:mr-2" />
+                                                        <span className="hidden sm:inline">Add Item (F2)</span>
+                                                        <span className="sm:hidden">Add</span>
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="p-0 w-72" side="bottom" align="end">
+                                                    <Command>
+                                                        <CommandInput placeholder="Search product..." value={productSearch} onValueChange={setProductSearch} />
+                                                        <CommandList>
+                                                            {loadingProducts ? (
+                                                                <div className="py-6 text-center text-sm"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>
+                                                            ) : products.length === 0 ? (
+                                                                <CommandEmpty>Type to search products...</CommandEmpty>
+                                                            ) : (
+                                                                <CommandGroup>
+                                                                    {products.map((p) => (
+                                                                        <CommandItem key={p.id} onSelect={() => addItem(p)} className="flex justify-between">
+                                                                            <span>{p.name}</span>
+                                                                            <span className="text-xs text-muted-foreground">GST: {p.gstRate}%</span>
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            )}
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                            <Button size="sm" variant="outline" onClick={() => setScannerOpen(true)}>
+                                                <Camera className="h-4 w-4 sm:mr-2" />
+                                                <span className="hidden sm:inline">Scan Barcode</span>
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
+                                    {/* Desktop table */}
                                     <div className="hidden md:block">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="bg-slate-50/50">
-                                                    <TableHead className="w-[50px]">Sr.</TableHead>
-                                                    <TableHead className="w-[300px]">Product Name</TableHead>
+                                                    <TableHead className="w-[40px]">Sr.</TableHead>
+                                                    <TableHead>Product</TableHead>
                                                     <TableHead>Batch</TableHead>
-                                                    <TableHead className="text-right">Qty</TableHead>
-                                                    <TableHead className="text-right">Free</TableHead>
+                                                    <TableHead className="text-right w-20">Qty</TableHead>
+                                                    <TableHead className="text-right w-16">Free</TableHead>
                                                     <TableHead className="text-right">Price</TableHead>
-                                                    <TableHead className="text-right">GST %</TableHead>
+                                                    <TableHead className="text-right">GST</TableHead>
                                                     <TableHead className="text-right">Total</TableHead>
-                                                    <TableHead className="w-[50px]"></TableHead>
+                                                    <TableHead className="w-10"></TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {items.length === 0 ? (
                                                     <TableRow>
-                                                        <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">
+                                                        <TableCell colSpan={9} className="text-center py-16 text-muted-foreground">
                                                             <div className="flex flex-col items-center gap-2">
                                                                 <ShoppingCart className="h-8 w-8 opacity-20" />
-                                                                <p>No items added yet. Search products to add.</p>
+                                                                <p>No items added yet.</p>
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ) : items.map((item, index) => (
-                                                    <TableRow key={item.id} className="hover:bg-slate-50/30">
-                                                        <TableCell className="text-slate-500 font-medium">{index + 1}</TableCell>
-                                                        <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
+                                                    <TableRow key={item.id}>
+                                                        <TableCell className="text-slate-500">{index + 1}</TableCell>
+                                                        <TableCell className="font-medium">{item.name}</TableCell>
                                                         <TableCell>
-                                                            <select className="text-xs font-semibold bg-slate-100 rounded px-2 py-1 border-none" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
-                                                                {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>)}
+                                                            <select className="text-xs bg-slate-100 rounded px-2 py-1" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
+                                                                {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber} ({b.currentStock})</option>)}
                                                             </select>
                                                         </TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-20 ml-auto text-right font-semibold" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right font-semibold text-green-600 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
-                                                        <TableCell className="text-right font-mono text-slate-600">Rs {item.unitPrice.toFixed(2)}</TableCell>
-                                                        <TableCell className="text-right p-4 font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
-                                                        <TableCell className="text-right font-black font-mono text-slate-900">Rs {(item.total + item.gstAmount).toFixed(2)}</TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} /></TableCell>
+                                                        <TableCell className="text-right font-mono text-sm">₹{item.unitPrice.toFixed(2)}</TableCell>
+                                                        <TableCell className="text-right font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
+                                                        <TableCell className="text-right font-bold font-mono">₹{(item.total + item.gstAmount).toFixed(2)}</TableCell>
                                                         <TableCell>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => removeItem(item.id)}>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeItem(item.id)}>
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </TableCell>
@@ -535,12 +555,108 @@ export default function BillingPage() {
                                             </TableBody>
                                         </Table>
                                     </div>
+
+                                    {/* Mobile item cards */}
+                                    <div className="md:hidden">
+                                        {items.length === 0 ? (
+                                            <div className="flex flex-col items-center gap-2 py-12 text-slate-400">
+                                                <ShoppingCart className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm">No items yet. Tap Add to start.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y">
+                                                {items.map((item, index) => (
+                                                    <div key={item.id} className="p-3 space-y-2">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-semibold text-sm text-slate-900 truncate">{index + 1}. {item.name}</p>
+                                                                <div className="mt-1">
+                                                                    <select className="text-xs bg-slate-100 rounded px-2 py-1 w-full" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
+                                                                        {products.find(p => p.id === item.productId)?.batches.map(b => (
+                                                                            <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive flex-shrink-0" onClick={() => removeItem(item.id)}>
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                                            <div>
+                                                                <p className="text-slate-500 mb-1">Qty</p>
+                                                                <Input type="number" min={0} className="h-8 text-right text-sm font-semibold" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Math.max(0, parseInt(e.target.value) || 0))} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-500 mb-1">Free</p>
+                                                                <Input type="number" min={0} className="h-8 text-right text-sm text-green-700 bg-green-50" placeholder="0" value={item.freeQuantity} onChange={(e) => updateItem(item.id, "freeQuantity", Math.max(0, parseInt(e.target.value) || 0))} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-500 mb-1">Total</p>
+                                                                <p className="h-8 flex items-center justify-end font-bold font-mono text-sm text-slate-900">₹{(item.total + item.gstAmount).toFixed(2)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs text-slate-400">₹{item.unitPrice.toFixed(2)} × {item.quantity} + GST {item.gstRate}%</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Bill Summary — visible on mobile, hidden on desktop (shown in sidebar) */}
+                            <Card className="md:hidden border shadow-sm rounded-xl overflow-hidden">
+                                <CardHeader className="border-b py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingCart className="h-4 w-4 text-slate-400" />
+                                        <CardTitle className="text-sm font-bold text-slate-800">Bill Summary</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-4">
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">Subtotal</span>
+                                            <span className="font-semibold font-mono">₹{totals.subtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">GST</span>
+                                            <span className="font-semibold text-emerald-600 font-mono">+₹{totals.gst.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-500">Extra Discount</span>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">₹</span>
+                                                <Input type="number" min={0} className="h-7 w-20 text-right pl-5 pr-2 text-sm" value={extraDiscount} onChange={(e) => setExtraDiscount(Math.max(0, parseFloat(e.target.value) || 0))} />
+                                            </div>
+                                        </div>
+                                        {totals.discount > 0 && (
+                                            <div className="flex justify-between text-rose-500">
+                                                <span>Total Savings</span>
+                                                <span className="font-bold font-mono">-₹{totals.discount.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Mode</p>
+                                        <div className="grid grid-cols-4 gap-1.5">
+                                            {["CASH", "UPI", "CARD", "CREDIT"].map(mode => (
+                                                <Button key={mode} variant={paymentMethod === mode ? "default" : "outline"} size="sm" className={cn("h-8 text-[11px] font-bold", paymentMethod === mode ? "bg-blue-600 text-white" : "text-slate-600")} onClick={() => setPaymentMethod(mode)}>
+                                                    {mode}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-50 rounded-lg p-3 text-center border">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Net Amount</p>
+                                        <p className="text-2xl font-black text-slate-900 font-mono">₹{totals.net.toFixed(2)}</p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
 
                         <div className="space-y-6">
-                            {/* Premium Redesigned Bill Summary Card */}
+                            {/* Desktop Bill Summary */}
                             <Card className="bg-white border shadow-sm rounded-xl overflow-hidden hidden md:block">
                                 <CardHeader className="border-b py-3 px-5">
                                     <div className="flex items-center gap-2">
