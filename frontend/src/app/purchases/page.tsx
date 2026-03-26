@@ -757,9 +757,6 @@ export default function PurchasesPage() {
                             {isUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
                             Upload Invoice
                         </Button>
-                        {!editingPurchaseId && (
-                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none"><FileDown className="mr-1.5 h-4 w-4" /> Import CSV</Button>
-                        )}
                         {editingPurchaseId && (
                             <Button variant="outline" size="sm" onClick={handleCancelEdit} className="flex-1 sm:flex-none border-slate-300">
                                 <X className="mr-1.5 h-4 w-4" /> Cancel Edit
