@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, MoreVertical, Share, X } from "lucide-react";
 
-type InstallMode = "android-prompt" | "android-manual" | "ios" | "hidden";
+type InstallMode = "android-prompt" | "android-manual" | "android-installing" | "ios" | "hidden";
 
 const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const ANDROID_INSTALL_FALLBACK_MS = 10000;
 const INSTALL_PROMPT_SEEN_KEY = "pwa-beforeinstallprompt-seen-at";
 const INSTALL_PROMPT_OUTCOME_KEY = "pwa-install-outcome";
 const APP_INSTALLED_AT_KEY = "pwa-appinstalled-at";
@@ -44,7 +45,6 @@ export function PWAInstallPrompt() {
         const ua = window.navigator.userAgent;
         const isIos = /iphone|ipad|ipod/i.test(ua);
         const isAndroid = /android/i.test(ua);
-        const isChromeLike = /chrome|crios|edg|edga|samsungbrowser/i.test(ua);
         const isMobile = isIos || isAndroid;
 
         if (!isMobile) {
@@ -73,19 +73,23 @@ export function PWAInstallPrompt() {
                 return;
             }
 
+            if (deferredPrompt) {
+                return;
+            }
+
             if (isIos) {
                 setMode("ios");
             } else if (isAndroid) {
                 setMode("android-manual");
             }
-        }, isChromeLike ? 2500 : 1500);
+        }, isAndroid ? ANDROID_INSTALL_FALLBACK_MS : 1500);
 
         return () => {
             window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
             window.removeEventListener("appinstalled", handleAppInstalled);
             window.clearTimeout(fallback);
         };
-    }, []);
+    }, [deferredPrompt]);
 
     useEffect(() => {
         if (deferredPrompt) {
@@ -99,11 +103,14 @@ export function PWAInstallPrompt() {
         }
 
         await deferredPrompt.prompt();
+        setMode("android-installing");
         const { outcome } = await deferredPrompt.userChoice;
         localStorage.setItem(INSTALL_PROMPT_OUTCOME_KEY, `${outcome}:${new Date().toISOString()}`);
 
         if (outcome === "accepted") {
-            setMode("hidden");
+            window.setTimeout(() => {
+                setMode("hidden");
+            }, 1500);
         } else {
             setMode("android-manual");
         }
@@ -148,6 +155,17 @@ export function PWAInstallPrompt() {
                             <Button onClick={handleInstall} size="sm" className="w-full">
                                 <Download className="mr-2 h-4 w-4" />
                                 Install App
+                            </Button>
+                        </>
+                    )}
+
+                    {mode === "android-installing" && (
+                        <>
+                            <p className="mb-3 mt-0.5 text-xs text-slate-500">
+                                Chrome is finishing the app install. This can take a few seconds while Android creates the app entry.
+                            </p>
+                            <Button size="sm" className="w-full" disabled>
+                                Installing...
                             </Button>
                         </>
                     )}

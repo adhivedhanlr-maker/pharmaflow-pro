@@ -33,6 +33,22 @@ type Diagnostics = {
     dismissedAt: string | null;
 };
 
+function formatDelay(from: string | null, to: string | null) {
+    if (!from || !to) {
+        return null;
+    }
+
+    const start = new Date(from).getTime();
+    const endTimestamp = to.includes(":") ? to.split(":").slice(1).join(":") : to;
+    const end = new Date(endTimestamp).getTime();
+
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) {
+        return null;
+    }
+
+    return ((end - start) / 1000).toFixed(1);
+}
+
 function Row({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex flex-col gap-1 rounded-lg border border-slate-200 p-3">
@@ -144,6 +160,19 @@ export default function PWADebugPage() {
         await collectDiagnostics();
     };
 
+    const promptToOutcomeDelay = diagnostics
+        ? formatDelay(diagnostics.installPromptSeenAt, diagnostics.installPromptOutcome)
+        : null;
+    const promptToInstalledDelay = diagnostics
+        ? formatDelay(diagnostics.installPromptSeenAt, diagnostics.appInstalledAt)
+        : null;
+    const outcomeTimestamp = diagnostics?.installPromptOutcome
+        ? diagnostics.installPromptOutcome.split(":").slice(1).join(":")
+        : null;
+    const outcomeToInstalledDelay = diagnostics
+        ? formatDelay(outcomeTimestamp, diagnostics.appInstalledAt)
+        : null;
+
     return (
         <div className="mx-auto max-w-5xl space-y-6 pb-24">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -180,6 +209,28 @@ export default function PWADebugPage() {
                     <Row label="Install Outcome" value={diagnostics?.installPromptOutcome ?? "No prompt result"} />
                     <Row label="App Installed At" value={diagnostics?.appInstalledAt ?? "Not installed"} />
                     <Row label="Dismissed At" value={diagnostics?.dismissedAt ?? "Never dismissed"} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Install Timing</CardTitle>
+                    <CardDescription>
+                        This helps verify how long Chrome takes between showing the install prompt and finishing the app install.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
+                        <p className="text-sm text-slate-600">
+                            If `Prompt to Installed` is much longer than `Prompt to Outcome`, the browser accepted the install quickly but Android took longer to finish creating the app entry.
+                        </p>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3">
+                        <Row label="Prompt to Outcome" value={promptToOutcomeDelay ? `${promptToOutcomeDelay}s` : "Not available"} />
+                        <Row label="Prompt to Installed" value={promptToInstalledDelay ? `${promptToInstalledDelay}s` : "Not available"} />
+                        <Row label="Outcome to Installed" value={outcomeToInstalledDelay ? `${outcomeToInstalledDelay}s` : "Not available"} />
+                    </div>
                 </CardContent>
             </Card>
 

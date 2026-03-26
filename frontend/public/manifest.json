@@ -2,7 +2,7 @@
     "id": "/",
     "name": "PharmaFlow Pro",
     "short_name": "PharmaFlow",
-    "description": "B2B Pharmaceutical Distribution Management System",
+    "description": "Wholesale pharma operations for billing, stock, deliveries, and field teams.",
     "lang": "en",
     "start_url": "/login?source=pwa",
     "scope": "/",
@@ -11,19 +11,49 @@
         "standalone",
         "minimal-ui"
     ],
-    "background_color": "#ffffff",
+    "background_color": "#0f172a",
     "theme_color": "#0f172a",
     "prefer_related_applications": false,
     "orientation": "portrait-primary",
     "screenshots": [
         {
-            "src": "/logo.png",
+            "src": "/pharmaflow-logo.png",
             "sizes": "512x512",
             "type": "image/png",
             "form_factor": "narrow"
         }
     ],
     "icons": [
+        {
+            "src": "/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any"
+        },
         {
             "src": "/icon-192x192.png",
             "sizes": "192x192",
@@ -35,6 +65,12 @@
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
+        },
+        {
+            "src": "/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "/icon-512x512.png",

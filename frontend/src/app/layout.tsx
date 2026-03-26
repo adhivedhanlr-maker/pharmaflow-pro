@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,22 +13,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PharmaFlow Pro",
-  description: "B2B Pharmaceutical Distribution System",
+  title: {
+    default: "PharmaFlow Pro",
+    template: "%s | PharmaFlow Pro",
+  },
+  description: "Wholesale pharma operations for billing, stock, deliveries, and field teams.",
+  applicationName: "PharmaFlow Pro",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "PharmaFlow Pro",
   },
   icons: {
     icon: [
-      { url: '/logo.png', sizes: '32x32', type: 'image/png' },
-      { url: '/logo.png', sizes: '16x16', type: 'image/png' },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico" },
     ],
-    shortcut: '/logo.png',
-    apple: '/logo.png',
-  }
+    shortcut: "/icon-192x192.png",
+    apple: [
+      { url: "/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
 };
 
 export const viewport = {
@@ -39,6 +50,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#0f172a",
+  colorScheme: "light",
 };
 
 import { AuthProvider } from "@/context/auth-context";

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -30,15 +30,25 @@ type ShellBranding = {
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { logout, isLoading, user, exitSupportAccess } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState<ShellBranding | null>(null);
+    const [isStandalone, setIsStandalone] = useState(false);
 
     useSessionTimeout();
 
     const isLoginPage = pathname === "/login";
+    const launchedFromPWA = searchParams.get("source") === "pwa";
 
     useEffect(() => {
+        const standaloneMode =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+        setIsStandalone(standaloneMode);
+        document.documentElement.dataset.displayMode = standaloneMode ? "standalone" : "browser";
+
         const loadBranding = async () => {
             try {
                 const response = await fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`);
@@ -77,13 +87,31 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         };
 
         void loadBranding();
+        return () => {
+            delete document.documentElement.dataset.displayMode;
+        };
     }, []);
 
     if (isLoading) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center bg-white">
-                <div className="animate-pulse text-slate-400 font-semibold text-lg">
-                    {branding?.companyName || "PharmaFlow..."}
+            <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-white">
+                <div className="flex w-full max-w-sm flex-col items-center px-8 text-center">
+                    <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-white/10 shadow-2xl shadow-black/30 ring-1 ring-white/10">
+                        <img
+                            src={branding?.logoUrl || "/pharmaflow-logo.png"}
+                            alt={branding?.companyName || "PharmaFlow Pro"}
+                            className="h-12 w-12 object-contain"
+                        />
+                    </div>
+                    <p className="text-xl font-semibold tracking-tight">
+                        {branding?.companyName || "PharmaFlow Pro"}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-300">
+                        {isStandalone || launchedFromPWA ? "Opening your workspace..." : "Preparing your workspace..."}
+                    </p>
+                    <div className="mt-6 h-1.5 w-40 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full w-1/2 animate-pulse rounded-full bg-cyan-400" />
+                    </div>
                 </div>
             </div>
         );
