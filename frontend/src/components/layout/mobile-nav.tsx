@@ -13,40 +13,40 @@ import { useAuth } from "@/context/auth-context";
 
 type NavItem = { title: string; href: string; icon: React.ElementType };
 
-const HOME: NavItem = { title: "Home", href: "/", icon: LayoutDashboard };
-const SETTINGS: NavItem = { title: "Settings", href: "/settings", icon: Settings };
+const HOME: NavItem = { title: "Home", href: "/app", icon: LayoutDashboard };
+const SETTINGS: NavItem = { title: "Settings", href: "/app/settings", icon: Settings };
 
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
     SALES_REP: [
         HOME,
-        { title: "Visits", href: "/visits", icon: MapPin },
-        { title: "Take Order", href: "/rep/orders/create", icon: ClipboardList },
-        { title: "My Day", href: "/visits/my-day", icon: LogIn },
+        { title: "Visits", href: "/app/visits", icon: MapPin },
+        { title: "Take Order", href: "/app/rep/orders/create", icon: ClipboardList },
+        { title: "My Day", href: "/app/visits/my-day", icon: LogIn },
     ],
     BILLING_OPERATOR: [
         HOME,
-        { title: "Billing", href: "/billing", icon: Receipt },
-        { title: "Parties", href: "/parties", icon: Users },
-        { title: "Returns", href: "/returns", icon: RotateCcw },
+        { title: "Billing", href: "/app/billing", icon: Receipt },
+        { title: "Parties", href: "/app/parties", icon: Users },
+        { title: "Returns", href: "/app/returns", icon: RotateCcw },
     ],
     WAREHOUSE_MANAGER: [
         HOME,
-        { title: "Stock", href: "/stock", icon: Package },
-        { title: "Purchases", href: "/purchases", icon: PackagePlus },
-        { title: "Returns", href: "/returns", icon: RotateCcw },
+        { title: "Stock", href: "/app/stock", icon: Package },
+        { title: "Purchases", href: "/app/purchases", icon: PackagePlus },
+        { title: "Returns", href: "/app/returns", icon: RotateCcw },
     ],
     ACCOUNTANT: [
         HOME,
-        { title: "Reports", href: "/reports", icon: BarChart3 },
-        { title: "Sales", href: "/sales-history", icon: FileText },
-        { title: "Parties", href: "/parties", icon: Users },
+        { title: "Reports", href: "/app/reports", icon: BarChart3 },
+        { title: "Sales", href: "/app/sales", icon: FileText },
+        { title: "Parties", href: "/app/parties", icon: Users },
     ],
 };
 
 const DEFAULT_NAV: NavItem[] = [
     HOME,
-    { title: "Billing", href: "/billing", icon: Receipt },
-    { title: "Stock", href: "/stock", icon: Package },
+    { title: "Billing", href: "/app/billing", icon: Receipt },
+    { title: "Stock", href: "/app/stock", icon: Package },
     SETTINGS,
 ];
 

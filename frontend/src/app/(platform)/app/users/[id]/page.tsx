@@ -112,7 +112,7 @@ export default function UserProfilePage() {
             <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
                 <h1 className="text-2xl font-bold">User Not Found</h1>
                 <Button variant="outline" asChild>
-                    <Link href="/users">Back to Users</Link>
+                    <Link href="/app/users">Back to Users</Link>
                 </Button>
             </div>
         );
@@ -123,7 +123,7 @@ export default function UserProfilePage() {
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild>
-                        <Link href="/users">
+                        <Link href="/app/users">
                             <ArrowLeft className="h-5 w-5" />
                         </Link>
                     </Button>

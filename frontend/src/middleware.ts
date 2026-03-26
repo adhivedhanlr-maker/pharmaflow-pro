@@ -15,24 +15,20 @@ export function middleware(request: NextRequest) {
 
     const token = request.cookies.get('auth_token')?.value || ''
 
-    // Protected routes start with these prefixes
-    const protectedRoutes = ['/', '/billing', '/stock', '/purchases', '/reports', '/parties', '/returns', '/settings']
+    const isAppRoute = pathname.startsWith('/app')
+    const isLoginPage = pathname === '/app/login'
 
-    const isProtectedRoute = protectedRoutes.some(route =>
-        pathname === route || pathname.startsWith(`${route}/`)
-    )
-
-    // Redirect to login if trying to access protected route without token
-    if (isProtectedRoute && !token && pathname !== '/login') {
+    // Redirect to login if trying to access app routes without token
+    if (isAppRoute && !isLoginPage && !token) {
         const url = request.nextUrl.clone()
-        url.pathname = '/login'
+        url.pathname = '/app/login'
         return NextResponse.redirect(url)
     }
 
     // Redirect to dashboard if logged in and trying to access login page
-    if (pathname === '/login' && token) {
+    if (isLoginPage && token) {
         const url = request.nextUrl.clone()
-        url.pathname = '/'
+        url.pathname = '/app'
         return NextResponse.redirect(url)
     }
 

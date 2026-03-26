@@ -606,7 +606,7 @@ export default function PurchasesPage() {
                     <p className="text-slate-500 max-w-sm">
                         Purchase entry and stock arrival recording are restricted to authorized warehouse and account personnel.
                     </p>
-                    <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
+                    <Button variant="outline" onClick={() => window.location.href = "/app"}>Back to Dashboard</Button>
                 </div>
             }
         >

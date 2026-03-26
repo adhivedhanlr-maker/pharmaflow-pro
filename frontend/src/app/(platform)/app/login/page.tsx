@@ -163,7 +163,7 @@ function LoginContent() {
                 tenantId: decodedPayload.tenantId,
                 supportAccess: decodedPayload.supportAccess,
             });
-            window.location.replace("/");
+            window.location.replace("/app");
         } catch (error) {
             console.error("Failed to initialize support access:", error);
             setError("Support access link is invalid or expired.");

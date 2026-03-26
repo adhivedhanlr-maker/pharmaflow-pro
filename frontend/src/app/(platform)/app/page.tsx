@@ -253,7 +253,7 @@ export default function Dashboard() {
           <AlertTitle>Complete distributor profile</AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-4">
             <span>{profileAlertMessage}</span>
-            <Link href="/settings" className="text-sm font-semibold text-amber-800 underline underline-offset-4">
+            <Link href="/app/settings" className="text-sm font-semibold text-amber-800 underline underline-offset-4">
               Open Settings
             </Link>
           </AlertDescription>

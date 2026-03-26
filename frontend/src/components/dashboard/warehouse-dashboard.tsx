@@ -86,9 +86,9 @@ export function WarehouseDashboard() {
     ];
 
     const quickActions = [
-        { label: "New Purchase", href: "/purchases", icon: PackagePlus },
-        { label: "View Stock", href: "/stock", icon: Package },
-        { label: "Returns", href: "/returns", icon: RotateCcw },
+        { label: "New Purchase", href: "/app/purchases", icon: PackagePlus },
+        { label: "View Stock", href: "/app/stock", icon: Package },
+        { label: "Returns", href: "/app/returns", icon: RotateCcw },
     ];
 
     return (
@@ -146,7 +146,7 @@ export function WarehouseDashboard() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-3">
                         <CardTitle className="text-base">Expiring Soon</CardTitle>
-                        <Link href="/stock">
+                        <Link href="/app/stock">
                             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                                 View Stock <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>
@@ -180,7 +180,7 @@ export function WarehouseDashboard() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-3">
                         <CardTitle className="text-base">Low Stock</CardTitle>
-                        <Link href="/purchases">
+                        <Link href="/app/purchases">
                             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                                 Add Stock <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>

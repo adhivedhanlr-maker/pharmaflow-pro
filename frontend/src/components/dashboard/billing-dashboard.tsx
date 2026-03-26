@@ -80,10 +80,10 @@ export function BillingDashboard() {
     ];
 
     const quickActions = [
-        { label: "New Bill", href: "/billing", icon: Receipt },
-        { label: "Sales History", href: "/sales-history", icon: FileText },
-        { label: "Parties", href: "/parties", icon: Users },
-        { label: "Returns", href: "/returns", icon: RotateCcw },
+        { label: "New Bill", href: "/app/billing", icon: Receipt },
+        { label: "Sales History", href: "/app/sales", icon: FileText },
+        { label: "Parties", href: "/app/parties", icon: Users },
+        { label: "Returns", href: "/app/returns", icon: RotateCcw },
     ];
 
     return (
@@ -140,7 +140,7 @@ export function BillingDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <CardTitle className="text-base">Recent Invoices</CardTitle>
-                    <Link href="/sales-history">
+                    <Link href="/app/sales">
                         <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                             View All <ArrowRight className="h-4 w-4 ml-1" />
                         </Button>

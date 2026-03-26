@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = (newToken: string, newUser: User) => {
         // Legacy login (if used)
         establishSession(newToken, newUser);
-        router.push("/");
+        router.push("/app");
     };
 
     const establishSession = (newToken: string, newUser: User) => {
@@ -208,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("test_token");
         // Neon Logout
         // auth.logout(); // If available in the client
-        router.push("/login");
+        router.push("/app/login");
     };
 
     const refreshUser = async () => {

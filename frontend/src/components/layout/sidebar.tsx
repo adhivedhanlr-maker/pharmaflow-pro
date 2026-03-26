@@ -31,26 +31,26 @@ import { Badge } from "@/components/ui/badge";
 import { hasRoleAccess, isAdminLikeRole } from "@/lib/roles";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"], hint: "D" },
-  { icon: Receipt, label: "Billing", href: "/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "B" },
-  { icon: ShoppingCart, label: "Take Order", href: "/rep/orders/create", roles: ["SALES_REP"], hint: "O" },
-  { icon: ShoppingCart, label: "Purchases", href: "/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"], hint: "P" },
-  { icon: Package, label: "Stock", href: "/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
-  { icon: Users, label: "Parties", href: "/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
-  { icon: BarChart3, label: "Reports", href: "/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
-  { icon: ShoppingCart, label: "Orders", href: "/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },
-  { icon: Package, label: "Deliveries", href: "/deliveries", roles: ["ADMIN", "BILLING_OPERATOR", "SALES_REP"], hint: "L" },
-  { icon: Receipt, label: "Sales History", href: "/sales", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "H" },
-  { icon: FileSpreadsheet, label: "Bills Receivable", href: "/sales/receivables", roles: ["ADMIN", "ACCOUNTANT"], hint: "R" },
-  { icon: MapPin, label: "Visits", href: "/visits", roles: ["SALES_REP"], hint: "V" },
-  { icon: Calendar, label: "Route Planner", href: "/admin/routes", roles: ["ADMIN"], hint: "R" },
-  { icon: Navigation, label: "Live Tracking", href: "/visits/tracking", roles: ["ADMIN"] },
-  { icon: MapIcon, label: "Route History", href: "/visits/history", roles: ["ADMIN", "SALES_REP"] },
-  { icon: Clock, label: "My Day", href: "/visits/my-day", roles: ["SALES_REP"], hint: "D" },
-  { icon: FileSpreadsheet, label: "Attendance", href: "/attendance", roles: ["ADMIN"], hint: "A" },
-  { icon: RefreshCw, label: "Returns", href: "/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
-  { icon: UserCog, label: "User Management", href: "/users", roles: ["ADMIN"], hint: "U" },
-  { icon: Building2, label: "Client Tenants", href: "/admin/tenants", roles: ["ADMIN"] },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/app", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER", "ACCOUNTANT", "SALES_REP"], hint: "D" },
+  { icon: Receipt, label: "Billing", href: "/app/billing", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "B" },
+  { icon: ShoppingCart, label: "Take Order", href: "/app/rep/orders/create", roles: ["SALES_REP"], hint: "O" },
+  { icon: ShoppingCart, label: "Purchases", href: "/app/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"], hint: "P" },
+  { icon: Package, label: "Stock", href: "/app/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
+  { icon: Users, label: "Parties", href: "/app/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
+  { icon: BarChart3, label: "Reports", href: "/app/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
+  { icon: ShoppingCart, label: "Orders", href: "/app/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },
+  { icon: Package, label: "Deliveries", href: "/app/deliveries", roles: ["ADMIN", "BILLING_OPERATOR", "SALES_REP"], hint: "L" },
+  { icon: Receipt, label: "Sales History", href: "/app/sales", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"], hint: "H" },
+  { icon: FileSpreadsheet, label: "Bills Receivable", href: "/app/sales/receivables", roles: ["ADMIN", "ACCOUNTANT"], hint: "R" },
+  { icon: MapPin, label: "Visits", href: "/app/visits", roles: ["SALES_REP"], hint: "V" },
+  { icon: Calendar, label: "Route Planner", href: "/app/admin/routes", roles: ["ADMIN"], hint: "R" },
+  { icon: Navigation, label: "Live Tracking", href: "/app/visits/tracking", roles: ["ADMIN"] },
+  { icon: MapIcon, label: "Route History", href: "/app/visits/history", roles: ["ADMIN", "SALES_REP"] },
+  { icon: Clock, label: "My Day", href: "/app/visits/my-day", roles: ["SALES_REP"], hint: "D" },
+  { icon: FileSpreadsheet, label: "Attendance", href: "/app/attendance", roles: ["ADMIN"], hint: "A" },
+  { icon: RefreshCw, label: "Returns", href: "/app/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
+  { icon: UserCog, label: "User Management", href: "/app/users", roles: ["ADMIN"], hint: "U" },
+  { icon: Building2, label: "Client Tenants", href: "/app/admin/tenants", roles: ["ADMIN"] },
 ];
 
 const PLATFORM_HOSTS = new Set([
@@ -160,11 +160,11 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
       {isAdminLikeRole(user?.role) && (
         <div className="px-4 py-2 border-t">
           <Link
-            href="/settings"
+            href="/app/settings"
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative group",
-              pathname === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
+              pathname === "/app/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
               isCollapsed && "justify-center px-2"
             )}
             title={isCollapsed ? "Settings" : undefined}

@@ -161,7 +161,7 @@ export default function PartiesPage() {
                     <p className="text-slate-500 max-w-sm">
                         Party (Customer/Supplier) management is restricted to authorized billing and sales staff.
                     </p>
-                    <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
+                    <Button variant="outline" onClick={() => window.location.href = "/app"}>Back to Dashboard</Button>
                 </div>
             }
         >

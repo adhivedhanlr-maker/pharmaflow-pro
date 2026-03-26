@@ -220,7 +220,7 @@ export default function TenantManagementPage() {
                 },
                 body: JSON.stringify({
                     reason: supportReason.trim(),
-                    returnUrl: `${window.location.origin}/admin/tenants`,
+                    returnUrl: `${window.location.origin}/app/admin/tenants`,
                 }),
             });
 
@@ -251,7 +251,7 @@ export default function TenantManagementPage() {
                     <p className="text-slate-500 max-w-sm">
                         Only platform administrators can onboard client portals.
                     </p>
-                    <Button variant="outline" onClick={() => (window.location.href = "/")}>Back to Dashboard</Button>
+                    <Button variant="outline" onClick={() => (window.location.href = "/app")}>Back to Dashboard</Button>
                 </div>
             }
         >

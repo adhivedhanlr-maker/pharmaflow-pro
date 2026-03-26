@@ -172,7 +172,7 @@ export function SalesRepDashboard() {
                         <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                         Refresh
                     </Button>
-                    <Link href="/rep/orders/create">
+                    <Link href="/app/rep/orders/create">
                         <Button className="bg-blue-600 hover:bg-blue-700">
                             <Plus className="h-4 w-4 mr-2" /> New Order
                         </Button>
@@ -213,7 +213,7 @@ export function SalesRepDashboard() {
                             <CardTitle className="text-base">Recent Orders</CardTitle>
                             <p className="text-xs text-muted-foreground">Latest transactions from your field visits.</p>
                         </div>
-                        <Link href="/orders">
+                        <Link href="/app/orders">
                             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                                 View All <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>
@@ -270,10 +270,10 @@ export function SalesRepDashboard() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-3 relative z-10">
                             {[
-                                { href: "/rep/orders/create", icon: ClipboardList, label: "Take Order" },
-                                { href: "/visits", icon: MapPin, label: "Log Visit" },
-                                { href: "/deliveries", icon: Package, label: "Verify Delivery" },
-                                { href: "/visits/my-day", icon: Calendar, label: "My Day" }
+                                { href: "/app/rep/orders/create", icon: ClipboardList, label: "Take Order" },
+                                { href: "/app/visits", icon: MapPin, label: "Log Visit" },
+                                { href: "/app/deliveries", icon: Package, label: "Verify Delivery" },
+                                { href: "/app/visits/my-day", icon: Calendar, label: "My Day" }
                             ].map((action, idx) => (
                                 <Link key={idx} href={action.href} className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 border border-white/5">
                                     <action.icon className="h-6 w-6 text-blue-100" />

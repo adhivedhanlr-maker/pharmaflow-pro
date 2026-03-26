@@ -488,7 +488,7 @@ function BillingContent() {
                     </div>
                     <h1 className="text-2xl font-bold">Access Denied</h1>
                     <p className="text-slate-500 max-w-sm">Invoice generation and billing features are restricted to authorized personnel.</p>
-                    <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
+                    <Button variant="outline" onClick={() => window.location.href = "/app"}>Back to Dashboard</Button>
                 </div>
             }
         >
@@ -499,7 +499,7 @@ function BillingContent() {
                     </div>
                     <h1 className="text-2xl font-bold">Restricted Access</h1>
                     <p className="text-slate-500 max-w-sm">You do not have permission to generate invoices. Please contact an administrator if you need this access.</p>
-                    <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
+                    <Button variant="outline" onClick={() => window.location.href = "/app"}>Back to Dashboard</Button>
                 </div>
             ) : (
                 <div className="space-y-4 no-print">

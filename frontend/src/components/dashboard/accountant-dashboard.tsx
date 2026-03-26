@@ -92,10 +92,10 @@ export function AccountantDashboard() {
     ];
 
     const quickActions = [
-        { label: "GST Report", href: "/reports", icon: BarChart3 },
-        { label: "Sales History", href: "/sales-history", icon: FileText },
-        { label: "Receivables", href: "/receivables", icon: TrendingUp },
-        { label: "Parties", href: "/parties", icon: Users },
+        { label: "GST Report", href: "/app/reports", icon: BarChart3 },
+        { label: "Sales History", href: "/app/sales", icon: FileText },
+        { label: "Receivables", href: "/app/sales/receivables", icon: TrendingUp },
+        { label: "Parties", href: "/app/parties", icon: Users },
     ];
 
     return (
@@ -179,7 +179,7 @@ export function AccountantDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <CardTitle className="text-base">Recent Transactions</CardTitle>
-                    <Link href="/sales-history">
+                    <Link href="/app/sales">
                         <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                             View All <ArrowRight className="h-4 w-4 ml-1" />
                         </Button>

@@ -4,7 +4,7 @@
     "short_name": "PharmaFlow",
     "description": "Wholesale pharma operations for billing, stock, deliveries, and field teams.",
     "lang": "en",
-    "start_url": "/login?source=pwa",
+    "start_url": "/app/login?source=pwa",
     "scope": "/",
     "display": "standalone",
     "display_override": [
@@ -95,7 +95,7 @@
             "name": "Billing",
             "short_name": "Billing",
             "description": "Create new invoice",
-            "url": "/billing",
+            "url": "/app/billing",
             "icons": [
                 {
                     "src": "/icon-192x192.png",
@@ -107,7 +107,7 @@
             "name": "Purchases",
             "short_name": "Purchases",
             "description": "Record purchase",
-            "url": "/purchases",
+            "url": "/app/purchases",
             "icons": [
                 {
                     "src": "/icon-192x192.png",
@@ -119,7 +119,7 @@
             "name": "Stock",
             "short_name": "Stock",
             "description": "View stock levels",
-            "url": "/stock",
+            "url": "/app/stock",
             "icons": [
                 {
                     "src": "/icon-192x192.png",
