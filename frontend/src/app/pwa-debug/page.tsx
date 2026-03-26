@@ -107,7 +107,7 @@ export default function PWADebugPage() {
             manifestScope,
             manifestId,
             manifestIconCount,
-            installConfirmed: localStorage.getItem("pwa-installed"),
+            installConfirmed: localStorage.getItem("pwa-appinstalled-at") ? "true" : null,
             installPromptSeenAt: localStorage.getItem("pwa-beforeinstallprompt-seen-at"),
             installPromptOutcome: localStorage.getItem("pwa-install-outcome"),
             appInstalledAt: localStorage.getItem("pwa-appinstalled-at"),

@@ -7,7 +7,6 @@ import { Download, MoreVertical, Share, X } from "lucide-react";
 type InstallMode = "android-prompt" | "android-manual" | "ios" | "hidden";
 
 const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
-const INSTALL_CONFIRMED_KEY = "pwa-installed";
 const INSTALL_PROMPT_SEEN_KEY = "pwa-beforeinstallprompt-seen-at";
 const INSTALL_PROMPT_OUTCOME_KEY = "pwa-install-outcome";
 const APP_INSTALLED_AT_KEY = "pwa-appinstalled-at";
@@ -30,7 +29,8 @@ export function PWAInstallPrompt() {
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
-        if (isStandaloneMode() || localStorage.getItem(INSTALL_CONFIRMED_KEY) === "true") {
+        const recordedInstall = localStorage.getItem(APP_INSTALLED_AT_KEY);
+        if (isStandaloneMode() || recordedInstall) {
             setMode("hidden");
             return;
         }
@@ -59,7 +59,6 @@ export function PWAInstallPrompt() {
         };
 
         const handleAppInstalled = () => {
-            localStorage.setItem(INSTALL_CONFIRMED_KEY, "true");
             localStorage.setItem(APP_INSTALLED_AT_KEY, new Date().toISOString());
             setDeferredPrompt(null);
             setDismissed(false);
@@ -104,7 +103,6 @@ export function PWAInstallPrompt() {
         localStorage.setItem(INSTALL_PROMPT_OUTCOME_KEY, `${outcome}:${new Date().toISOString()}`);
 
         if (outcome === "accepted") {
-            localStorage.setItem(INSTALL_CONFIRMED_KEY, "true");
             setMode("hidden");
         } else {
             setMode("android-manual");
