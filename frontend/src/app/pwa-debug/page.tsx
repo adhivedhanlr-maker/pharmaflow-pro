@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 type Diagnostics = {
     currentUrl: string;
     origin: string;
+    hostname: string;
+    tenantLabel: string;
     userAgent: string;
     online: boolean;
     secureContext: boolean;
@@ -32,6 +34,19 @@ type Diagnostics = {
     swWaitingAt: string | null;
     dismissedAt: string | null;
 };
+
+function getTenantLabel(hostname: string) {
+    const parts = hostname.split(".");
+    if (parts.length >= 4) {
+        return parts[0];
+    }
+
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "local";
+    }
+
+    return "platform";
+}
 
 function formatDelay(from: string | null, to: string | null) {
     if (!from || !to) {
@@ -67,6 +82,8 @@ export default function PWADebugPage() {
     }, []);
 
     const collectDiagnostics = async () => {
+        const hostname = window.location.hostname;
+        const tenantLabel = getTenantLabel(hostname);
         const manifestHref = document.querySelector("link[rel='manifest']")?.getAttribute("href") || "/manifest.json";
 
         let manifestName: string | null = null;
@@ -105,6 +122,8 @@ export default function PWADebugPage() {
         setDiagnostics({
             currentUrl: window.location.href,
             origin: window.location.origin,
+            hostname,
+            tenantLabel,
             userAgent: navigator.userAgent,
             online: navigator.onLine,
             secureContext: window.isSecureContext,
@@ -172,6 +191,12 @@ export default function PWADebugPage() {
     const outcomeToInstalledDelay = diagnostics
         ? formatDelay(outcomeTimestamp, diagnostics.appInstalledAt)
         : null;
+    const installAvailability = diagnostics?.installPromptSeenAt
+        ? "Real install prompt available"
+        : "Waiting for Chrome install prompt";
+    const installAvailabilityTone = diagnostics?.installPromptSeenAt
+        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+        : "border-amber-200 bg-amber-50 text-amber-900";
 
     return (
         <div className="mx-auto max-w-5xl space-y-6 pb-24">
@@ -197,6 +222,12 @@ export default function PWADebugPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    <div className={`rounded-lg border p-3 ${installAvailabilityTone}`}>
+                        <span className="text-xs font-semibold uppercase tracking-wide">Install Status</span>
+                        <p className="mt-1 text-sm font-medium">{installAvailability}</p>
+                    </div>
+                    <Row label="Tenant Label" value={diagnostics?.tenantLabel ?? "Loading..."} />
+                    <Row label="Hostname" value={diagnostics?.hostname ?? "Loading..."} />
                     <Row label="Secure Context" value={diagnostics ? String(diagnostics.secureContext) : "Loading..."} />
                     <Row label="Standalone Mode" value={diagnostics ? String(diagnostics.standaloneMode) : "Loading..."} />
                     <Row label="SW Supported" value={diagnostics ? String(diagnostics.serviceWorkerSupported) : "Loading..."} />

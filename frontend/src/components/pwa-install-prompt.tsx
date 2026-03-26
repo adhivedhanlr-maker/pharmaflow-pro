@@ -6,7 +6,7 @@ import { Download, MoreVertical, Share, X } from "lucide-react";
 
 type InstallMode = "android-prompt" | "android-manual" | "android-installing" | "ios" | "hidden";
 
-const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const DISMISS_WINDOW_MS = 12 * 60 * 60 * 1000;
 const ANDROID_INSTALL_FALLBACK_MS = 10000;
 const INSTALL_PROMPT_SEEN_KEY = "pwa-beforeinstallprompt-seen-at";
 const INSTALL_PROMPT_OUTCOME_KEY = "pwa-install-outcome";
