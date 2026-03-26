@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -30,16 +30,15 @@ type ShellBranding = {
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
     const { logout, isLoading, user, exitSupportAccess } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState<ShellBranding | null>(null);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [launchedFromPWA, setLaunchedFromPWA] = useState(false);
 
     useSessionTimeout();
 
     const isLoginPage = pathname === "/login";
-    const launchedFromPWA = searchParams.get("source") === "pwa";
 
     useEffect(() => {
         const standaloneMode =
@@ -47,6 +46,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
         setIsStandalone(standaloneMode);
+        setLaunchedFromPWA(new URLSearchParams(window.location.search).get("source") === "pwa");
         document.documentElement.dataset.displayMode = standaloneMode ? "standalone" : "browser";
 
         const loadBranding = async () => {
