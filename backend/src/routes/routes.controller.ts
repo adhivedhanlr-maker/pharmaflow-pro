@@ -24,11 +24,13 @@ export class RoutesController {
     }
 
     @Get(':id')
+    @Roles('ADMIN', 'SALES_REP')
     findOne(@Param('id') id: string, @Request() req: any) {
         return this.routesService.findOne(id, req.user.tenantId);
     }
 
     @Patch(':id/stops/:stopId')
+    @Roles('ADMIN', 'SALES_REP')
     updateStopStatus(
         @Param('id') id: string,
         @Param('stopId') stopId: string,

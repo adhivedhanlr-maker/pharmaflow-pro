@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Request } from '@nestjs/common';
 import { ReturnsService } from './returns.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,25 +12,25 @@ export class ReturnsController {
 
     @Post('sales')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
-    createSalesReturn(@Body() data: any) {
-        return this.returnsService.createSalesReturn(data);
+    createSalesReturn(@Body() data: any, @Request() req: any) {
+        return this.returnsService.createSalesReturn(data, req.user.tenantId);
     }
 
     @Post('purchase')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    createPurchaseReturn(@Body() data: any) {
-        return this.returnsService.createPurchaseReturn(data);
+    createPurchaseReturn(@Body() data: any, @Request() req: any) {
+        return this.returnsService.createPurchaseReturn(data, req.user.tenantId);
     }
 
     @Get('sales/:invoiceNumber')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR)
-    getSaleForReturn(@Param('invoiceNumber') invoiceNumber: string) {
-        return this.returnsService.getSaleForReturn(invoiceNumber);
+    getSaleForReturn(@Param('invoiceNumber') invoiceNumber: string, @Request() req: any) {
+        return this.returnsService.getSaleForReturn(invoiceNumber, req.user.tenantId);
     }
 
     @Get('purchase/:billNumber')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    getPurchaseForReturn(@Param('billNumber') billNumber: string) {
-        return this.returnsService.getPurchaseForReturn(billNumber);
+    getPurchaseForReturn(@Param('billNumber') billNumber: string, @Request() req: any) {
+        return this.returnsService.getPurchaseForReturn(billNumber, req.user.tenantId);
     }
 }

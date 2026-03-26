@@ -24,6 +24,7 @@ export class OrdersController {
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     findOne(@Param('id') id: string, @Request() req: any) {
         return this.ordersService.findOne(id, req.user.tenantId);
     }

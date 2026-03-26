@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { TwoFactorService } from './two-factor.service';
@@ -46,6 +47,7 @@ export class AuthController {
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     async login(@Body() loginDto: any, @Req() req: any) {
         const result = await this.authService.login(
             loginDto.username,
@@ -93,6 +95,7 @@ export class AuthController {
 
     @Post('2fa/verify')
     @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     async verify2FA(@Body() body: { username: string; token: string }, @Req() req: any) {
         return this.authService.verify2FAAndLogin(
             body.username,

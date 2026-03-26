@@ -34,7 +34,6 @@ export class PartiesController {
     @Post('customers')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     createCustomer(@Body() data: any, @Request() req: any) {
-        console.log('Create Customer Request:', data);
         return this.partiesService.createCustomer(data, req.user.tenantId);
     }
 
@@ -56,14 +55,6 @@ export class PartiesController {
     @Post('suppliers')
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
     createSupplier(@Body() data: any, @Request() req: any) {
-        console.log('Create Supplier Request:', {
-            data,
-            user: {
-                id: req.user?.id,
-                tenantId: req.user?.tenantId,
-                role: req.user?.role
-            }
-        });
         return this.partiesService.createSupplier(data, req.user.tenantId);
     }
 

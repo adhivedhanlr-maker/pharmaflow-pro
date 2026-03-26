@@ -127,7 +127,7 @@ export default function UsersPage() {
             if (response.ok) {
                 toast.success("User created successfully");
                 setIsDialogOpen(false);
-                setFormData({ username: "", password: "", name: "", role: "BILLING_OPERATOR", canGenerateInvoice: false });
+                setFormData({ username: "", password: "", name: "", role: "BILLING_OPERATOR", canGenerateInvoice: false, permissions: [] });
                 fetchUsers();
             } else {
                 const message = result.message || "Failed to create user";

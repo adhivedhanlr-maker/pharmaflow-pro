@@ -64,11 +64,13 @@ export class UsersController {
     }
 
     @Patch(':id')
+    @Roles(Role.ADMIN)
     update(@Param('id') id: string, @Body() data: any, @Request() req: any) {
         return this.usersService.update(id, data, req.user.tenantId);
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN)
     remove(@Param('id') id: string, @Request() req: any) {
         return this.usersService.remove(id, req.user.tenantId);
     }

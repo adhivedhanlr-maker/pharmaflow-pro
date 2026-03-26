@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -15,19 +15,20 @@ export class ReportsController {
     getGstReport(
         @Query('start') start: string,
         @Query('end') end: string,
+        @Request() req: any,
     ) {
-        return this.reportsService.getGstReport(new Date(start), new Date(end));
+        return this.reportsService.getGstReport(new Date(start), new Date(end), req.user.tenantId);
     }
 
     @Get('expiry-forecast')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    getExpiryForecast() {
-        return this.reportsService.getExpiryForecast();
+    getExpiryForecast(@Request() req: any) {
+        return this.reportsService.getExpiryForecast(req.user.tenantId);
     }
 
     @Get('profitability')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    getProfitability() {
-        return this.reportsService.getProfitabilitySummary();
+    getProfitability(@Request() req: any) {
+        return this.reportsService.getProfitabilitySummary(req.user.tenantId);
     }
 }

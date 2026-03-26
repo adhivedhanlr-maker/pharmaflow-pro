@@ -5,9 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
     constructor(private prisma: PrismaService) { }
 
-    async getGstReport(startDate: Date, endDate: Date) {
+    async getGstReport(startDate: Date, endDate: Date, tenantId: string) {
         const sales = await this.prisma.sale.findMany({
             where: {
+                tenantId,
                 date: {
                     gte: startDate,
                     lte: endDate,
@@ -37,18 +38,18 @@ export class ReportsService {
         };
     }
 
-    async getExpiryForecast() {
+    async getExpiryForecast(tenantId: string) {
         const now = new Date();
         const threeMonths = new Date(now.getFullYear(), now.getMonth() + 3, 1);
         const sixMonths = new Date(now.getFullYear(), now.getMonth() + 6, 1);
 
         const expiring3 = await this.prisma.batch.findMany({
-            where: { expiryDate: { lte: threeMonths, gt: now } },
+            where: { tenantId, expiryDate: { lte: threeMonths, gt: now } },
             include: { product: true },
         });
 
         const expiring6 = await this.prisma.batch.findMany({
-            where: { expiryDate: { lte: sixMonths, gt: threeMonths } },
+            where: { tenantId, expiryDate: { lte: sixMonths, gt: threeMonths } },
             include: { product: true },
         });
 
@@ -59,8 +60,9 @@ export class ReportsService {
         };
     }
 
-    async getProfitabilitySummary() {
+    async getProfitabilitySummary(tenantId: string) {
         const saleItems = await this.prisma.saleItem.findMany({
+            where: { sale: { tenantId } },
             include: { batch: true },
         });
 

@@ -26,6 +26,7 @@ export class AuditLogController {
 
         return this.auditLogService.getLogs({
             userId: userId || (!isAdminLikeRole(user.role) ? user.userId : undefined),
+            tenantId: user.tenantId,
             action,
             startDate: startDate ? new Date(startDate) : undefined,
             endDate: endDate ? new Date(endDate) : undefined,

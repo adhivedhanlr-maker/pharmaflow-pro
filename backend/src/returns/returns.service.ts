@@ -5,13 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReturnsService {
     constructor(private prisma: PrismaService) { }
 
-    async createSalesReturn(data: any) {
+    async createSalesReturn(data: any, tenantId: string) {
         const { saleId, items } = data;
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Verify Sale
-            const sale = await tx.sale.findUnique({
-                where: { id: saleId },
+            // 1. Verify Sale belongs to this tenant
+            const sale = await tx.sale.findFirst({
+                where: { id: saleId, tenantId },
                 include: { items: true, customer: true },
             });
             if (!sale) throw new NotFoundException('Sale not found');
@@ -63,13 +63,13 @@ export class ReturnsService {
         });
     }
 
-    async createPurchaseReturn(data: any) {
+    async createPurchaseReturn(data: any, tenantId: string) {
         const { purchaseId, items } = data;
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Verify Purchase
-            const purchase = await tx.purchase.findUnique({
-                where: { id: purchaseId },
+            // 1. Verify Purchase belongs to this tenant
+            const purchase = await tx.purchase.findFirst({
+                where: { id: purchaseId, tenantId },
                 include: { items: true, supplier: true },
             });
             if (!purchase) throw new NotFoundException('Purchase not found');
@@ -118,10 +118,9 @@ export class ReturnsService {
         });
     }
 
-    // Get sale details for return
-    async getSaleForReturn(invoiceNumber: string) {
+    async getSaleForReturn(invoiceNumber: string, tenantId: string) {
         const sale = await this.prisma.sale.findFirst({
-            where: { invoiceNumber },
+            where: { invoiceNumber, tenantId },
             include: {
                 customer: true,
                 items: {
@@ -143,10 +142,9 @@ export class ReturnsService {
         return sale;
     }
 
-    // Get purchase details for return
-    async getPurchaseForReturn(billNumber: string) {
+    async getPurchaseForReturn(billNumber: string, tenantId: string) {
         const purchase = await this.prisma.purchase.findFirst({
-            where: { billNumber },
+            where: { billNumber, tenantId },
             include: {
                 supplier: true,
                 items: {

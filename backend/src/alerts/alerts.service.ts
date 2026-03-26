@@ -18,25 +18,40 @@ export class AlertsService {
     async checkInventory() {
         this.logger.log('Running automated inventory check...');
 
+        // Get all distinct tenants that have products
+        const tenants = await this.prisma.product.findMany({
+            select: { tenantId: true },
+            distinct: ['tenantId'],
+            where: { tenantId: { not: null } },
+        });
+
+        for (const { tenantId } of tenants) {
+            if (!tenantId) continue;
+            await this.checkInventoryForTenant(tenantId);
+        }
+    }
+
+    private async checkInventoryForTenant(tenantId: string) {
         // 1. Check Low Stock
         const lowStockProducts = await this.prisma.product.findMany({
             where: {
+                tenantId,
                 batches: {
                     some: {
-                        currentStock: { lte: 10 }, // Can be dynamic based on reorderLevel
+                        currentStock: { lte: 10 },
                     },
                 },
             },
-            include: { batches: true },
+            include: { batches: { where: { tenantId } } },
         });
 
         for (const product of lowStockProducts) {
             const totalStock = product.batches.reduce((acc, b) => acc + b.currentStock, 0);
             if (totalStock <= product.reorderLevel) {
-            await this.createNotification(
+                await this.createNotification(
                     'LOW_STOCK',
                     `Product ${product.name} is running low (Total: ${totalStock}, Reorder: ${product.reorderLevel})`,
-                    product.tenantId || undefined,
+                    tenantId,
                 );
             }
         }
@@ -47,6 +62,7 @@ export class AlertsService {
 
         const expiringBatches = await this.prisma.batch.findMany({
             where: {
+                tenantId,
                 expiryDate: { lte: threshold, gt: new Date() },
             },
             include: { product: true },
@@ -56,7 +72,7 @@ export class AlertsService {
             await this.createNotification(
                 'EXPIRY',
                 `Batch ${batch.batchNumber} of ${batch.product.name} expires on ${batch.expiryDate.toDateString()}`,
-                batch.tenantId || undefined,
+                tenantId,
             );
         }
     }

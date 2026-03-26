@@ -5,21 +5,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class StockService {
     constructor(private prisma: PrismaService) { }
 
-    async findAllBatches() {
+    async findAllBatches(tenantId: string) {
         return this.prisma.batch.findMany({
+            where: { tenantId },
             include: { product: true },
             orderBy: { expiryDate: 'asc' },
         });
     }
 
-    async updateStockManual(batchId: string, quantity: number, reason: string, pricing?: {
+    async updateStockManual(batchId: string, quantity: number, reason: string, tenantId: string, pricing?: {
         salePrice?: number;
         purchasePrice?: number;
         mrp?: number;
         ptr?: number;
         pts?: number;
     }) {
-        const batch = await this.prisma.batch.findUnique({ where: { id: batchId } });
+        const batch = await this.prisma.batch.findFirst({ where: { id: batchId, tenantId } });
         if (!batch) throw new NotFoundException('Batch not found');
 
         return this.prisma.batch.update({
@@ -36,22 +37,24 @@ export class StockService {
         });
     }
 
-    async getStockAlerts() {
+    async getStockAlerts(tenantId: string) {
         const lowStock = await this.prisma.product.findMany({
             where: {
+                tenantId,
                 batches: {
                     some: {
                         currentStock: { lte: 10 },
                     },
                 },
             },
-            include: { batches: true },
+            include: { batches: { where: { tenantId } } },
         });
 
         const expiringSoon = await this.prisma.batch.findMany({
             where: {
+                tenantId,
                 expiryDate: {
-                    lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                    lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                     gt: new Date(),
                 },
             },

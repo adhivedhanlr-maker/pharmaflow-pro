@@ -12,7 +12,7 @@ import { TenantBrandingModule } from '../tenant-branding/tenant-branding.module'
         PassportModule,
         TenantBrandingModule,
         JwtModule.register({
-            secret: process.env.JWT_SECRET || 'secretKey',
+            secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '7d' },
         }),
     ],

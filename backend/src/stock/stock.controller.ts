@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,8 +12,8 @@ export class StockController {
 
     @Get('batches')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.BILLING_OPERATOR)
-    findAllBatches() {
-        return this.stockService.findAllBatches();
+    findAllBatches(@Request() req: any) {
+        return this.stockService.findAllBatches(req.user.tenantId);
     }
 
     @Patch('batches/:id')
@@ -29,8 +29,9 @@ export class StockController {
             ptr?: number;
             pts?: number;
         },
+        @Request() req: any,
     ) {
-        return this.stockService.updateStockManual(id, data.quantity, data.reason, {
+        return this.stockService.updateStockManual(id, data.quantity, data.reason, req.user.tenantId, {
             salePrice: data.salePrice,
             purchasePrice: data.purchasePrice,
             mrp: data.mrp,
@@ -41,7 +42,7 @@ export class StockController {
 
     @Get('alerts')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    getStockAlerts() {
-        return this.stockService.getStockAlerts();
+    getStockAlerts(@Request() req: any) {
+        return this.stockService.getStockAlerts(req.user.tenantId);
     }
 }
