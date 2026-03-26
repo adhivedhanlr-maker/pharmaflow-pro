@@ -4,76 +4,64 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import {
-    LayoutDashboard,
-    Receipt,
-    Package,
-    Settings,
-    ClipboardList,
-    LogIn,
-    MapPin
+    LayoutDashboard, Receipt, Package, Settings,
+    ClipboardList, LogIn, MapPin, PackagePlus,
+    BarChart3, Users, FileText, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+
+type NavItem = { title: string; href: string; icon: React.ElementType };
+
+const HOME: NavItem = { title: "Home", href: "/", icon: LayoutDashboard };
+const SETTINGS: NavItem = { title: "Settings", href: "/settings", icon: Settings };
+
+const NAV_BY_ROLE: Record<string, NavItem[]> = {
+    SALES_REP: [
+        HOME,
+        { title: "Visits", href: "/visits", icon: MapPin },
+        { title: "Take Order", href: "/rep/orders/create", icon: ClipboardList },
+        { title: "My Day", href: "/visits/my-day", icon: LogIn },
+    ],
+    BILLING_OPERATOR: [
+        HOME,
+        { title: "Billing", href: "/billing", icon: Receipt },
+        { title: "Parties", href: "/parties", icon: Users },
+        { title: "Returns", href: "/returns", icon: RotateCcw },
+    ],
+    WAREHOUSE_MANAGER: [
+        HOME,
+        { title: "Stock", href: "/stock", icon: Package },
+        { title: "Purchases", href: "/purchases", icon: PackagePlus },
+        { title: "Returns", href: "/returns", icon: RotateCcw },
+    ],
+    ACCOUNTANT: [
+        HOME,
+        { title: "Reports", href: "/reports", icon: BarChart3 },
+        { title: "Sales", href: "/sales-history", icon: FileText },
+        { title: "Parties", href: "/parties", icon: Users },
+    ],
+};
+
+const DEFAULT_NAV: NavItem[] = [
+    HOME,
+    { title: "Billing", href: "/billing", icon: Receipt },
+    { title: "Stock", href: "/stock", icon: Package },
+    SETTINGS,
+];
 
 export function MobileNav() {
     const pathname = usePathname();
     const { user } = useAuth();
 
     const items = useMemo(() => {
-        const defaultItems = [
-            {
-                title: "Home",
-                href: "/",
-                icon: LayoutDashboard,
-            },
-            {
-                title: "Billing",
-                href: "/billing",
-                icon: Receipt,
-            },
-            {
-                title: "Stock",
-                href: "/stock",
-                icon: Package,
-            },
-            {
-                title: "Settings",
-                href: "/settings",
-                icon: Settings,
-            },
-        ];
-
-        if (user?.role === "SALES_REP") {
-            return [
-                {
-                    title: "Home",
-                    href: "/",
-                    icon: LayoutDashboard,
-                },
-                {
-                    title: "Visits",
-                    href: "/visits",
-                    icon: MapPin,
-                },
-                {
-                    title: "Take Orders",
-                    href: "/rep/orders/create",
-                    icon: ClipboardList,
-                },
-                {
-                    title: "My Day",
-                    href: "/visits/my-day",
-                    icon: LogIn,
-                },
-            ];
-        }
-
-        return defaultItems;
+        if (!user?.role) return DEFAULT_NAV;
+        return NAV_BY_ROLE[user.role] ?? DEFAULT_NAV;
     }, [user?.role]);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-6 py-2 md:hidden">
-            <div className="flex justify-between items-center">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-2 py-2 md:hidden safe-area-bottom">
+            <div className="flex justify-around items-center">
                 {items.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -81,11 +69,11 @@ export function MobileNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center gap-1 min-w-[60px]",
-                                isActive ? "text-blue-600" : "text-slate-500"
+                                "flex flex-col items-center justify-center gap-1 flex-1 py-1 rounded-xl transition-colors",
+                                isActive ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-slate-700"
                             )}
                         >
-                            <item.icon className={cn("h-6 w-6", isActive && "fill-blue-100")} />
+                            <item.icon className={cn("h-5 w-5", isActive && "fill-blue-100")} />
                             <span className="text-[10px] font-medium">{item.title}</span>
                         </Link>
                     );

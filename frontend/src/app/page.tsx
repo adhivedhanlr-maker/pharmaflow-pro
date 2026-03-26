@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SalesRepDashboard } from "@/components/dashboard/sales-rep-dashboard";
+import { BillingDashboard } from "@/components/dashboard/billing-dashboard";
+import { WarehouseDashboard } from "@/components/dashboard/warehouse-dashboard";
+import { AccountantDashboard } from "@/components/dashboard/accountant-dashboard";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { RoleGate } from "@/components/auth/role-gate";
 import { useAuth } from "@/context/auth-context";
@@ -238,6 +241,9 @@ export default function Dashboard() {
     const filteredActions = quickActions.filter(a => hasRoleAccess(role, a.roles));
 
     if (role === "SALES_REP") return <SalesRepDashboard />;
+    if (role === "BILLING_OPERATOR") return <BillingDashboard />;
+    if (role === "WAREHOUSE_MANAGER") return <WarehouseDashboard />;
+    if (role === "ACCOUNTANT") return <AccountantDashboard />;
 
     return (
         <div className="space-y-5 pb-24 md:pb-0">
