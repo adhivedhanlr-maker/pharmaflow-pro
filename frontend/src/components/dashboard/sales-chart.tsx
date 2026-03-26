@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Area,
     AreaChart,
@@ -29,18 +29,24 @@ interface SalesPoint {
 export function SalesChart() {
     const { token } = useAuth();
     const [data, setData] = useState<SalesPoint[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [range, setRange] = useState<RangeOption>("week");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
     useEffect(() => {
-        if (token && range !== "custom") {
+        if (!token) {
+            setLoading(false);
+            setData([]);
+            return;
+        }
+
+        if (range !== "custom") {
             void fetchAnalytics();
         }
     }, [token, range]);
 
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = useCallback(async () => {
         if (!token) {
             return;
         }
@@ -52,6 +58,8 @@ export function SalesChart() {
         }
 
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 12000);
 
         try {
             const params = new URLSearchParams({ range });
@@ -61,7 +69,8 @@ export function SalesChart() {
             }
 
             const res = await fetch(`${API_BASE}/sales/analytics?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
             });
 
             if (!res.ok) {
@@ -75,9 +84,10 @@ export function SalesChart() {
             console.error("Failed to fetch analytics:", error);
             setData([]);
         } finally {
+            window.clearTimeout(timeoutId);
             setLoading(false);
         }
-    };
+    }, [token, range, startDate, endDate]);
 
     if (loading) {
         return (
@@ -146,7 +156,7 @@ export function SalesChart() {
                         />
                         <Tooltip
                             labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ""}
-                            formatter={(value: any) => [`Rs ${(Number(value) || 0).toLocaleString()}`, "Sales"]}
+                            formatter={(value: number | string | undefined) => [`Rs ${(Number(value) || 0).toLocaleString()}`, "Sales"]}
                             contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                         />
                         <Area

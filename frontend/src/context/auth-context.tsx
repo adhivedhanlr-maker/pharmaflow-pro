@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface User {
     id: string;
@@ -53,34 +53,112 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [testMode, setTestMode] = useState(false);
     const router = useRouter();
-    const pathname = usePathname();
 
     const isAuthenticated = !!token || testMode;
 
-    useEffect(() => {
-        // Check for existing session on mount
-        const storedToken = localStorage.getItem("auth_token");
-        const storedUser = localStorage.getItem("auth_user");
-        const isTestMode = localStorage.getItem("test_mode") === "true";
-        const testUser = localStorage.getItem("test_user");
-        const testToken = localStorage.getItem("test_token");
+    const clearStoredSession = () => {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    };
 
-        if (isTestMode && testUser && testToken) {
-            setTestMode(true);
-            setUser(JSON.parse(testUser));
-            setToken(testToken);
-        } else if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+    const isValidSessionUser = (value: unknown): value is User => {
+        if (!value || typeof value !== "object") {
+            return false;
         }
 
-        // Sync with Neon Auth
-        // Note: Actual Neon Auth extraction might differ based on SDK version
-        // Assuming we can get the token if accessible.
-        // For now, relying on the provider to handle the UI flow, 
-        // and we might need to manually set the token after login in a callback if Neon doesn't auto-sync.
+        const candidate = value as Partial<User>;
+        return Boolean(
+            typeof candidate.id === "string" &&
+            candidate.id.trim() &&
+            typeof candidate.username === "string" &&
+            candidate.username.trim() &&
+            typeof candidate.role === "string" &&
+            candidate.role.trim() &&
+            typeof candidate.name === "string" &&
+            candidate.name.trim()
+        );
+    };
 
-        setIsLoading(false);
+    const parseStoredUser = (rawUser: string | null) => {
+        if (!rawUser) {
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(rawUser);
+            return isValidSessionUser(parsed) ? parsed : null;
+        } catch (error) {
+            console.error("Failed to parse stored auth user:", error);
+            return null;
+        }
+    };
+
+    const restoreSessionFromServer = async (sessionToken: string) => {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+        try {
+            const response = await fetch(`${API_BASE}/users/me`, {
+                headers: { Authorization: `Bearer ${sessionToken}` },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Session refresh failed with ${response.status}`);
+            }
+
+            const userData = await response.json();
+            if (!isValidSessionUser(userData)) {
+                throw new Error("Session refresh returned an incomplete user");
+            }
+
+            setToken(sessionToken);
+            setUser(userData);
+            localStorage.setItem("auth_token", sessionToken);
+            localStorage.setItem("auth_user", JSON.stringify(userData));
+            document.cookie = `auth_token=${sessionToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
+        } catch (error) {
+            console.error("Failed to restore session:", error);
+            setToken(null);
+            setUser(null);
+            clearStoredSession();
+        }
+    };
+
+    useEffect(() => {
+        const bootstrapSession = async () => {
+            const storedToken = localStorage.getItem("auth_token");
+            const storedUser = parseStoredUser(localStorage.getItem("auth_user"));
+            const isTestMode = localStorage.getItem("test_mode") === "true";
+            const testUser = parseStoredUser(localStorage.getItem("test_user"));
+            const testToken = localStorage.getItem("test_token");
+
+            if (isTestMode && testUser && testToken) {
+                setTestMode(true);
+                setUser(testUser);
+                setToken(testToken);
+                setIsLoading(false);
+                return;
+            }
+
+            if (!storedToken) {
+                setIsLoading(false);
+                return;
+            }
+
+            if (storedUser) {
+                setToken(storedToken);
+                setUser(storedUser);
+                setIsLoading(false);
+
+                void restoreSessionFromServer(storedToken);
+                return;
+            }
+
+            await restoreSessionFromServer(storedToken);
+            setIsLoading(false);
+        };
+
+        void bootstrapSession();
     }, []);
 
     const login = (newToken: string, newUser: User) => {
@@ -123,12 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(null);
         setUser(null);
         setTestMode(false);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("auth_user");
+        clearStoredSession();
         localStorage.removeItem("test_mode");
         localStorage.removeItem("test_user");
         localStorage.removeItem("test_token");
-        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         // Neon Logout
         // auth.logout(); // If available in the client
         router.push("/login");
@@ -143,6 +219,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
             if (response.ok) {
                 const userData = await response.json();
+                if (!isValidSessionUser(userData)) {
+                    throw new Error("Refreshed user payload is incomplete");
+                }
                 setUser(userData);
                 localStorage.setItem("auth_user", JSON.stringify(userData));
             }
@@ -167,9 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setToken(null);
             setUser(null);
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("auth_user");
-            document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            clearStoredSession();
             window.location.href = user.supportAccess.returnUrl;
         }
     };

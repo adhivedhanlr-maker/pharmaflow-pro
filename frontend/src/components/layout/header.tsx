@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Bell, User, Info, AlertTriangle, XCircle, LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
@@ -33,17 +33,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export function Header({ branding }: HeaderProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const { logout, exitSupportAccess, user: authUser } = useAuth();
+    const { logout, exitSupportAccess, user: authUser, token } = useAuth();
 
-    useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(interval);
-    }, []);
+    const fetchNotifications = useCallback(async () => {
+        if (!token) {
+            setNotifications([]);
+            setUnreadCount(0);
+            return;
+        }
 
-    const fetchNotifications = async () => {
         try {
-            const response = await fetch(`${API_BASE}/alerts`);
+            const response = await fetch(`${API_BASE}/alerts`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (response.ok) {
                 const data = await response.json();
                 setNotifications(data);
@@ -52,12 +54,32 @@ export function Header({ branding }: HeaderProps) {
         } catch (error) {
             console.error("Failed to fetch notifications:", error);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        const initialFetchId = window.setTimeout(() => {
+            void fetchNotifications();
+        }, 0);
+        const interval = window.setInterval(() => {
+            void fetchNotifications();
+        }, 30000);
+        return () => {
+            window.clearTimeout(initialFetchId);
+            window.clearInterval(interval);
+        };
+    }, [fetchNotifications]);
 
     const markAsRead = async (id: string) => {
         try {
-            await fetch(`${API_BASE}/alerts/${id}/read`, { method: "PATCH" });
-            fetchNotifications();
+            if (!token) {
+                return;
+            }
+
+            await fetch(`${API_BASE}/alerts/${id}/read`, {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            void fetchNotifications();
         } catch (error) {
             console.error("Failed to mark notification as read:", error);
         }

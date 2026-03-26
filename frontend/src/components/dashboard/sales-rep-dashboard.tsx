@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +23,30 @@ interface DashboardStats {
     salesValueToday: number;
     pendingDeliveries: number;
     visitsToday: number;
-    recentOrders: any[];
+    recentOrders: SalesRepOrder[];
+}
+
+interface SalesRepOrder {
+    id: string;
+    createdAt: string;
+    totalAmount: number;
+    orderNumber: string;
+    status: string;
+    customer: {
+        name: string;
+    };
+}
+
+interface SalesRepDelivery {
+    deliveryStatus: string;
+}
+
+interface SalesRepVisit {
+    checkInTime: string;
 }
 
 export function SalesRepDashboard() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const [stats, setStats] = useState<DashboardStats>({
         ordersToday: 0,
         salesValueToday: 0,
@@ -39,34 +58,61 @@ export function SalesRepDashboard() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-    const fetchData = async () => {
+    const fetchWithTimeout = async (url: string) => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 12000);
+
+        try {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                return [];
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error(`Dashboard request failed for ${url}:`, error);
+            return [];
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
+    };
+
+    const fetchData = useCallback(async () => {
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
-            const headers = { Authorization: `Bearer ${token}` };
-            const [ordersRes, deliveriesRes, visitsRes] = await Promise.all([
-                fetch(`${API_BASE}/orders`, { headers }),
-                fetch(`${API_BASE}/sales/invoices`, { headers }),
-                fetch(`${API_BASE}/visits/my-visits`, { headers })
+            const [orders, deliveries, visits] = await Promise.all([
+                fetchWithTimeout(`${API_BASE}/orders`),
+                fetchWithTimeout(`${API_BASE}/sales/invoices`),
+                fetchWithTimeout(`${API_BASE}/visits/my-visits`),
             ]);
-
-            const orders = ordersRes.ok ? await ordersRes.json() : [];
-            const deliveries = deliveriesRes.ok ? await deliveriesRes.json() : [];
-            const visits = visitsRes.ok ? await visitsRes.json() : [];
 
             // Process Data
             const today = new Date().toISOString().split('T')[0];
 
-            const todaysOrders = orders.filter((o: any) => o.createdAt.startsWith(today));
-            const salesValue = todaysOrders.reduce((acc: number, o: any) => acc + o.totalAmount, 0);
-            const pendingDeliveries = deliveries.filter((d: any) => d.deliveryStatus === 'PENDING').length;
-            const visitsToday = visits.filter((v: any) => v.checkInTime.startsWith(today)).length;
+            const safeOrders = Array.isArray(orders) ? (orders as SalesRepOrder[]) : [];
+            const safeDeliveries = Array.isArray(deliveries) ? (deliveries as SalesRepDelivery[]) : [];
+            const safeVisits = Array.isArray(visits) ? (visits as SalesRepVisit[]) : [];
+
+            const todaysOrders = safeOrders.filter((order) => order.createdAt.startsWith(today));
+            const salesValue = todaysOrders.reduce((accumulator, order) => accumulator + order.totalAmount, 0);
+            const pendingDeliveries = safeDeliveries.filter((delivery) => delivery.deliveryStatus === 'PENDING').length;
+            const visitsToday = safeVisits.filter((visit) => visit.checkInTime.startsWith(today)).length;
 
             setStats({
                 ordersToday: todaysOrders.length,
                 salesValueToday: salesValue,
                 pendingDeliveries,
                 visitsToday,
-                recentOrders: orders.slice(0, 5) // Last 5 orders
+                recentOrders: safeOrders.slice(0, 5), // Last 5 orders
             });
 
         } catch (error) {
@@ -74,7 +120,7 @@ export function SalesRepDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         if (token) fetchData();
