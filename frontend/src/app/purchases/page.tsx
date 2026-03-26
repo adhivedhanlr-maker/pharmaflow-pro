@@ -135,6 +135,8 @@ export default function PurchasesPage() {
     const [selectedSupplierId, setSelectedSupplierId] = useState("");
     const [billNumber, setBillNumber] = useState("");
     const [items, setItems] = useState<PurchaseItem[]>([]);
+    // Auto-size text input to its content length
+    const sz = (val: string, min = 4) => Math.max((val?.length || 0) + 1, min);
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
@@ -861,11 +863,11 @@ export default function PurchasesPage() {
                             <TableHeader>
                                 <TableRow className="bg-slate-50/50">
                                     <TableHead className="w-10 text-center text-[10px] font-bold uppercase">S NO</TableHead>
-                                    <TableHead className="w-[170px] text-[10px] font-bold uppercase">BRAND NAME</TableHead>
-                                    <TableHead className="w-[160px] text-[10px] font-bold uppercase">COMPO</TableHead>
-                                    <TableHead className="w-[75px] text-[10px] font-bold uppercase">HSN</TableHead>
-                                    <TableHead className="w-[90px] text-[10px] font-bold uppercase">PACKING</TableHead>
-                                    <TableHead className="w-[95px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
+                                    <TableHead className="min-w-[150px] text-[10px] font-bold uppercase">BRAND NAME</TableHead>
+                                    <TableHead className="min-w-[120px] text-[10px] font-bold uppercase">COMPO</TableHead>
+                                    <TableHead className="min-w-[60px] text-[10px] font-bold uppercase">HSN</TableHead>
+                                    <TableHead className="min-w-[70px] text-[10px] font-bold uppercase">PACKING</TableHead>
+                                    <TableHead className="min-w-[80px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
                                     <TableHead className="w-[130px] text-[10px] font-bold uppercase">EXPIRY</TableHead>
                                     <TableHead className="w-[75px] text-right text-[10px] font-bold uppercase">QTY</TableHead>
                                     <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">FREE</TableHead>
@@ -921,6 +923,7 @@ export default function PurchasesPage() {
                                                 className="h-8 text-[11px] bg-slate-50"
                                                 value={item.composition}
                                                 placeholder="Composition"
+                                                size={sz(item.composition, 10)}
                                                 onChange={(e) => updateItem(item.id, 'composition', e.target.value)}
                                             />
                                         </TableCell>
@@ -929,6 +932,7 @@ export default function PurchasesPage() {
                                                 className="h-8 text-[11px] bg-slate-50 font-mono"
                                                 value={item.hsnCode}
                                                 placeholder="HSN"
+                                                size={sz(item.hsnCode, 5)}
                                                 onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                                             />
                                         </TableCell>
@@ -937,6 +941,7 @@ export default function PurchasesPage() {
                                                 className="h-8 text-[11px] bg-slate-50"
                                                 value={item.packing}
                                                 placeholder="Packing"
+                                                size={sz(item.packing, 5)}
                                                 onChange={(e) => updateItem(item.id, 'packing', e.target.value)}
                                             />
                                         </TableCell>
@@ -945,6 +950,7 @@ export default function PurchasesPage() {
                                                 className="h-8 text-[11px] font-mono"
                                                 value={item.batchNumber}
                                                 placeholder="Batch"
+                                                size={sz(item.batchNumber, 6)}
                                                 onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
                                             />
                                         </TableCell>

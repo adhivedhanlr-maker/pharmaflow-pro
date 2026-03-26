@@ -47,6 +47,7 @@ interface Product {
         expiryDate: string;
         currentStock: number;
         salePrice: number;
+        supplier?: { id: string; name: string } | null;
     }[];
 }
 
@@ -311,6 +312,7 @@ export default function StockPage() {
                                             <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('batchNumber')}>
                                                 <div className="flex items-center">Batch No. {renderSortIcon('batchNumber', batchSortConfig.field, batchSortConfig.order)}</div>
                                             </TableHead>
+                                            <TableHead className="text-[11px]">Supplier</TableHead>
                                             <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleBatchSort('expiryDate')}>
                                                 <div className="flex items-center">Expiry {renderSortIcon('expiryDate', batchSortConfig.field, batchSortConfig.order)}</div>
                                             </TableHead>
@@ -326,7 +328,7 @@ export default function StockPage() {
                                     <TableBody>
                                         {loading ? (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
+                                                <TableCell colSpan={9} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
                                             </TableRow>
                                         ) : allBatches.length === 0 ? (
                                             <TableRow>
@@ -337,6 +339,7 @@ export default function StockPage() {
                                                 <TableCell className="text-slate-500">{idx + 1}</TableCell>
                                                 <TableCell className="font-semibold text-blue-900">{b.productName}</TableCell>
                                                 <TableCell className="font-mono text-xs">{b.batchNumber}</TableCell>
+                                                <TableCell className="text-xs text-slate-500">{b.supplier?.name || <span className="italic text-slate-300">—</span>}</TableCell>
                                                 <TableCell className="text-slate-500">{new Date(b.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</TableCell>
                                                 <TableCell className="text-right font-bold text-slate-700">{b.currentStock} Units</TableCell>
                                                 <TableCell className="text-right font-mono">₹{b.salePrice.toFixed(2)}</TableCell>

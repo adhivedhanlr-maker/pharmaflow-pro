@@ -60,6 +60,7 @@ interface Batch {
     pts?: number;
     mrp?: number;
     expiryDate: string;
+    supplier?: { id: string; name: string } | null;
 }
 
 interface Customer {
@@ -623,7 +624,7 @@ function BillingContent() {
                                                         <TableCell className="font-medium">{item.name}</TableCell>
                                                         <TableCell>
                                                             <select className="text-xs bg-slate-100 rounded px-2 py-1" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
-                                                                {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber} ({b.currentStock})</option>)}
+                                                                {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber}{b.supplier ? ` · ${b.supplier.name}` : ""} ({b.currentStock})</option>)}
                                                             </select>
                                                         </TableCell>
                                                         <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} /></TableCell>
@@ -660,7 +661,7 @@ function BillingContent() {
                                                                 <div className="mt-1">
                                                                     <select className="text-xs bg-slate-100 rounded px-2 py-1 w-full" value={item.batchId} onChange={(e) => updateItem(item.id, "batchId", e.target.value)}>
                                                                         {products.find(p => p.id === item.productId)?.batches.map(b => (
-                                                                            <option key={b.id} value={b.id}>{b.batchNumber} (Stock: {b.currentStock})</option>
+                                                                            <option key={b.id} value={b.id}>{b.batchNumber}{b.supplier ? ` · ${b.supplier.name}` : ""} (Stock: {b.currentStock})</option>
                                                                         ))}
                                                                     </select>
                                                                 </div>

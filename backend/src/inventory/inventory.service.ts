@@ -41,12 +41,13 @@ export class InventoryService {
                 take,
                 ...(includeBatches && {
                     include: {
-                        batches: onlyWithStock
-                            ? {
-                                where: { currentStock: { gt: 0 } },
-                                orderBy: { expiryDate: 'asc' as const },
-                            }
-                            : { orderBy: { expiryDate: 'asc' as const } },
+                        batches: {
+                            ...(onlyWithStock ? { where: { currentStock: { gt: 0 } } } : {}),
+                            orderBy: { expiryDate: 'asc' as const },
+                            include: {
+                                supplier: { select: { id: true, name: true } },
+                            },
+                        },
                     },
                 }),
                 orderBy: { name: 'asc' },

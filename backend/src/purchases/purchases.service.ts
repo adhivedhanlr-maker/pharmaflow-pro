@@ -64,11 +64,12 @@ export class PurchasesService {
                     throw new Error("Each item must have a productId or a name");
                 }
 
-                // Check if batch exists or create new
+                // Check if batch exists for this product + batch number + supplier combination
                 let batch = await tx.batch.findFirst({
                     where: {
                         productId: item.productId,
                         batchNumber: item.batchNumber,
+                        supplierId: supplierId,
                         ...(tenantId ? { tenantId } : {}),
                     },
                 });
@@ -86,15 +87,17 @@ export class PurchasesService {
                             pts: item.pts,
                             nr: item.nr,
                             expiryDate: new Date(item.expiryDate),
+                            supplierId: supplierId,
                         },
                     });
                 } else {
-                    // Create new batch
+                    // Create new batch — same batch number from different suppliers → separate records
                     batch = await tx.batch.create({
                         data: {
                             tenantId,
                             productId: item.productId,
                             batchNumber: item.batchNumber,
+                            supplierId: supplierId,
                             expiryDate: new Date(item.expiryDate),
                             currentStock: item.quantity,
                             purchasePrice: item.purchasePrice,
