@@ -847,34 +847,34 @@ export default function PurchasesPage() {
                 </div>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b gap-2">
-                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight shrink-0">Item Entry Details</CardTitle>
-                        <div className="flex gap-2 items-center ml-auto">
+                    <CardHeader className="flex flex-wrap items-center justify-between py-2 px-4 border-b gap-2">
+                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Item Entry Details</CardTitle>
+                        <div className="flex gap-2 items-center">
                             <AddProductDialog onProductAdded={fetchData} />
-                            <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs whitespace-nowrap">
+                            <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs">
                                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Item
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-0 border-t overflow-x-auto">
-                        <Table>
+                        <Table style={{ minWidth: "1520px" }}>
                             <TableHeader>
                                 <TableRow className="bg-slate-50/50">
-                                    <TableHead className="w-12 text-center text-[10px] font-bold uppercase">S NO</TableHead>
-                                    <TableHead className="w-[180px] text-[10px] font-bold uppercase">BRAND NAME</TableHead>
-                                    <TableHead className="w-[180px] text-[10px] font-bold uppercase">COMPO</TableHead>
-                                    <TableHead className="w-[80px] text-[10px] font-bold uppercase">HSN</TableHead>
-                                    <TableHead className="w-[100px] text-[10px] font-bold uppercase">PACKING</TableHead>
-                                    <TableHead className="w-[100px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
-                                    <TableHead className="w-[120px] text-[10px] font-bold uppercase">EXPIRY</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">QTY</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">FREE</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">DISC%</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">RATE</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">MRP</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">PTR</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">PTS</TableHead>
-                                    <TableHead className="text-right text-[10px] font-bold uppercase">NR</TableHead>
+                                    <TableHead className="w-10 text-center text-[10px] font-bold uppercase">S NO</TableHead>
+                                    <TableHead className="w-[170px] text-[10px] font-bold uppercase">BRAND NAME</TableHead>
+                                    <TableHead className="w-[160px] text-[10px] font-bold uppercase">COMPO</TableHead>
+                                    <TableHead className="w-[75px] text-[10px] font-bold uppercase">HSN</TableHead>
+                                    <TableHead className="w-[90px] text-[10px] font-bold uppercase">PACKING</TableHead>
+                                    <TableHead className="w-[95px] text-[10px] font-bold uppercase">BATCH NO</TableHead>
+                                    <TableHead className="w-[130px] text-[10px] font-bold uppercase">EXPIRY</TableHead>
+                                    <TableHead className="w-[75px] text-right text-[10px] font-bold uppercase">QTY</TableHead>
+                                    <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">FREE</TableHead>
+                                    <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">DISC%</TableHead>
+                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">RATE</TableHead>
+                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">MRP</TableHead>
+                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">PTR</TableHead>
+                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">PTS</TableHead>
+                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">NR</TableHead>
                                     <TableHead className="w-10"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -959,7 +959,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-16 ml-auto text-right text-[11px] font-bold"
+                                                className="h-8 w-full text-right text-[11px] font-bold"
                                                 value={item.quantity === 0 ? "" : item.quantity}
                                                 placeholder="0"
                                                 min="0"
@@ -972,7 +972,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-14 ml-auto text-right text-[11px] font-bold text-emerald-600"
+                                                className="h-8 w-full text-right text-[11px] font-bold text-emerald-600"
                                                 value={item.freeQty === 0 ? "" : item.freeQty}
                                                 placeholder="0"
                                                 min="0"
@@ -985,7 +985,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-14 ml-auto text-right text-[11px] font-bold text-amber-600"
+                                                className="h-8 w-full text-right text-[11px] font-bold text-amber-600"
                                                 value={item.discountPct === 0 ? "" : item.discountPct}
                                                 placeholder="0"
                                                 min="0"
@@ -1000,7 +1000,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono"
+                                                className="h-8 w-full text-right text-[11px] font-mono"
                                                 value={item.purchasePrice === 0 ? "" : item.purchasePrice}
                                                 placeholder="0.00"
                                                 min="0"
@@ -1014,7 +1014,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-slate-700"
+                                                className="h-8 w-full text-right text-[11px] font-mono text-slate-700"
                                                 value={item.salePrice === 0 ? "" : item.salePrice}
                                                 placeholder="0.00"
                                                 min="0"
@@ -1028,7 +1028,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-blue-600"
+                                                className="h-8 w-full text-right text-[11px] font-mono text-blue-600"
                                                 value={item.ptr === 0 ? "" : item.ptr}
                                                 placeholder="0.00"
                                                 min="0"
@@ -1042,7 +1042,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-green-600"
+                                                className="h-8 w-full text-right text-[11px] font-mono text-green-600"
                                                 value={item.pts === 0 ? "" : item.pts}
                                                 placeholder="0.00"
                                                 min="0"
@@ -1056,7 +1056,7 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-20 ml-auto text-right text-[11px] font-mono text-orange-600"
+                                                className="h-8 w-full text-right text-[11px] font-mono text-orange-600"
                                                 value={item.nr === 0 ? "" : item.nr}
                                                 placeholder="0.00"
                                                 min="0"

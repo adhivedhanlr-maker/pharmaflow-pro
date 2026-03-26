@@ -26,13 +26,22 @@ import {
     TrendingDown,
     AlertOctagon,
     Loader2,
-    FileDown,
+    FileText,
+    FileSpreadsheet,
     ShieldAlert,
-    Receipt
+    Receipt,
+    ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleGate } from "@/components/auth/role-gate";
 import { useAuth } from "@/context/auth-context";
+import {
+    openGstReportPdf,
+    downloadGstReportExcel,
+    type InvoiceRow,
+    type ReportMode,
+    type BusinessProfile
+} from "@/lib/gst-report";
 
 interface SaleItem {
     quantity: number;
@@ -87,35 +96,49 @@ interface ExpiringBatch {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-function downloadCSV(filename: string, rows: (string | number)[][]) {
-    const csv = rows.map(r =>
-        r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")
-    ).join("\n");
-    const blob = new Blob(["\uFEFF" + csv, ], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-}
-
 export default function ReportsPage() {
     const { token } = useAuth();
     const [sales, setSales] = useState<Sale[]>([]);
     const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [expiring, setExpiring] = useState<ExpiringBatch[]>([]);
+    const [businessProfile, setBusinessProfile] = useState<BusinessProfile>({ companyName: "Company" });
     const [loading, setLoading] = useState(false);
-    const [gstLoading, setGstLoading] = useState(false);
+    const [reportMode, setReportMode] = useState<ReportMode>("SUMMARY");
 
-    // Date range — defaults to current month
+    // Default to current month
     const now = new Date();
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-    const today = now.toISOString().slice(0, 10);
-    const [startDate, setStartDate] = useState(firstOfMonth);
-    const [endDate, setEndDate] = useState(today);
+    const [startDate, setStartDate] = useState(
+        new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    );
+    const [endDate, setEndDate] = useState(now.toISOString().slice(0, 10));
 
     useEffect(() => {
-        if (token) fetchReports();
+        if (token) {
+            fetchReports();
+            fetchProfile();
+        }
     }, [token]);
+
+    const fetchProfile = async () => {
+        try {
+            const [profileRes, brandingRes] = await Promise.all([
+                fetch(`${API_BASE}/business-profile`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`),
+            ]);
+            const profile = profileRes.ok ? await profileRes.json() : null;
+            const branding = brandingRes.ok ? await brandingRes.json() : null;
+            setBusinessProfile({
+                companyName: profile?.companyName || branding?.companyName || "Company",
+                address: profile?.address || branding?.address || "",
+                phone: profile?.phone || "",
+                email: profile?.email || "",
+                gstin: profile?.gstin || "",
+                panNo: profile?.panNo || "",
+                dlNo: profile?.dlNo || "",
+                fssaiNo: profile?.fssaiNo || "",
+            });
+        } catch { /* ignore */ }
+    };
 
     const fetchReports = async () => {
         setLoading(true);
@@ -138,16 +161,12 @@ export default function ReportsPage() {
 
     // Filter by date range
     const filteredSales = useMemo(() =>
-        sales.filter(s => {
-            const d = s.createdAt.slice(0, 10);
-            return d >= startDate && d <= endDate;
-        }), [sales, startDate, endDate]);
+        sales.filter(s => { const d = s.createdAt.slice(0, 10); return d >= startDate && d <= endDate; }),
+        [sales, startDate, endDate]);
 
     const filteredPurchases = useMemo(() =>
-        purchases.filter(p => {
-            const d = p.createdAt.slice(0, 10);
-            return d >= startDate && d <= endDate;
-        }), [purchases, startDate, endDate]);
+        purchases.filter(p => { const d = p.createdAt.slice(0, 10); return d >= startDate && d <= endDate; }),
+        [purchases, startDate, endDate]);
 
     const stats = {
         totalSales: filteredSales.reduce((a, s) => a + (s.netAmount || 0), 0),
@@ -156,131 +175,145 @@ export default function ReportsPage() {
         expiryRisk: expiring.reduce((a, b) => a + (b.currentStock * b.salePrice), 0),
     };
 
-    const handleDownloadGST = () => {
-        setGstLoading(true);
-        const label = `${startDate}_to_${endDate}`;
+    const periodLabel = `${startDate} to ${endDate}`;
 
-        // ── SALES GST CSV ──
-        const salesRows: (string | number)[][] = [[
-            "Invoice No", "Date", "Customer", "Customer GSTIN",
-            "HSN Code", "Product", "Qty", "Free",
-            "Rate (PTR/PTS)", "Taxable Value", "GST %",
-            "CGST Amt", "SGST Amt", "Total"
-        ]];
-        for (const sale of filteredSales) {
-            const date = new Date(sale.createdAt).toLocaleDateString("en-IN");
-            for (const item of (sale.items || [])) {
-                const taxable = item.quantity * item.unitPrice;
-                const cgst = item.gstAmount / 2;
-                const sgst = item.gstAmount / 2;
-                salesRows.push([
-                    sale.invoiceNumber,
-                    date,
-                    sale.customer?.name || "",
-                    sale.customer?.gstin || "",
-                    item.product?.hsnCode || "",
-                    item.product?.name || "",
-                    item.quantity,
-                    item.freeQuantity || 0,
-                    item.unitPrice.toFixed(2),
-                    taxable.toFixed(2),
-                    item.gstRate,
-                    cgst.toFixed(2),
-                    sgst.toFixed(2),
-                    item.totalAmount.toFixed(2),
-                ]);
-            }
-        }
-        downloadCSV(`GST_Sales_${label}.csv`, salesRows);
+    // Build invoice-level rows (one row per invoice / bill)
+    const buildSaleRows = (): InvoiceRow[] =>
+        filteredSales.map(sale => ({
+            refNumber: sale.invoiceNumber,
+            dateKey: sale.createdAt.slice(0, 10),
+            date: new Date(sale.createdAt).toLocaleDateString("en-IN"),
+            partyName: sale.customer?.name || "",
+            partyGstin: sale.customer?.gstin || "",
+            taxableValue: sale.totalAmount - sale.gstAmount,
+            cgst: sale.gstAmount / 2,
+            sgst: sale.gstAmount / 2,
+            netAmount: sale.netAmount,
+        }));
 
-        // ── PURCHASE GST CSV ──
-        const purRows: (string | number)[][] = [[
-            "Bill No", "Date", "Supplier", "Supplier GSTIN",
-            "HSN Code", "Product", "Qty", "Free",
-            "Purchase Rate", "Taxable Value", "GST %",
-            "CGST Amt", "SGST Amt", "Total"
-        ]];
-        for (const pur of filteredPurchases) {
-            const date = new Date(pur.createdAt).toLocaleDateString("en-IN");
-            for (const item of (pur.items || [])) {
-                const taxable = item.quantity * item.purchasePrice;
-                const cgst = item.gstAmount / 2;
-                const sgst = item.gstAmount / 2;
-                purRows.push([
-                    pur.billNumber,
-                    date,
-                    pur.supplier?.name || "",
-                    pur.supplier?.gstin || "",
-                    item.product?.hsnCode || "",
-                    item.product?.name || "",
-                    item.quantity,
-                    item.freeQty || 0,
-                    item.purchasePrice.toFixed(2),
-                    taxable.toFixed(2),
-                    item.gstRate,
-                    cgst.toFixed(2),
-                    sgst.toFixed(2),
-                    item.totalAmount.toFixed(2),
-                ]);
-            }
-        }
-        // Small delay between downloads so browser doesn't block second one
-        setTimeout(() => {
-            downloadCSV(`GST_Purchase_${label}.csv`, purRows);
-            setGstLoading(false);
-        }, 300);
-    };
+    const buildPurchaseRows = (): InvoiceRow[] =>
+        filteredPurchases.map(pur => ({
+            refNumber: pur.billNumber,
+            dateKey: pur.createdAt.slice(0, 10),
+            date: new Date(pur.createdAt).toLocaleDateString("en-IN"),
+            partyName: pur.supplier?.name || "",
+            partyGstin: pur.supplier?.gstin || "",
+            taxableValue: pur.netAmount - pur.gstAmount,
+            cgst: pur.gstAmount / 2,
+            sgst: pur.gstAmount / 2,
+            netAmount: pur.netAmount,
+        }));
+
+    const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
     return (
         <RoleGate
             allowedRoles={["ADMIN", "ACCOUNTANT"]}
             fallback={
                 <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 text-center">
-                    <div className="bg-red-50 p-6 rounded-full">
-                        <ShieldAlert className="h-16 w-16 text-red-500" />
-                    </div>
+                    <div className="bg-red-50 p-6 rounded-full"><ShieldAlert className="h-16 w-16 text-red-500" /></div>
                     <h1 className="text-2xl font-bold">Access Denied</h1>
-                    <p className="text-slate-500 max-w-sm">
-                        Financial reports and analytics are restricted to Administrators and Accountants.
-                    </p>
+                    <p className="text-slate-500 max-w-sm">Financial reports are restricted to Administrators and Accountants.</p>
                     <Button variant="outline" onClick={() => window.location.href = "/"}>Back to Dashboard</Button>
                 </div>
             }
         >
             <div className="space-y-6 pb-24 md:pb-0">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+                {/* ── Header ── */}
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Business Reports</h1>
-                        <p className="text-muted-foreground text-sm">Financial analytics and GST reports.</p>
+                        <p className="text-muted-foreground text-sm">Financial analytics and GST filing reports.</p>
                     </div>
+                    {/* Date filter */}
                     <div className="flex flex-wrap items-center gap-2">
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={e => setStartDate(e.target.value)}
-                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white"
-                        />
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
                         <span className="text-slate-400 text-sm">to</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={e => setEndDate(e.target.value)}
-                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white"
-                        />
-                        <Button size="sm" onClick={handleDownloadGST} disabled={gstLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            {gstLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
-                            Download GST Report
-                        </Button>
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
                     </div>
                 </div>
 
-                {/* Stat Cards */}
+                {/* ── GST Report Download Cards ── */}
+                <Card className="border-slate-200">
+                    <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <CardTitle className="text-sm font-bold text-slate-700">GST Reports</CardTitle>
+                            {/* Summary / Detailed toggle */}
+                            <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit">
+                                {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
+                                    <button key={m}
+                                        onClick={() => setReportMode(m)}
+                                        className={`px-4 py-1.5 text-xs font-bold transition-colors ${
+                                            reportMode === m
+                                                ? "bg-slate-800 text-white"
+                                                : "bg-white text-slate-500 hover:bg-slate-50"
+                                        }`}>
+                                        {m === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed"}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                            {reportMode === "SUMMARY"
+                                ? "Totals grouped by date — ideal for quick GST filing overview"
+                                : "One row per invoice/bill — full detail for auditing"}
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Sales */}
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50/30 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Receipt className="h-4 w-4 text-emerald-700" />
+                                    <span className="text-sm font-bold text-emerald-800">GST Sales Report</span>
+                                    <span className="ml-auto text-xs text-slate-400">{filteredSales.length} invoices</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="outline"
+                                        className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                        onClick={() => openGstReportPdf(reportMode, "SALES", buildSaleRows(), businessProfile, periodLabel)}>
+                                        <FileText className="mr-1.5 h-3.5 w-3.5" /> PDF
+                                    </Button>
+                                    <Button size="sm"
+                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        onClick={() => downloadGstReportExcel(reportMode, "SALES", buildSaleRows(), businessProfile, periodLabel)}>
+                                        <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> Excel
+                                    </Button>
+                                </div>
+                            </div>
+                            {/* Purchase */}
+                            <div className="rounded-lg border border-blue-200 bg-blue-50/30 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <ShoppingCart className="h-4 w-4 text-blue-700" />
+                                    <span className="text-sm font-bold text-blue-800">GST Purchase Report</span>
+                                    <span className="ml-auto text-xs text-slate-400">{filteredPurchases.length} bills</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="outline"
+                                        className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                                        onClick={() => openGstReportPdf(reportMode, "PURCHASE", buildPurchaseRows(), businessProfile, periodLabel)}>
+                                        <FileText className="mr-1.5 h-3.5 w-3.5" /> PDF
+                                    </Button>
+                                    <Button size="sm"
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                                        onClick={() => downloadGstReportExcel(reportMode, "PURCHASE", buildPurchaseRows(), businessProfile, periodLabel)}>
+                                        <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> Excel
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* ── Stat Cards ── */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card>
                         <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Sales</CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">₹{stats.totalSales.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
+                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalSales)}</div>
                             <div className="text-xs text-green-600 flex items-center mt-1">
                                 <TrendingUp className="h-3 w-3 mr-1" /> {filteredSales.length} invoices
                             </div>
@@ -289,14 +322,14 @@ export default function ReportsPage() {
                     <Card>
                         <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">GST Collected</CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">₹{stats.totalGst.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
+                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalGst)}</div>
                             <p className="text-xs text-muted-foreground mt-1">CGST + SGST on sales</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Purchases</CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">₹{stats.totalPurchases.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
+                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalPurchases)}</div>
                             <div className="text-xs text-blue-600 flex items-center mt-1">
                                 <TrendingDown className="h-3 w-3 mr-1" /> {filteredPurchases.length} bills
                             </div>
@@ -305,7 +338,7 @@ export default function ReportsPage() {
                     <Card className="border-red-100 bg-red-50/20">
                         <CardHeader className="pb-2 text-red-500 font-bold uppercase tracking-wider text-[10px]">Expiry Stock Value</CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-600">₹{stats.expiryRisk.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
+                            <div className="text-2xl font-bold text-red-600">{inr(stats.expiryRisk)}</div>
                             <div className="text-xs text-red-500 flex items-center mt-1">
                                 <AlertOctagon className="h-3 w-3 mr-1" /> {expiring.length} batches near expiry
                             </div>
@@ -313,7 +346,7 @@ export default function ReportsPage() {
                     </Card>
                 </div>
 
-                {/* Tabs */}
+                {/* ── Tabs ── */}
                 <Tabs defaultValue="expiry" className="space-y-4">
                     <TabsList className="bg-muted/50 p-1">
                         <TabsTrigger value="expiry">Expiry Risk Analysis</TabsTrigger>
@@ -342,7 +375,7 @@ export default function ReportsPage() {
                                             <TableRow><TableCell colSpan={5} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></TableCell></TableRow>
                                         ) : expiring.length === 0 ? (
                                             <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No critical expiries found.</TableCell></TableRow>
-                                        ) : expiring.map((b) => (
+                                        ) : expiring.map(b => (
                                             <TableRow key={b.id}>
                                                 <TableCell className="font-medium text-slate-900">{b.product.name}</TableCell>
                                                 <TableCell className="font-mono text-xs uppercase">{b.batchNumber}</TableCell>
@@ -382,8 +415,8 @@ export default function ReportsPage() {
                                         {loading ? (
                                             <TableRow><TableCell colSpan={5} className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></TableCell></TableRow>
                                         ) : filteredSales.length === 0 ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No transactions found for selected period.</TableCell></TableRow>
-                                        ) : filteredSales.slice(0, 20).map((s) => (
+                                            <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No transactions in selected period.</TableCell></TableRow>
+                                        ) : filteredSales.slice(0, 20).map(s => (
                                             <TableRow key={s.id}>
                                                 <TableCell className="font-mono font-bold text-slate-700 text-xs">{s.invoiceNumber}</TableCell>
                                                 <TableCell className="text-slate-500 text-xs">{new Date(s.createdAt).toLocaleDateString("en-IN")}</TableCell>
