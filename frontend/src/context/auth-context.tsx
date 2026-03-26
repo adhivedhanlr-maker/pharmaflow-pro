@@ -12,6 +12,7 @@ interface User {
     isOnDuty?: boolean;
     twoFactorEnabled?: boolean;
     canGenerateInvoice?: boolean;
+    permissions?: string[];
     lastLat?: number;
     lastLng?: number;
     supportAccess?: {

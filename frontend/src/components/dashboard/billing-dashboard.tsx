@@ -119,12 +119,12 @@ export function BillingDashboard() {
                 ))}
             </div>
 
-            {/* Quick Actions */}
-            <Card>
+            {/* Quick Actions — mobile only (desktop has sidebar) */}
+            <Card className="md:hidden">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <CardContent className="grid grid-cols-2 gap-2">
                     {quickActions.map(a => (
                         <Link key={a.label} href={a.href}>
                             <Button variant="outline" className="w-full justify-start gap-2">

@@ -124,8 +124,8 @@ export function WarehouseDashboard() {
                 ))}
             </div>
 
-            {/* Quick Actions */}
-            <Card>
+            {/* Quick Actions — mobile only (desktop has sidebar) */}
+            <Card className="md:hidden">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                 </CardHeader>

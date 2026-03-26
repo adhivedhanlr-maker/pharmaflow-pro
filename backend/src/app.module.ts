@@ -22,6 +22,7 @@ import { VisitsModule } from './visits/visits.module';
 import { OrdersModule } from './orders/orders.module';
 import { RoutesModule } from './routes/routes.module';
 import { TenantBrandingModule } from './tenant-branding/tenant-branding.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 
 @Module({
@@ -41,6 +42,7 @@ import { TenantBrandingModule } from './tenant-branding/tenant-branding.module';
     OrdersModule,
     RoutesModule,
     TenantBrandingModule,
+    PermissionsModule,
 
     ScheduleModule.forRoot(),
     MailerModule.forRoot({

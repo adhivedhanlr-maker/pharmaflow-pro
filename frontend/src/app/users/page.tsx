@@ -34,6 +34,7 @@ import { RoleGate } from "@/components/auth/role-gate";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { isAdminLikeRole } from "@/lib/roles";
+import { ALL_PERMISSIONS, PERMISSION_LABELS, ROLE_DEFAULTS, type Permission } from "@/lib/permissions";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -43,6 +44,7 @@ interface User {
     name: string;
     role: string;
     canGenerateInvoice: boolean;
+    permissions: string[];
     createdAt: string;
 }
 
@@ -63,6 +65,7 @@ export default function UsersPage() {
         name: "",
         role: "BILLING_OPERATOR",
         canGenerateInvoice: false,
+        permissions: [] as string[],
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -71,6 +74,7 @@ export default function UsersPage() {
         name: "",
         role: "BILLING_OPERATOR",
         canGenerateInvoice: false,
+        permissions: [] as string[],
     });
 
     useEffect(() => {
@@ -168,8 +172,32 @@ export default function UsersPage() {
             name: user.name,
             role: user.role,
             canGenerateInvoice: user.canGenerateInvoice,
+            permissions: user.permissions ?? [],
         });
         setIsEditDialogOpen(true);
+    };
+
+    const togglePermission = (perm: string, isEdit: boolean) => {
+        if (isEdit) {
+            setEditFormData(prev => ({
+                ...prev,
+                permissions: prev.permissions.includes(perm)
+                    ? prev.permissions.filter(p => p !== perm)
+                    : [...prev.permissions, perm],
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                permissions: prev.permissions.includes(perm)
+                    ? prev.permissions.filter(p => p !== perm)
+                    : [...prev.permissions, perm],
+            }));
+        }
+    };
+
+    const useRoleDefaults = (role: string, isEdit: boolean) => {
+        if (isEdit) setEditFormData(prev => ({ ...prev, permissions: [] }));
+        else setFormData(prev => ({ ...prev, permissions: [] }));
     };
 
     const handleUpdateUser = async (e: React.FormEvent) => {
@@ -322,6 +350,46 @@ export default function UsersPage() {
                                     </div>
                                 )}
 
+                                {/* Per-user permission overrides */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label className="text-sm font-medium">Custom Permissions</Label>
+                                        <button type="button" onClick={() => useRoleDefaults(formData.role, false)} className="text-xs text-blue-600 hover:underline">
+                                            Use role defaults
+                                        </button>
+                                    </div>
+                                    {formData.permissions.length === 0 && (
+                                        <p className="text-xs text-slate-400 italic">Using role defaults — toggle below to override</p>
+                                    )}
+                                    <div className="space-y-2 border rounded-lg p-3 bg-slate-50/50">
+                                        {ALL_PERMISSIONS.map(perm => (
+                                            <div key={perm} className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-xs font-medium text-slate-700">{PERMISSION_LABELS[perm as Permission].label}</p>
+                                                    <p className="text-[10px] text-slate-400">{PERMISSION_LABELS[perm as Permission].description}</p>
+                                                </div>
+                                                <Switch
+                                                    checked={formData.permissions.length > 0
+                                                        ? formData.permissions.includes(perm)
+                                                        : (ROLE_DEFAULTS[formData.role] ?? []).includes(perm)}
+                                                    onCheckedChange={() => {
+                                                        if (formData.permissions.length === 0) {
+                                                            // First toggle — initialize from role defaults
+                                                            const defaults = ROLE_DEFAULTS[formData.role] ?? [];
+                                                            const next = defaults.includes(perm)
+                                                                ? defaults.filter(p => p !== perm)
+                                                                : [...defaults, perm];
+                                                            setFormData(prev => ({ ...prev, permissions: next }));
+                                                        } else {
+                                                            togglePermission(perm, false);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <Button type="submit" className="w-full h-11 bg-indigo-600 hover:bg-indigo-700" disabled={isCreating}>
                                     {isCreating ? (
                                         <>
@@ -405,6 +473,45 @@ export default function UsersPage() {
                                         />
                                     </div>
                                 )}
+
+                                {/* Per-user permission overrides */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label className="text-sm font-medium">Custom Permissions</Label>
+                                        <button type="button" onClick={() => useRoleDefaults(editFormData.role, true)} className="text-xs text-blue-600 hover:underline">
+                                            Use role defaults
+                                        </button>
+                                    </div>
+                                    {editFormData.permissions.length === 0 && (
+                                        <p className="text-xs text-slate-400 italic">Using role defaults — toggle below to override</p>
+                                    )}
+                                    <div className="space-y-2 border rounded-lg p-3 bg-slate-50/50 max-h-52 overflow-y-auto">
+                                        {ALL_PERMISSIONS.map(perm => (
+                                            <div key={perm} className="flex items-center justify-between gap-2">
+                                                <div>
+                                                    <p className="text-xs font-medium text-slate-700">{PERMISSION_LABELS[perm as Permission].label}</p>
+                                                    <p className="text-[10px] text-slate-400">{PERMISSION_LABELS[perm as Permission].description}</p>
+                                                </div>
+                                                <Switch
+                                                    checked={editFormData.permissions.length > 0
+                                                        ? editFormData.permissions.includes(perm)
+                                                        : (ROLE_DEFAULTS[editFormData.role] ?? []).includes(perm)}
+                                                    onCheckedChange={() => {
+                                                        if (editFormData.permissions.length === 0) {
+                                                            const defaults = ROLE_DEFAULTS[editFormData.role] ?? [];
+                                                            const next = defaults.includes(perm)
+                                                                ? defaults.filter(p => p !== perm)
+                                                                : [...defaults, perm];
+                                                            setEditFormData(prev => ({ ...prev, permissions: next }));
+                                                        } else {
+                                                            togglePermission(perm, true);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 <Button type="submit" className="w-full h-11 bg-indigo-600 hover:bg-indigo-700" disabled={isUpdating}>
                                     {isUpdating ? (

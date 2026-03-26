@@ -22,6 +22,7 @@ export class UsersService {
                 role: true,
                 tenantId: true,
                 canGenerateInvoice: true,
+                permissions: true,
                 isOnDuty: true,
                 createdAt: true,
                 paymentMethod: true,
@@ -47,6 +48,7 @@ export class UsersService {
                 role: true,
                 tenantId: true,
                 canGenerateInvoice: true,
+                permissions: true,
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,
@@ -77,6 +79,7 @@ export class UsersService {
                     role: true,
                     tenantId: true,
                     canGenerateInvoice: true,
+                    permissions: true,
                 },
             });
         } catch (error) {
@@ -153,6 +156,7 @@ export class UsersService {
                 role: true,
                 tenantId: true,
                 canGenerateInvoice: true,
+                permissions: true,
                 isOnDuty: true,
                 hourlyRate: true,
                 overtimeRate: true,
