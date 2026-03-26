@@ -1,5 +1,6 @@
 const CACHE_NAME = "pharmaflow-static-v4";
 const STATIC_ASSETS = [
+    "/login",
     "/manifest.json",
     "/logo.png",
     "/icon-192x192.png",
@@ -47,7 +48,30 @@ self.addEventListener("message", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-    if (event.request.method !== "GET" || !isStaticAsset(event.request.url)) {
+    if (event.request.method !== "GET") {
+        return;
+    }
+
+    if (event.request.mode === "navigate") {
+        event.respondWith(
+            fetch(event.request).catch(async () => {
+                const cachedPage = await caches.match(event.request);
+                if (cachedPage) {
+                    return cachedPage;
+                }
+
+                const loginFallback = await caches.match("/login");
+                if (loginFallback) {
+                    return loginFallback;
+                }
+
+                throw new Error("Navigation request failed and no fallback page is cached.");
+            }),
+        );
+        return;
+    }
+
+    if (!isStaticAsset(event.request.url)) {
         return;
     }
 
