@@ -11,10 +11,13 @@ export function usePWARegistration() {
         const register = async () => {
             try {
                 const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+                localStorage.setItem("pwa-sw-registered-at", new Date().toISOString());
+                localStorage.setItem("pwa-sw-scope", registration.scope);
                 await registration.update();
 
                 const activateUpdate = (worker: ServiceWorker | null) => {
                     if (worker && worker.state === "installed" && navigator.serviceWorker.controller) {
+                        localStorage.setItem("pwa-sw-waiting-at", new Date().toISOString());
                         worker.postMessage({ type: "SKIP_WAITING" });
                     }
                 };
@@ -37,6 +40,7 @@ export function usePWARegistration() {
         };
 
         const handleControllerChange = () => {
+            localStorage.setItem("pwa-sw-controller-change-at", new Date().toISOString());
             window.location.reload();
         };
 

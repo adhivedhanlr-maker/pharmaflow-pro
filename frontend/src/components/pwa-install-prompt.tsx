@@ -8,6 +8,9 @@ type InstallMode = "android-prompt" | "android-manual" | "ios" | "hidden";
 
 const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 const INSTALL_CONFIRMED_KEY = "pwa-installed";
+const INSTALL_PROMPT_SEEN_KEY = "pwa-beforeinstallprompt-seen-at";
+const INSTALL_PROMPT_OUTCOME_KEY = "pwa-install-outcome";
+const APP_INSTALLED_AT_KEY = "pwa-appinstalled-at";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -50,12 +53,14 @@ export function PWAInstallPrompt() {
 
         const handleBeforeInstallPrompt = (event: Event) => {
             event.preventDefault();
+            localStorage.setItem(INSTALL_PROMPT_SEEN_KEY, new Date().toISOString());
             setDeferredPrompt(event as BeforeInstallPromptEvent);
             setMode("android-prompt");
         };
 
         const handleAppInstalled = () => {
             localStorage.setItem(INSTALL_CONFIRMED_KEY, "true");
+            localStorage.setItem(APP_INSTALLED_AT_KEY, new Date().toISOString());
             setDeferredPrompt(null);
             setDismissed(false);
             setMode("hidden");
@@ -96,6 +101,7 @@ export function PWAInstallPrompt() {
 
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
+        localStorage.setItem(INSTALL_PROMPT_OUTCOME_KEY, `${outcome}:${new Date().toISOString()}`);
 
         if (outcome === "accepted") {
             localStorage.setItem(INSTALL_CONFIRMED_KEY, "true");
