@@ -4,7 +4,7 @@
     "short_name": "PharmaFlow",
     "description": "B2B Pharmaceutical Distribution Management System",
     "lang": "en",
-    "start_url": "/",
+    "start_url": "/login?source=pwa",
     "scope": "/",
     "display": "standalone",
     "display_override": [
@@ -15,6 +15,14 @@
     "theme_color": "#0f172a",
     "prefer_related_applications": false,
     "orientation": "portrait-primary",
+    "screenshots": [
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
     "icons": [
         {
             "src": "/icon-192x192.png",

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PharmaFlow Pro Offline</title>
+    <meta name="theme-color" content="#0f172a">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #0f172a;
+        }
+
+        .card {
+            width: min(92vw, 420px);
+            padding: 32px 24px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+            text-align: center;
+        }
+
+        img {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+        }
+
+        h1 {
+            margin: 16px 0 8px;
+            font-size: 24px;
+        }
+
+        p {
+            margin: 0 0 20px;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: #0f172a;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <img src="/logo.png" alt="PharmaFlow Pro">
+        <h1>You are offline</h1>
+        <p>PharmaFlow Pro will reconnect automatically when your internet connection is back.</p>
+        <button type="button" onclick="window.location.reload()">Try again</button>
+    </main>
+</body>
+</html>

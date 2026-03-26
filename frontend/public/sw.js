@@ -1,6 +1,9 @@
 const CACHE_NAME = "pharmaflow-static-v4";
 const STATIC_ASSETS = [
+    "/",
     "/login",
+    "/login?source=pwa",
+    "/offline.html",
     "/manifest.json",
     "/logo.png",
     "/icon-192x192.png",
@@ -63,6 +66,11 @@ self.addEventListener("fetch", (event) => {
                 const loginFallback = await caches.match("/login");
                 if (loginFallback) {
                     return loginFallback;
+                }
+
+                const offlineFallback = await caches.match("/offline.html");
+                if (offlineFallback) {
+                    return offlineFallback;
                 }
 
                 throw new Error("Navigation request failed and no fallback page is cached.");
