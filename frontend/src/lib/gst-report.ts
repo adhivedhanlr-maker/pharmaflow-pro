@@ -1,6 +1,41 @@
 // GST Report generator — PDF (new window print) + Excel (.xls SpreadsheetML)
 // Report modes: SUMMARY (day-wise totals) | DETAILED (invoice/bill-wise)
 
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const COMPANY_NOISE = new Set(["PVT","LTD","PRIVATE","LIMITED","CO","INC","CORP","AND","THE"]);
+
+/** "2026-02-28" → "28Feb2026" */
+function fmtDateSlug(iso: string) {
+    const parts = iso.split("-");
+    if (parts.length < 3) return iso.replace(/\D/g, "");
+    return `${parts[2]}${MONTHS[parseInt(parts[1]) - 1]}${parts[0]}`;
+}
+
+/** "BLUEDOTS HEALTHCARE PVT LTD" → "BLUEDOTS_HEALTHCARE" */
+function companySlug(name: string) {
+    return name.toUpperCase()
+        .split(/\s+/)
+        .filter(w => !COMPANY_NOISE.has(w.replace(/\./g, "")))
+        .slice(0, 2)
+        .join("_")
+        .replace(/[^A-Z0-9_]/g, "");
+}
+
+/** "2026-02-28 to 2026-03-26" → "28Feb2026_26Mar2026" */
+function periodSlug(periodLabel: string) {
+    const [start, , end] = periodLabel.split(" ");
+    if (!start || !end) return periodLabel.replace(/\s+/g, "_");
+    return start === end ? fmtDateSlug(start) : `${fmtDateSlug(start)}_${fmtDateSlug(end)}`;
+}
+
+function buildFilename(type: ReportType, mode: ReportMode, profile: BusinessProfile, periodLabel: string, ext: string) {
+    const co = companySlug(profile.companyName);
+    const tp = type === "SALES" ? "GST_Sales" : "GST_Purchase";
+    const md = mode === "SUMMARY" ? "Summary" : "Detailed";
+    const pd = periodSlug(periodLabel);
+    return `${co}_${tp}_${md}_${pd}.${ext}`;
+}
+
 export interface BusinessProfile {
     companyName: string;
     address?: string;
@@ -188,7 +223,7 @@ export function openGstReportPdf(
 ) {
     const typeLabel = type === "SALES" ? "GST SALES REPORT" : "GST PURCHASE REPORT";
     const modeLabel = mode === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed";
-    const title = `${typeLabel} — ${modeLabel}`;
+    const title = buildFilename(type, mode, profile, periodLabel, "pdf").replace(/\.pdf$/, "").replace(/_/g, " ");
 
     const { headers, dataRows, totalsRow, colCount, grandTaxable, grandCgst, grandSgst, grandNet } =
         buildContent(mode, type, rows, true);
@@ -270,7 +305,7 @@ export function downloadGstReportExcel(
 </table>
 </body></html>`;
 
-    const filename = `${type === "SALES" ? "GST_Sales" : "GST_Purchase"}_${mode === "SUMMARY" ? "Summary" : "Detailed"}_${periodLabel}.xls`;
+    const filename = buildFilename(type, mode, profile, periodLabel, "xls");
     const blob = new Blob(["\uFEFF" + html], { type: "application/vnd.ms-excel;charset=UTF-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

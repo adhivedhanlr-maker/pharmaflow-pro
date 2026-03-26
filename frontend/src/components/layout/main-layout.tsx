@@ -18,7 +18,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { useEffect, useState } from "react";
-import { useSessionTimeout } from "@/hooks/use-session-timeout";
+import { SessionTimeoutModal } from "@/components/session-timeout-modal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -35,8 +35,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [branding, setBranding] = useState<ShellBranding | null>(null);
     const [isStandalone, setIsStandalone] = useState(false);
     const [launchedFromPWA, setLaunchedFromPWA] = useState(false);
-
-    useSessionTimeout();
 
     const isLoginPage = pathname === "/login";
 
@@ -123,6 +121,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 print:overflow-visible print:h-auto">
+            <SessionTimeoutModal />
             <Sidebar className="hidden md:flex no-print" branding={branding} />
 
             <div className="flex flex-col flex-1 overflow-hidden print:overflow-visible print:h-auto">

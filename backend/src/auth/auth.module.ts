@@ -13,7 +13,7 @@ import { TenantBrandingModule } from '../tenant-branding/tenant-branding.module'
         TenantBrandingModule,
         JwtModule.register({
             secret: process.env.JWT_SECRET || 'secretKey',
-            signOptions: { expiresIn: '1d' },
+            signOptions: { expiresIn: '7d' },
         }),
     ],
     providers: [AuthService, JwtStrategy, TwoFactorService],
