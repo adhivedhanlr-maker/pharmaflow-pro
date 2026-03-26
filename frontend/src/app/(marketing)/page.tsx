@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -139,9 +138,9 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
             <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
           </nav>
-          <Link href="/app/login">
-            <Button variant="outline" size="sm">Sign In</Button>
-          </Link>
+          <a href="#contact">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Get a Demo</Button>
+          </a>
         </div>
       </header>
 
@@ -161,14 +160,14 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a href="#contact">
             <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8">
-              Get a Free Demo
+              Get a Free Demo <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </a>
-          <Link href="/app/login">
+          <a href="#features">
             <Button size="lg" variant="outline" className="w-full sm:w-auto px-8">
-              Sign In <ArrowRight className="ml-2 h-4 w-4" />
+              See Features
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 
@@ -352,9 +351,9 @@ export default function LandingPage() {
             <span className="text-sm font-semibold text-slate-700">PharmaFlow Pro</span>
           </div>
           <p className="text-xs text-slate-400">© {new Date().getFullYear()} PharmaFlow Pro. All rights reserved.</p>
-          <Link href="/app/login" className="text-sm text-blue-600 hover:underline font-medium">
-            Sign In to App →
-          </Link>
+          <a href="#contact" className="text-sm text-blue-600 hover:underline font-medium">
+            Book a Demo →
+          </a>
         </div>
       </footer>
     </div>
