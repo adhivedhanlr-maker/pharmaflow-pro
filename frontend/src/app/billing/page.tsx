@@ -232,6 +232,21 @@ function BillingContent() {
         return () => clearTimeout(timer);
     }, [customerSearch, token]);
 
+    // Re-price all items when customer type toggles
+    useEffect(() => {
+        setItems(prev => prev.map(item => {
+            const newUnitPrice = customerType === "DISTRIBUTOR"
+                ? (item.pts || item.ptr || item.unitPrice)
+                : (item.ptr || item.pts || item.unitPrice);
+            return {
+                ...item,
+                unitPrice: newUnitPrice,
+                gstAmount: (item.quantity * newUnitPrice * item.gstRate) / 100,
+                total: item.quantity * newUnitPrice,
+            };
+        }));
+    }, [customerType]);
+
     useEffect(() => {
         const draft = {
             selectedCustomerId,
