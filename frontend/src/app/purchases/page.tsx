@@ -870,11 +870,11 @@ export default function PurchasesPage() {
                                     <TableHead className="w-[75px] text-right text-[10px] font-bold uppercase">QTY</TableHead>
                                     <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">FREE</TableHead>
                                     <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">DISC%</TableHead>
-                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">RATE</TableHead>
-                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">MRP</TableHead>
-                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">PTR</TableHead>
-                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">PTS</TableHead>
-                                    <TableHead className="w-[90px] text-right text-[10px] font-bold uppercase">NR</TableHead>
+                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">RATE</TableHead>
+                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">MRP</TableHead>
+                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">PTR</TableHead>
+                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">PTS</TableHead>
+                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">NR</TableHead>
                                     <TableHead className="w-10"></TableHead>
                                 </TableRow>
                             </TableHeader>
