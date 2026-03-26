@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, Users, TrendingUp, RefreshCw, ArrowRight, FileText, RotateCcw, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Receipt, Users, TrendingUp, RefreshCw, ArrowRight, FileText, RotateCcw } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -33,11 +34,9 @@ export function BillingDashboard() {
     const [stats, setStats] = useState<BillingStats>(EMPTY);
     const [loading, setLoading] = useState(true);
 
-    const displayName = user?.name?.split(" ")[0] || "there";
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+    const displayName = user?.name?.trim() || user?.username?.trim() || "there";
     const today = new Date().toISOString().split("T")[0];
-    const thisMonth = today.substring(0, 7); // YYYY-MM
+    const thisMonth = today.substring(0, 7);
 
     const fetchData = useCallback(async () => {
         if (!token) { setLoading(false); return; }
@@ -74,104 +73,93 @@ export function BillingDashboard() {
     useEffect(() => { if (token) fetchData(); }, [token]);
 
     const statCards = [
-        { title: "Invoices Today", value: stats.invoicesToday, icon: Receipt, iconBg: "bg-blue-100", color: "text-blue-600", border: "border-t-blue-500" },
-        { title: "Revenue Today", value: `₹${stats.revenueToday.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`, icon: TrendingUp, iconBg: "bg-emerald-100", color: "text-emerald-600", border: "border-t-emerald-500" },
-        { title: "This Month", value: stats.invoicesThisMonth, icon: FileText, iconBg: "bg-violet-100", color: "text-violet-600", border: "border-t-violet-500" },
-        { title: "Customers", value: stats.totalCustomers, icon: Users, iconBg: "bg-orange-100", color: "text-orange-600", border: "border-t-orange-500" },
+        { title: "Invoices Today", value: stats.invoicesToday.toString(), description: "Billed today", icon: Receipt, color: "text-green-600" },
+        { title: "Revenue Today", value: `₹${stats.revenueToday.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`, description: "Total collected today", icon: TrendingUp, color: "text-blue-600" },
+        { title: "This Month", value: stats.invoicesThisMonth.toString(), description: "Invoices this month", icon: FileText, color: "text-purple-600" },
+        { title: "Customers", value: stats.totalCustomers.toString(), description: "Registered parties", icon: Users, color: "text-orange-500" },
     ];
 
     const quickActions = [
-        { label: "New Bill", href: "/billing", bg: "bg-blue-600 hover:bg-blue-700", icon: Receipt },
-        { label: "Sales History", href: "/sales-history", bg: "bg-slate-700 hover:bg-slate-800", icon: FileText },
-        { label: "Parties", href: "/parties", bg: "bg-orange-500 hover:bg-orange-600", icon: Users },
-        { label: "Returns", href: "/returns", bg: "bg-rose-500 hover:bg-rose-600", icon: RotateCcw },
+        { label: "New Bill", href: "/billing", icon: Receipt },
+        { label: "Sales History", href: "/sales-history", icon: FileText },
+        { label: "Parties", href: "/parties", icon: Users },
+        { label: "Returns", href: "/returns", icon: RotateCcw },
     ];
 
     return (
-        <div className="space-y-5 pb-24 md:pb-0">
-            {/* Header */}
-            <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white p-5 shadow-lg">
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <p className="text-blue-200 text-sm font-medium mb-1">Billing Operator</p>
-                        <h1 className="text-xl font-bold">{greeting}, {displayName}!</h1>
-                        <p className="text-blue-200 text-sm mt-0.5">
-                            {stats.invoicesToday} {stats.invoicesToday === 1 ? "invoice" : "invoices"} billed today
-                        </p>
-                    </div>
-                    <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-40">
-                        <RefreshCw className={cn("h-4 w-4 text-white", loading && "animate-spin")} />
-                    </button>
+        <div className="space-y-6 pb-24 md:pb-0">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Billing Dashboard</h1>
+                    <p className="text-muted-foreground">
+                        Welcome back, <span className="font-semibold text-foreground">{displayName}</span>. Here&apos;s your billing overview for today.
+                    </p>
                 </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Quick Actions</p>
-                <div className="grid grid-cols-4 gap-2">
-                    {quickActions.map(a => (
-                        <Link key={a.label} href={a.href}>
-                            <div className={`${a.bg} rounded-xl p-3 flex flex-col items-center gap-1.5 text-white transition-transform active:scale-95 shadow-sm`}>
-                                <a.icon className="h-5 w-5" />
-                                <span className="text-[10px] font-semibold text-center leading-tight">{a.label}</span>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                <Button variant="outline" onClick={fetchData} disabled={loading} className="self-start sm:self-auto">
+                    <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+                    Refresh
+                </Button>
             </div>
 
             {/* Stat Cards */}
-            <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Overview</p>
-                <div className="grid grid-cols-2 gap-3">
-                    {statCards.map(s => (
-                        <Card key={s.title} className={`border-t-4 shadow-sm ${s.border}`}>
-                            <CardContent className="p-4">
-                                <div className={`p-2 rounded-lg ${s.iconBg} w-fit mb-3`}>
-                                    <s.icon className={`h-4 w-4 ${s.color}`} />
-                                </div>
-                                <div className={cn("text-2xl font-black text-slate-900", loading && "opacity-40")}>
-                                    {loading ? "—" : s.value}
-                                </div>
-                                <p className="text-xs text-slate-500 mt-0.5">{s.title}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {statCards.map(s => (
+                    <Card key={s.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{s.title}</CardTitle>
+                            <s.icon className={`h-4 w-4 ${s.color}`} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={cn("text-3xl font-bold transition-opacity", loading && "opacity-50")}>
+                                {loading ? "..." : s.value}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{s.description}</p>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
+            {/* Quick Actions */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {quickActions.map(a => (
+                        <Link key={a.label} href={a.href}>
+                            <Button variant="outline" className="w-full justify-start gap-2">
+                                <a.icon className="h-4 w-4" />
+                                {a.label}
+                            </Button>
+                        </Link>
+                    ))}
+                </CardContent>
+            </Card>
+
             {/* Recent Invoices */}
-            <Card className="shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
-                    <CardTitle className="text-sm font-semibold">Recent Invoices</CardTitle>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <CardTitle className="text-base">Recent Invoices</CardTitle>
                     <Link href="/sales-history">
-                        <button className="text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline">
-                            View All <ArrowRight className="h-3 w-3" />
-                        </button>
+                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                            View All <ArrowRight className="h-4 w-4 ml-1" />
+                        </Button>
                     </Link>
                 </CardHeader>
                 <CardContent className="p-0">
                     {stats.recentInvoices.length === 0 && !loading ? (
-                        <div className="py-10 text-center text-slate-400 text-sm">No invoices yet.</div>
+                        <p className="text-sm text-muted-foreground text-center py-8">No invoices yet.</p>
                     ) : (
                         <div className="divide-y">
                             {stats.recentInvoices.map(inv => (
-                                <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-slate-50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-                                            {(inv.customer?.name || "?").substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-slate-900">{inv.customer?.name || "Walk-in"}</p>
-                                            <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                                                <Clock className="h-2.5 w-2.5" />
-                                                {inv.invoiceNumber} · {new Date(inv.createdAt).toLocaleDateString("en-IN")}
-                                            </p>
-                                        </div>
+                                <div key={inv.id} className="flex items-center justify-between px-6 py-3">
+                                    <div>
+                                        <p className="text-sm font-semibold">{inv.customer?.name || "Walk-in"}</p>
+                                        <p className="text-xs text-muted-foreground">{inv.invoiceNumber} · {new Date(inv.createdAt).toLocaleDateString("en-IN")}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-bold text-slate-900">₹{inv.netAmount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
-                                        <p className="text-[10px] text-slate-400">GST: ₹{inv.gstAmount.toFixed(0)}</p>
+                                        <p className="text-sm font-bold">₹{inv.netAmount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                                        <p className="text-xs text-muted-foreground">GST ₹{inv.gstAmount.toFixed(0)}</p>
                                     </div>
                                 </div>
                             ))}
