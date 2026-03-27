@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10_000);
+        const timeout = setTimeout(() => controller.abort(), 15_000);
 
         try {
             const response = await fetch(`${API_BASE}/users/me`, {
@@ -108,12 +108,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             if (!response.ok) {
-                throw new Error(`Session refresh failed with ${response.status}`);
+                if (response.status === 401 || response.status === 403) {
+                    // Token genuinely expired or revoked — must log out
+                    setToken(null);
+                    setUser(null);
+                    clearStoredSession();
+                    if (typeof window !== "undefined" && !window.location.pathname.endsWith("/app/login")) {
+                        router.push("/app/login");
+                    }
+                }
+                // Any other status (500, 503 etc.) — backend hiccup, keep cached session
+                return;
             }
 
             const userData = await response.json();
             if (!isValidSessionUser(userData)) {
-                throw new Error("Session refresh returned an incomplete user");
+                return; // Unexpected payload shape — keep cached session, don't log out
             }
 
             setToken(sessionToken);
@@ -122,14 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem("auth_user", JSON.stringify(userData));
             document.cookie = `auth_token=${sessionToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
         } catch (error) {
-            console.error("Failed to restore session:", error);
-            setToken(null);
-            setUser(null);
-            clearStoredSession();
-            // Redirect to login — token expired or backend unreachable
-            if (typeof window !== "undefined" && !window.location.pathname.endsWith("/app/login")) {
-                router.push("/app/login");
-            }
+            // Network error or timeout — backend unreachable, keep the cached session
+            // Only a confirmed 401/403 above triggers logout
+            const isAbort = error instanceof DOMException && error.name === "AbortError";
+            console.warn(isAbort ? "Session validation timed out — keeping cached session" : "Session validation network error — keeping cached session");
         } finally {
             clearTimeout(timeout);
         }
