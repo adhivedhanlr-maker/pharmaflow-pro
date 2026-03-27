@@ -8,7 +8,7 @@ import {
     Printer,
     FileText,
     Loader2,
-    Calendar,
+    RefreshCw,
     Download,
     Trash2,
     Eye,
@@ -211,7 +211,7 @@ export default function SalesHistoryPage() {
                             />
                         </div>
                         <Button variant="outline" size="icon" onClick={fetchSales} title="Refresh">
-                            <Calendar className="h-4 w-4" />
+                            <RefreshCw className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
@@ -265,6 +265,7 @@ export default function SalesHistoryPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[40px] text-center">#</TableHead>
                                         <TableHead>Date</TableHead>
                                         <TableHead>Invoice #</TableHead>
                                         <TableHead>Customer</TableHead>
@@ -276,19 +277,22 @@ export default function SalesHistoryPage() {
                                 <TableBody>
                                     {loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
+                                            <TableCell colSpan={7} className="h-24 text-center">
                                                 <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                                             </TableCell>
                                         </TableRow>
                                     ) : filteredSales.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                                 No invoices found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredSales.map((sale) => (
+                                        filteredSales.map((sale, idx) => (
                                             <TableRow key={sale.id}>
+                                                <TableCell className="text-center text-xs text-muted-foreground font-mono">
+                                                    {idx + 1}
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground text-xs">
                                                     {format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}
                                                 </TableCell>
