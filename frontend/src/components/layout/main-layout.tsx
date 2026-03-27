@@ -92,23 +92,33 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-white">
-                <div className="flex w-full max-w-sm flex-col items-center px-8 text-center">
-                    <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-white/10 shadow-2xl shadow-black/30 ring-1 ring-white/10">
+            <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+                <style>{`
+                    @keyframes pfp-slide {
+                        0%   { transform: translateX(-100%); }
+                        100% { transform: translateX(400%); }
+                    }
+                    .pfp-splash-bar {
+                        animation: pfp-slide 1.4s cubic-bezier(0.4,0,0.2,1) infinite;
+                    }
+                `}</style>
+                <div className="flex w-full max-w-xs flex-col items-center px-8 text-center">
+                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200">
                         <img
                             src={branding?.logoUrl || "/pharmaflow-logo.png"}
                             alt={branding?.companyName || "PharmaFlow Pro"}
-                            className="h-12 w-12 object-contain"
+                            className="h-10 w-10 object-contain"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
                     </div>
-                    <p className="text-xl font-semibold tracking-tight">
+                    <p className="text-base font-semibold text-slate-900 tracking-tight">
                         {branding?.companyName || "PharmaFlow Pro"}
                     </p>
-                    <p className="mt-2 text-sm text-slate-300">
-                        {isStandalone || launchedFromPWA ? "Opening your workspace..." : "Preparing your workspace..."}
+                    <p className="mt-1 text-xs text-slate-400">
+                        {isStandalone || launchedFromPWA ? "Opening your workspace…" : "Loading…"}
                     </p>
-                    <div className="mt-6 h-1.5 w-40 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full w-1/2 animate-pulse rounded-full bg-cyan-400" />
+                    <div className="mt-5 h-1 w-32 overflow-hidden rounded-full bg-slate-200">
+                        <div className="pfp-splash-bar h-full w-1/3 rounded-full bg-blue-500" />
                     </div>
                 </div>
             </div>
