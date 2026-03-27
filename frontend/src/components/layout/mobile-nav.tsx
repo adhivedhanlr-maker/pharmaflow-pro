@@ -70,10 +70,10 @@ export function MobileNav() {
                             href={item.href}
                             className={cn(
                                 "flex flex-col items-center justify-center gap-1 flex-1 py-1 rounded-xl transition-colors",
-                                isActive ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-slate-700"
+                                isActive ? "text-blue-600" : "text-slate-500 hover:text-slate-700"
                             )}
                         >
-                            <item.icon className={cn("h-5 w-5", isActive && "fill-blue-100")} />
+                            <item.icon className="h-5 w-5" />
                             <span className="text-[10px] font-medium">{item.title}</span>
                         </Link>
                     );
