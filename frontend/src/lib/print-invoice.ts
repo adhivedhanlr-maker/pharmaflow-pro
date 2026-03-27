@@ -25,7 +25,7 @@ export function printInvoiceNewWindow(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; min-width: 0; }
     body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
     @page { size: A4; margin: 6mm; }
     @media print { body { padding: 0; zoom: 1 !important; transform: none !important; } }
@@ -36,33 +36,15 @@ export function printInvoiceNewWindow(
 <body>
   ${element.innerHTML}
   <script>
-    function fixAndScale() {
-      // Fix flex children: set min-width:0 so they don't push page wider than viewport
-      var all = document.querySelectorAll('*');
-      for (var i = 0; i < all.length; i++) {
-        var el = all[i];
-        if (window.getComputedStyle(el).display === 'flex') {
-          for (var j = 0; j < el.children.length; j++) {
-            el.children[j].style.minWidth = '0';
-          }
-        }
+    window.addEventListener('load', function() {
+      var contentW = document.documentElement.scrollWidth;
+      var screenW = window.innerWidth;
+      if (screenW < 900 && contentW > screenW) {
+        document.body.style.zoom = (screenW / contentW).toFixed(4);
+        document.documentElement.style.overflowX = 'hidden';
       }
-      // After flex fix, measure content width and apply zoom if still overflowing on mobile
-      requestAnimationFrame(function() {
-        var contentW = document.documentElement.scrollWidth;
-        var screenW = window.innerWidth;
-        if (screenW < 900 && contentW > screenW) {
-          document.body.style.zoom = (screenW / contentW).toFixed(4);
-          document.documentElement.style.overflowX = 'hidden';
-        }
-        ${autoPrint ? "setTimeout(function(){ window.print(); }, 200);" : ""}
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fixAndScale);
-    } else {
-      fixAndScale();
-    }
+      ${autoPrint ? "setTimeout(function(){ window.print(); }, 300);" : ""}
+    });
   <\/script>
 </body>
 </html>`);
@@ -70,9 +52,8 @@ export function printInvoiceNewWindow(
 }
 
 /**
- * Prints the invoice directly on the current page — no new tab opens.
- * Works correctly on both desktop and mobile.
- * InvoicePrint uses all inline styles so print output is clean.
+ * Prints the invoice on the current page — no new tab.
+ * Uses afterprint event for cleanup so mobile async print works correctly.
  */
 export function printOnPage(
     element: HTMLElement,
@@ -100,8 +81,20 @@ export function printOnPage(
 
     document.head.appendChild(styleEl);
     document.body.appendChild(printEl);
+
+    const cleanup = () => {
+        if (document.head.contains(styleEl)) document.head.removeChild(styleEl);
+        if (document.body.contains(printEl)) document.body.removeChild(printEl);
+        document.title = originalTitle;
+    };
+
+    // afterprint fires when print dialog closes — works on desktop and mobile
+    window.addEventListener('afterprint', cleanup, { once: true });
+    // Safety fallback: clean up after 60s if afterprint never fires
+    setTimeout(() => {
+        window.removeEventListener('afterprint', cleanup);
+        cleanup();
+    }, 60000);
+
     window.print();
-    document.head.removeChild(styleEl);
-    document.body.removeChild(printEl);
-    document.title = originalTitle;
 }
