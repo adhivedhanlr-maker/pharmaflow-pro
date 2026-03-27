@@ -28,7 +28,7 @@ export function printInvoiceNewWindow(
 
     #pfp-preview-shell {
       min-height: 100vh;
-      padding: 12px;
+      padding: 8px;
       overflow: auto;
     }
 
@@ -38,19 +38,112 @@ export function printInvoiceNewWindow(
     }
 
     #pfp-preview-stage {
-      width: 210mm;
-      max-width: none;
+      width: 100%;
+      max-width: 210mm;
       margin: 0 auto;
-      transform-origin: top left;
     }
 
     #pfp-preview-stage > * {
-      width: 210mm !important;
+      width: 100% !important;
       max-width: 210mm !important;
-      min-width: 210mm !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
       border-radius: 0 !important;
       box-shadow: none !important;
+    }
+
+    @media screen and (max-width: 768px) {
+      html, body {
+        background: #e7ecf3;
+      }
+
+      #pfp-preview-shell {
+        padding: 6px;
+      }
+
+      #pfp-preview-stage {
+        max-width: 100%;
+      }
+
+      #pfp-preview-stage > * {
+        width: calc(100vw - 12px) !important;
+        max-width: calc(100vw - 12px) !important;
+      }
+
+      .invoice-print-root {
+        font-size: 9px !important;
+      }
+
+      .invoice-header {
+        padding: 8px 6px 6px !important;
+      }
+
+      .invoice-header-inner {
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+
+      .invoice-compliance {
+        gap: 6px !important;
+        padding: 4px 6px !important;
+        font-size: 8px !important;
+      }
+
+      .invoice-meta-grid,
+      .invoice-summary-grid,
+      .invoice-footer-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .invoice-billto,
+      .invoice-gst-summary,
+      .invoice-bank-panel {
+        border-right: none !important;
+        border-bottom: 1px solid #444 !important;
+      }
+
+      .invoice-meta,
+      .invoice-totals-panel,
+      .invoice-sign-panel {
+        padding: 6px !important;
+      }
+
+      .invoice-sign-panel {
+        min-height: 90px !important;
+      }
+
+      .invoice-items-table,
+      .invoice-gst-table,
+      .invoice-totals-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+      }
+
+      .invoice-items-table th,
+      .invoice-items-table td,
+      .invoice-gst-table th,
+      .invoice-gst-table td,
+      .invoice-totals-table td {
+        font-size: 7px !important;
+        line-height: 1.15 !important;
+        padding: 3px 2px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      .invoice-items-table th:nth-child(3),
+      .invoice-items-table td:nth-child(3),
+      .invoice-items-table th:nth-child(4),
+      .invoice-items-table td:nth-child(4),
+      .invoice-items-table th:nth-child(11),
+      .invoice-items-table td:nth-child(11) {
+        display: none !important;
+      }
+
+      .invoice-gst-table th,
+      .invoice-gst-table td {
+        font-size: 6.5px !important;
+      }
     }
 
     @media print {
@@ -102,17 +195,6 @@ export function printInvoiceNewWindow(
   </div>
   <script>
     window.addEventListener('load', function() {
-      var viewport = document.getElementById('pfp-preview-viewport');
-      var stage = document.getElementById('pfp-preview-stage');
-      if (viewport && stage) {
-        var screenW = Math.max(window.innerWidth || 0, 320);
-        var availableW = Math.max(screenW - 16, 160);
-        var contentW = stage.offsetWidth || 794;
-        var scale = Math.min(1, availableW / contentW);
-        stage.style.transform = 'scale(' + scale.toFixed(4) + ')';
-        viewport.style.width = Math.round(contentW * scale) + 'px';
-        viewport.style.height = Math.round(stage.scrollHeight * scale) + 'px';
-      }
       ${autoPrint ? "setTimeout(function(){ window.print(); }, 300);" : ""}
     });
   <\/script>

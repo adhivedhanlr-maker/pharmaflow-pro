@@ -136,9 +136,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
         return (
             <div
                 ref={ref}
-                className={preview
-                    ? "bg-white text-black border border-slate-300 shadow-sm"
-                    : "hidden print:block bg-white text-black mx-auto"}
+                className={`invoice-print-root ${preview ? "invoice-print-preview" : "invoice-print-print"}`}
+                data-preview={preview ? "true" : "false"}
                 style={{
                     width: "210mm",
                     maxWidth: "210mm",
@@ -148,8 +147,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                 }}
             >
                 <div style={{ border: "2px solid #222", backgroundColor: "#fff" }}>
-                    <div style={{ borderBottom: "1px solid #444", padding: "8px 10px 6px", textAlign: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+                    <div className="invoice-header" style={{ borderBottom: "1px solid #444", padding: "8px 10px 6px", textAlign: "center" }}>
+                        <div className="invoice-header-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                             {logoUrl && businessProfile?.showLogo !== false && (
                                 <img
                                     src={logoUrl}
@@ -176,15 +175,15 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
                     </div>
 
-                    <div style={{ borderBottom: "1px solid #444", padding: "4px 8px", fontSize: "10px", display: "flex", gap: "14px", flexWrap: "wrap" }}>
+                    <div className="invoice-compliance" style={{ borderBottom: "1px solid #444", padding: "4px 8px", fontSize: "10px", display: "flex", gap: "14px", flexWrap: "wrap" }}>
                         {businessProfile?.gstin && <span><b>GSTIN:</b> {businessProfile.gstin}</span>}
                         {businessProfile?.panNo && <span><b>PAN:</b> {businessProfile.panNo}</span>}
                         {businessProfile?.dlNo && <span><b>DL No:</b> {businessProfile.dlNo}</span>}
                         {businessProfile?.fssaiNo && <span><b>FSSAI:</b> {businessProfile.fssaiNo}</span>}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 250px", borderBottom: "1px solid #444" }}>
-                        <div style={{ padding: "6px 8px", borderRight: "1px solid #444" }}>
+                    <div className="invoice-meta-grid" style={{ display: "grid", gridTemplateColumns: "1fr 250px", borderBottom: "1px solid #444" }}>
+                        <div className="invoice-billto" style={{ padding: "6px 8px", borderRight: "1px solid #444" }}>
                             <div style={{ fontWeight: 700, fontSize: "11px", marginBottom: "5px" }}>BILL TO</div>
                             <div style={{ fontWeight: 800, fontSize: "14px", lineHeight: 1.15 }}>{customer.name}</div>
                             {customer.address && <div style={{ marginTop: "4px", whiteSpace: "pre-line" }}>{customer.address}</div>}
@@ -194,7 +193,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             {customer.fssaiNo && <div><b>FSSAI:</b> {customer.fssaiNo}</div>}
                         </div>
 
-                        <div style={{ padding: "6px 8px" }}>
+                        <div className="invoice-meta" style={{ padding: "6px 8px" }}>
                             <div style={{ textAlign: "center", fontWeight: 800, fontSize: "22px", letterSpacing: "0.5px", marginBottom: "4px" }}>
                                 TAX INVOICE
                             </div>
@@ -221,7 +220,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
                     </div>
 
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <table className="invoice-items-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
                             <tr>
                                 <th style={{ ...headBase, width: "30px" }}>SNo</th>
@@ -265,10 +264,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </tbody>
                     </table>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 190px", borderTop: "1px solid #444" }}>
-                        <div style={{ borderRight: "1px solid #444" }}>
+                    <div className="invoice-summary-grid" style={{ display: "grid", gridTemplateColumns: "1fr 190px", borderTop: "1px solid #444" }}>
+                        <div className="invoice-gst-summary" style={{ borderRight: "1px solid #444" }}>
                             <div style={{ padding: "5px 6px", fontWeight: 700, borderBottom: "1px solid #444" }}>GST Summary</div>
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <table className="invoice-gst-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>
                                     <tr>
                                         <th style={headBase}>Tax %</th>
@@ -297,8 +296,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             </div>
                         </div>
 
-                        <div style={{ padding: "4px 6px" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
+                        <div className="invoice-totals-panel" style={{ padding: "4px 6px" }}>
+                            <table className="invoice-totals-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
                                 <tbody>
                                     <tr>
                                         <td>Sub Total :</td>
@@ -341,8 +340,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         <b>Amount In Words :</b> {numberToWords(totals.net)}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "1px solid #444" }}>
-                        <div style={{ padding: "6px 8px", borderRight: "1px solid #444", minHeight: "100px" }}>
+                    <div className="invoice-footer-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "1px solid #444" }}>
+                        <div className="invoice-bank-panel" style={{ padding: "6px 8px", borderRight: "1px solid #444", minHeight: "100px" }}>
                             <div style={{ fontWeight: 700, marginBottom: "4px" }}>Bank Details</div>
                             {businessProfile?.bankName && <div><b>BANK:</b> {businessProfile.bankName}</div>}
                             {businessProfile?.bankBranch && <div><b>Branch:</b> {businessProfile.bankBranch}</div>}
@@ -350,7 +349,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             {businessProfile?.bankIfsc && <div><b>IFSC:</b> {businessProfile.bankIfsc}</div>}
                         </div>
 
-                        <div style={{ padding: "6px 8px", minHeight: "100px", position: "relative" }}>
+                        <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", position: "relative" }}>
                             <div style={{ textAlign: "right" }}>For</div>
                             <div style={{ textAlign: "right", fontWeight: 700, marginTop: "24px" }}>{companyName}</div>
                             <div style={{ position: "absolute", right: "8px", bottom: "16px", left: "34%", borderTop: "1px solid #444", textAlign: "right", paddingTop: "3px" }}>
