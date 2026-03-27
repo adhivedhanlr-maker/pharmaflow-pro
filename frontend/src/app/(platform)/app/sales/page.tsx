@@ -12,7 +12,6 @@ import {
     Download,
     Trash2,
     Eye,
-    X
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -31,12 +30,6 @@ import { Badge } from "@/components/ui/badge";
 import { RoleGate } from "@/components/auth/role-gate";
 import { useAuth } from "@/context/auth-context";
 import { InvoicePrint } from "@/components/billing/invoice-print";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -94,8 +87,6 @@ export default function SalesHistoryPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const printRef = useRef<HTMLDivElement>(null);
-    const viewRef = useRef<HTMLDivElement>(null);
-    const [viewInvoice, setViewInvoice] = useState<Sale | null>(null);
 
     useEffect(() => {
         if (token) {
@@ -180,17 +171,20 @@ export default function SalesHistoryPage() {
         setSelectedInvoice(sale);
         setTimeout(() => {
             if (printRef.current) {
-                printInvoiceNewWindow(printRef.current, sale.invoiceNumber, sale.customer.name);
+                printInvoiceNewWindow(printRef.current, sale.invoiceNumber, sale.customer.name, true);
             }
             setSelectedInvoice(null);
         }, 200);
     };
 
-    const handlePrintFromView = () => {
-        if (!viewInvoice) return;
-        if (viewRef.current) {
-            printInvoiceNewWindow(viewRef.current, viewInvoice.invoiceNumber, viewInvoice.customer.name);
-        }
+    const handleView = (sale: Sale) => {
+        setSelectedInvoice(sale);
+        setTimeout(() => {
+            if (printRef.current) {
+                printInvoiceNewWindow(printRef.current, sale.invoiceNumber, sale.customer.name, false);
+            }
+            setSelectedInvoice(null);
+        }, 200);
     };
 
     const filteredSales = sales.filter(s =>
@@ -253,7 +247,7 @@ export default function SalesHistoryPage() {
                                     </div>
                                     <div className="flex items-center gap-1 flex-shrink-0">
                                         <span className="font-bold text-slate-900 text-sm">₹{sale.netAmount.toLocaleString()}</span>
-                                        <Button variant="ghost" size="sm" onClick={() => setViewInvoice(sale)} className="h-8 w-8 p-0" title="View Invoice">
+                                        <Button variant="ghost" size="sm" onClick={() => handleView(sale)} className="h-8 w-8 p-0" title="View Invoice">
                                             <Eye className="h-4 w-4 text-blue-500" />
                                         </Button>
                                         <Button variant="ghost" size="sm" onClick={() => handlePrint(sale)} className="h-8 w-8 p-0" title="Print / Save PDF">
@@ -324,7 +318,7 @@ export default function SalesHistoryPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end gap-0.5">
-                                                        <Button variant="ghost" size="sm" onClick={() => setViewInvoice(sale)} className="h-8 w-8 p-0" title="View Invoice">
+                                                        <Button variant="ghost" size="sm" onClick={() => handleView(sale)} className="h-8 w-8 p-0" title="View Invoice">
                                                             <Eye className="h-4 w-4 text-blue-500 hover:text-blue-700" />
                                                         </Button>
                                                         <Button variant="ghost" size="sm" onClick={() => handlePrint(sale)} className="h-8 w-8 p-0" title="Print / Save PDF">
@@ -382,60 +376,6 @@ export default function SalesHistoryPage() {
                     )}
                 </div>
 
-                {/* View Invoice Dialog */}
-                <Dialog open={!!viewInvoice} onOpenChange={(open) => { if (!open) setViewInvoice(null); }}>
-                    <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
-                        <DialogHeader className="px-4 pt-4 pb-3 flex-shrink-0 border-b">
-                            <div className="flex items-center justify-between">
-                                <DialogTitle className="text-base font-semibold">
-                                    {viewInvoice?.invoiceNumber} — {viewInvoice?.customer?.name}
-                                </DialogTitle>
-                                <Button variant="outline" size="sm" onClick={handlePrintFromView} className="gap-2 mr-8">
-                                    <Printer className="h-4 w-4" />
-                                    Print / Save PDF
-                                </Button>
-                            </div>
-                        </DialogHeader>
-                        <div className="overflow-y-auto flex-1 p-4 bg-slate-50">
-                            {viewInvoice && (
-                                <div className="bg-white shadow rounded-lg overflow-hidden">
-                                    <InvoicePrint
-                                        ref={viewRef}
-                                        preview={true}
-                                        invoiceNumber={viewInvoice.invoiceNumber}
-                                        date={new Date(viewInvoice.createdAt)}
-                                        businessProfile={businessProfile}
-                                        customer={viewInvoice.customer}
-                                        customerType={viewInvoice.customerType as "PHARMACY" | "DISTRIBUTOR" | undefined}
-                                        items={viewInvoice.items.map(item => ({
-                                            id: item.id,
-                                            name: item.product.name,
-                                            company: item.product.company,
-                                            packing: item.product.packing,
-                                            hsnCode: item.product.hsnCode,
-                                            batchNumber: item.batch?.batchNumber || "N/A",
-                                            expiryDate: item.batch?.expiryDate,
-                                            mrp: item.batch?.mrp || item.batch?.salePrice,
-                                            ptr: item.batch?.ptr,
-                                            quantity: item.quantity,
-                                            freeQuantity: item.freeQuantity || 0,
-                                            unitPrice: item.unitPrice,
-                                            gstRate: item.product.gstRate,
-                                            gstAmount: item.gstAmount,
-                                            total: item.totalAmount
-                                        }))}
-                                        totals={{
-                                            subtotal: viewInvoice.totalAmount,
-                                            gst: viewInvoice.gstAmount,
-                                            discount: viewInvoice.discountAmount,
-                                            net: viewInvoice.netAmount
-                                        }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </DialogContent>
-                </Dialog>
             </div>
         </RoleGate>
     );

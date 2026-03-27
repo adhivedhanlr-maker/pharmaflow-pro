@@ -6,7 +6,8 @@
 export function printInvoiceNewWindow(
     element: HTMLElement,
     invoiceNumber: string,
-    customerName?: string
+    customerName?: string,
+    autoPrint: boolean = true
 ) {
     const win = window.open("", "_blank");
     if (!win) {
@@ -35,11 +36,11 @@ export function printInvoiceNewWindow(
 </head>
 <body>
   ${element.innerHTML}
-  <script>
+  ${autoPrint ? `<script>
     window.addEventListener('load', function() {
       setTimeout(function() { window.print(); }, 400);
     });
-  </script>
+  </script>` : ""}
 </body>
 </html>`);
     win.document.close();
