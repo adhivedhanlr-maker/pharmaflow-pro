@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RoleGate } from "@/components/auth/role-gate";
 import { toast } from "sonner";
+import { SettingsBreadcrumb } from "@/components/ui/settings-breadcrumb";
 import {
     Download,
     Upload,
@@ -150,6 +151,10 @@ export default function DataManagementPage() {
             }
         >
             <div className="space-y-6 max-w-3xl">
+                <SettingsBreadcrumb crumbs={[
+                    { label: "Settings", href: "/app/settings" },
+                    { label: "Data Management" },
+                ]} />
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Data Management</h1>
                     <p className="text-muted-foreground">Export your data as Excel files for backup, or import data in bulk.</p>

@@ -12,7 +12,7 @@
         "minimal-ui"
     ],
     "background_color": "#ffffff",
-    "theme_color": "#1d4ed8",
+    "theme_color": "#ffffff",
     "prefer_related_applications": false,
     "orientation": "portrait-primary",
     "screenshots": [
@@ -61,7 +61,7 @@
             "purpose": "any"
         },
         {
-            "src": "/icon-192x192.png",
+            "src": "/icon-maskable-192x192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
@@ -79,7 +79,7 @@
             "purpose": "any"
         },
         {
-            "src": "/icon-512x512.png",
+            "src": "/icon-maskable-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
@@ -96,36 +96,21 @@
             "short_name": "Billing",
             "description": "Create new invoice",
             "url": "/app/billing",
-            "icons": [
-                {
-                    "src": "/icon-192x192.png",
-                    "sizes": "192x192"
-                }
-            ]
+            "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
         },
         {
             "name": "Purchases",
             "short_name": "Purchases",
             "description": "Record purchase",
             "url": "/app/purchases",
-            "icons": [
-                {
-                    "src": "/icon-192x192.png",
-                    "sizes": "192x192"
-                }
-            ]
+            "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
         },
         {
             "name": "Stock",
             "short_name": "Stock",
             "description": "View stock levels",
             "url": "/app/stock",
-            "icons": [
-                {
-                    "src": "/icon-192x192.png",
-                    "sizes": "192x192"
-                }
-            ]
+            "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
         }
     ]
 }

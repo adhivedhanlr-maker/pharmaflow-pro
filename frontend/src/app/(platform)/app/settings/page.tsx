@@ -23,14 +23,11 @@ import {
     ShieldAlert,
     Database,
     ArrowRight,
+    Shield,
 } from "lucide-react";
-import TwoFactorSetup from "@/components/settings/two-factor-setup";
 import { RoleGate } from "@/components/auth/role-gate";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { isAdminLikeRole } from "@/lib/roles";
-import { ALL_PERMISSIONS, PERMISSION_LABELS, ROLE_DEFAULTS, type Permission } from "@/lib/permissions";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -59,53 +56,12 @@ export default function SettingsPage() {
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
-    const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({ ...ROLE_DEFAULTS });
-    const [savingPerms, setSavingPerms] = useState(false);
 
     useEffect(() => {
         if (token && isAdminLikeRole(user?.role)) {
             fetchProfile();
-            fetchRolePermissions();
         }
     }, [token, user]);
-
-    const fetchRolePermissions = async () => {
-        try {
-            const res = await fetch(`${API_BASE}/permissions/roles`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) setRolePermissions(await res.json());
-        } catch { /* use defaults */ }
-    };
-
-    const toggleRolePermission = (role: string, perm: string) => {
-        setRolePermissions(prev => {
-            const current = prev[role] ?? [];
-            const next = current.includes(perm) ? current.filter(p => p !== perm) : [...current, perm];
-            return { ...prev, [role]: next };
-        });
-    };
-
-    const saveRolePermissions = async (role: string) => {
-        setSavingPerms(true);
-        try {
-            await fetch(`${API_BASE}/permissions/roles/${role}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ permissions: rolePermissions[role] ?? [] }),
-            });
-        } finally {
-            setSavingPerms(false);
-        }
-    };
-
-    const resetRolePermissions = async (role: string) => {
-        await fetch(`${API_BASE}/permissions/roles/${role}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        setRolePermissions(prev => ({ ...prev, [role]: ROLE_DEFAULTS[role] ?? [] }));
-    };
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -448,86 +404,49 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Role Permissions */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Role Permissions</CardTitle>
-                            <CardDescription>
-                                Configure what each staff role can access by default. Individual users can have additional overrides set from the Users page.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {(['BILLING_OPERATOR', 'WAREHOUSE_MANAGER', 'ACCOUNTANT', 'SALES_REP'] as const).map(role => {
-                                const roleLabel: Record<string, string> = {
-                                    BILLING_OPERATOR: 'Billing Operator',
-                                    WAREHOUSE_MANAGER: 'Warehouse Manager',
-                                    ACCOUNTANT: 'Accountant',
-                                    SALES_REP: 'Sales Representative',
-                                };
-                                const perms = rolePermissions[role] ?? ROLE_DEFAULTS[role] ?? [];
-                                return (
-                                    <div key={role} className="border rounded-lg p-4 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-semibold text-sm text-slate-800">{roleLabel[role]}</h3>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-xs text-slate-500"
-                                                    onClick={() => resetRolePermissions(role)}
-                                                >
-                                                    Reset defaults
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-xs"
-                                                    disabled={savingPerms}
-                                                    onClick={() => saveRolePermissions(role)}
-                                                >
-                                                    {savingPerms ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
-                                                    Save
-                                                </Button>
+                    {/* Sub-section nav cards */}
+                    <div className="grid grid-cols-1 gap-3">
+                        {[
+                            {
+                                href: "/app/settings/roles",
+                                icon: <ShieldAlert className="h-5 w-5 text-violet-600" />,
+                                bg: "bg-violet-50",
+                                title: "Role Permissions",
+                                desc: "Configure what each staff role can access by default",
+                            },
+                            {
+                                href: "/app/settings/2fa",
+                                icon: <Shield className="h-5 w-5 text-green-600" />,
+                                bg: "bg-green-50",
+                                title: "Two-Factor Authentication",
+                                desc: "Add an extra layer of security to your login",
+                            },
+                            {
+                                href: "/app/settings/data",
+                                icon: <Database className="h-5 w-5 text-blue-600" />,
+                                bg: "bg-blue-50",
+                                title: "Data Management",
+                                desc: "Export data to Excel, import customers / suppliers / products in bulk",
+                            },
+                        ].map(item => (
+                            <a key={item.href} href={item.href} className="block">
+                                <Card className="hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer">
+                                    <CardContent className="flex items-center justify-between p-5">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`${item.bg} p-2.5 rounded-lg shrink-0`}>
+                                                {item.icon}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm">{item.title}</p>
+                                                <p className="text-xs text-slate-500">{item.desc}</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {ALL_PERMISSIONS.map(perm => (
-                                                <div key={perm} className="flex items-center justify-between gap-3 py-1">
-                                                    <Label className="text-xs font-normal text-slate-600 cursor-pointer">
-                                                        {PERMISSION_LABELS[perm as Permission].label}
-                                                    </Label>
-                                                    <Switch
-                                                        checked={perms.includes(perm)}
-                                                        onCheckedChange={() => toggleRolePermission(role, perm)}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </CardContent>
-                    </Card>
-
-                    <TwoFactorSetup />
-
-                    {/* Data Management */}
-                    <a href="/app/settings/data" className="block">
-                        <Card className="hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-blue-50 p-2.5 rounded-lg">
-                                        <Database className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-sm">Data Management</p>
-                                        <p className="text-xs text-slate-500">Export data to Excel, import customers / suppliers / products in bulk</p>
-                                    </div>
-                                </div>
-                                <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
-                            </CardContent>
-                        </Card>
-                    </a>
+                                        <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
+                                    </CardContent>
+                                </Card>
+                            </a>
+                        ))}
+                    </div>
                 </div>
             </div>
         </RoleGate>

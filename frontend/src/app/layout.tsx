@@ -49,7 +49,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#1d4ed8",
+  themeColor: "#ffffff",
   colorScheme: "light",
 };
 
@@ -60,6 +60,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* White status bar + navigation bar on Android Chrome */}
+        <meta name="theme-color" content="#ffffff" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
