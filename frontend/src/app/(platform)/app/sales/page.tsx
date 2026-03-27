@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { printInvoiceNewWindow, printOnPage } from "@/lib/print-invoice";
-import { format } from "date-fns";
+import {
+    format, isToday, isThisWeek, isThisMonth, isThisYear,
+    parseISO, startOfDay, endOfDay, isWithinInterval,
+} from "date-fns";
 import {
     Search,
     Printer,
@@ -12,12 +15,14 @@ import {
     Download,
     Trash2,
     Eye,
+    Filter,
+    X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Table,
     TableBody,
@@ -33,12 +38,15 @@ import { InvoicePrint } from "@/components/billing/invoice-print";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+type PaymentFilter = "ALL" | "CASH" | "CREDIT" | "UPI" | "CARD";
+type DateFilter = "ALL" | "TODAY" | "WEEK" | "MONTH" | "YEAR" | "CUSTOM";
+
 interface SaleItem {
     id: string;
     quantity: number;
     freeQuantity?: number;
     unitPrice: number;
-    totalAmount: number; // This is line total (qty * price)
+    totalAmount: number;
     gstAmount: number;
     product: {
         name: string;
@@ -86,6 +94,11 @@ export default function SalesHistoryPage() {
     const [businessProfile, setBusinessProfile] = useState<any>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
+    const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
+    const [dateFilter, setDateFilter] = useState<DateFilter>("ALL");
+    const [customFrom, setCustomFrom] = useState("");
+    const [customTo, setCustomTo] = useState("");
+
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -103,7 +116,6 @@ export default function SalesHistoryPage() {
             });
             if (res.ok) {
                 const data = await res.json();
-                // Ensure recent first
                 setSales(data.sort((a: Sale, b: Sale) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
             }
         } catch (error) {
@@ -187,21 +199,80 @@ export default function SalesHistoryPage() {
         }, 200);
     };
 
-    const filteredSales = sales.filter(s =>
-        s.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const clearFilters = () => {
+        setPaymentFilter("ALL");
+        setDateFilter("ALL");
+        setCustomFrom("");
+        setCustomTo("");
+        setSearchQuery("");
+    };
+
+    const filteredSales = sales.filter(s => {
+        // Search filter
+        const matchesSearch =
+            s.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        if (!matchesSearch) return false;
+
+        // Payment method filter
+        if (paymentFilter !== "ALL") {
+            const method = s.paymentMethod || (s.isCash ? "CASH" : "CREDIT");
+            if (method !== paymentFilter) return false;
+        }
+
+        // Date filter
+        if (dateFilter !== "ALL") {
+            const date = new Date(s.createdAt);
+            if (dateFilter === "TODAY" && !isToday(date)) return false;
+            if (dateFilter === "WEEK" && !isThisWeek(date, { weekStartsOn: 1 })) return false;
+            if (dateFilter === "MONTH" && !isThisMonth(date)) return false;
+            if (dateFilter === "YEAR" && !isThisYear(date)) return false;
+            if (dateFilter === "CUSTOM") {
+                if (customFrom) {
+                    const from = startOfDay(parseISO(customFrom));
+                    if (date < from) return false;
+                }
+                if (customTo) {
+                    const to = endOfDay(parseISO(customTo));
+                    if (date > to) return false;
+                }
+            }
+        }
+
+        return true;
+    });
+
+    const totalFiltered = filteredSales.reduce((sum, s) => sum + s.netAmount, 0);
+    const hasActiveFilter = paymentFilter !== "ALL" || dateFilter !== "ALL" || searchQuery;
+
+    const paymentOptions: { value: PaymentFilter; label: string }[] = [
+        { value: "ALL", label: "All" },
+        { value: "CASH", label: "Cash" },
+        { value: "CREDIT", label: "Credit" },
+        { value: "UPI", label: "UPI" },
+        { value: "CARD", label: "Card" },
+    ];
+
+    const dateOptions: { value: DateFilter; label: string }[] = [
+        { value: "ALL", label: "All Time" },
+        { value: "TODAY", label: "Today" },
+        { value: "WEEK", label: "This Week" },
+        { value: "MONTH", label: "This Month" },
+        { value: "YEAR", label: "This Year" },
+        { value: "CUSTOM", label: "Custom" },
+    ];
 
     return (
         <RoleGate allowedRoles={["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT"]}>
-            <div className="space-y-6 pb-24 md:pb-0">
+            <div className="space-y-4 pb-24 md:pb-0">
+                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Sales History</h1>
                         <p className="text-muted-foreground">View and manage past invoices.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="relative w-full md:w-[300px]">
+                        <div className="relative w-full md:w-[280px]">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search invoice or customer..."
@@ -215,6 +286,89 @@ export default function SalesHistoryPage() {
                         </Button>
                     </div>
                 </div>
+
+                {/* Filter bar */}
+                <Card>
+                    <CardContent className="p-3 space-y-3">
+                        {/* Payment method filter */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-16 shrink-0">Payment</span>
+                            <div className="flex gap-1 flex-wrap">
+                                {paymentOptions.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setPaymentFilter(opt.value)}
+                                        className={cn(
+                                            "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                                            paymentFilter === opt.value
+                                                ? "bg-slate-900 text-white border-slate-900"
+                                                : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Date filter */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-16 shrink-0">Date</span>
+                            <div className="flex gap-1 flex-wrap">
+                                {dateOptions.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setDateFilter(opt.value)}
+                                        className={cn(
+                                            "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                                            dateFilter === opt.value
+                                                ? "bg-slate-900 text-white border-slate-900"
+                                                : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Custom date range */}
+                        {dateFilter === "CUSTOM" && (
+                            <div className="flex items-center gap-2 flex-wrap pl-[76px]">
+                                <input
+                                    type="date"
+                                    value={customFrom}
+                                    onChange={e => setCustomFrom(e.target.value)}
+                                    className="border rounded-md px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                                />
+                                <span className="text-xs text-muted-foreground">to</span>
+                                <input
+                                    type="date"
+                                    value={customTo}
+                                    onChange={e => setCustomTo(e.target.value)}
+                                    className="border rounded-md px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                                />
+                            </div>
+                        )}
+
+                        {/* Summary + clear */}
+                        <div className="flex items-center justify-between pt-1 border-t">
+                            <span className="text-xs text-muted-foreground">
+                                {filteredSales.length} invoice{filteredSales.length !== 1 ? "s" : ""}
+                                {" · "}
+                                <span className="font-semibold text-slate-800">₹{totalFiltered.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
+                            </span>
+                            {hasActiveFilter && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+                                >
+                                    <X className="h-3 w-3" /> Clear filters
+                                </button>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardContent className="p-0">
