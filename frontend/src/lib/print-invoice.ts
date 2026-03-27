@@ -8,17 +8,11 @@ export function printInvoiceNewWindow(
     customerName?: string,
     autoPrint: boolean = true
 ) {
-    const win = window.open("", "_blank");
-    if (!win) {
-        alert("Popup blocked. Please allow popups for this site to view invoices.");
-        return;
-    }
-
     const title = customerName
         ? `${customerName} (${invoiceNumber})`
         : `Invoice - ${invoiceNumber}`;
 
-    win.document.write(`<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html>
 <head>
   <title>${title}</title>
@@ -99,10 +93,9 @@ export function printInvoiceNewWindow(
   </div>
   <script>
     window.addEventListener('load', function() {
-      var shell = document.getElementById('pfp-preview-shell');
       var viewport = document.getElementById('pfp-preview-viewport');
       var stage = document.getElementById('pfp-preview-stage');
-      if (shell && viewport && stage) {
+      if (viewport && stage) {
         var screenW = Math.max(window.innerWidth || 0, 320);
         var availableW = Math.max(screenW - 24, 160);
         var contentW = stage.offsetWidth || 794;
@@ -115,8 +108,18 @@ export function printInvoiceNewWindow(
     });
   <\/script>
 </body>
-</html>`);
-    win.document.close();
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const previewUrl = URL.createObjectURL(blob);
+    const win = window.open(previewUrl, "_blank");
+    if (!win) {
+        URL.revokeObjectURL(previewUrl);
+        alert("Popup blocked. Please allow popups for this site to view invoices.");
+        return;
+    }
+
+    win.addEventListener("beforeunload", () => URL.revokeObjectURL(previewUrl), { once: true });
 }
 
 /**
