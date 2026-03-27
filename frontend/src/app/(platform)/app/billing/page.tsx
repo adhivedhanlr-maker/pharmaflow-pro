@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { flushSync } from "react-dom";
-import { printInvoiceNewWindow } from "@/lib/print-invoice";
+import { printOnPage } from "@/lib/print-invoice";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -466,7 +466,7 @@ function BillingContent() {
                 flushSync(() => setCurrentInvoiceNumber(invoiceNo));
 
                 if (printRef.current) {
-                    printInvoiceNewWindow(printRef.current, invoiceNo, customerName);
+                    printOnPage(printRef.current, invoiceNo, customerName);
                 }
 
                 setItems([]);
@@ -941,7 +941,7 @@ function BillingContent() {
                                 className="gap-2 mr-8"
                                 onClick={() => {
                                     if (viewRef.current && savedInvoiceDialog) {
-                                        printInvoiceNewWindow(viewRef.current, savedInvoiceDialog.invoiceNumber, savedInvoiceDialog.customer.name);
+                                        printOnPage(viewRef.current, savedInvoiceDialog.invoiceNumber, savedInvoiceDialog.customer.name);
                                     }
                                 }}
                             >
