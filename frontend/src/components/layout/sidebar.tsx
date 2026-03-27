@@ -83,7 +83,7 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
   const filteredMenuItems = menuItems.filter(item =>
     user &&
     hasRoleAccess(user.role, item.roles) &&
-    (item.href !== "/admin/tenants" || (hostname !== null && PLATFORM_HOSTS.has(hostname)))
+    (item.href !== "/app/admin/tenants" || (hostname !== null && PLATFORM_HOSTS.has(hostname)))
   );
 
   return (
