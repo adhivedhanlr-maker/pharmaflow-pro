@@ -26,22 +26,90 @@ export function printInvoiceNewWindow(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; min-width: 0; }
-    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
+    html, body { margin: 0; padding: 0; background: #eef2f7; color: #000; font-family: Arial, sans-serif; }
+    body { font-size: 11px; }
     @page { size: A4; margin: 6mm; }
-    @media print { body { padding: 0; zoom: 1 !important; transform: none !important; } }
     table { border-collapse: collapse; }
     ol, ul { padding-left: 16px; margin: 0; }
+
+    #pfp-preview-shell {
+      min-height: 100vh;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    #pfp-preview-viewport {
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #pfp-preview-stage {
+      width: 210mm;
+      max-width: none;
+      margin: 0 auto;
+      transform-origin: top left;
+    }
+
+    #pfp-preview-stage > * {
+      width: 210mm !important;
+      max-width: none !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    @media print {
+      html, body {
+        background: #fff !important;
+        overflow: visible !important;
+      }
+
+      #pfp-preview-shell {
+        min-height: auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+
+      #pfp-preview-viewport {
+        width: auto !important;
+        margin: 0 !important;
+      }
+
+      #pfp-preview-stage {
+        width: auto !important;
+        margin: 0 !important;
+        transform: none !important;
+      }
+
+      #pfp-preview-stage > * {
+        width: auto !important;
+        max-width: 100% !important;
+      }
+    }
   </style>
 </head>
 <body>
-  ${element.innerHTML}
+  <div id="pfp-preview-shell">
+    <div id="pfp-preview-viewport">
+      <div id="pfp-preview-stage">
+        ${element.innerHTML}
+      </div>
+    </div>
+  </div>
   <script>
     window.addEventListener('load', function() {
-      var contentW = document.documentElement.scrollWidth;
-      var screenW = window.innerWidth;
-      if (screenW < 900 && contentW > screenW) {
-        document.body.style.zoom = (screenW / contentW).toFixed(4);
-        document.documentElement.style.overflowX = 'hidden';
+      var shell = document.getElementById('pfp-preview-shell');
+      var viewport = document.getElementById('pfp-preview-viewport');
+      var stage = document.getElementById('pfp-preview-stage');
+      if (shell && viewport && stage) {
+        var screenW = Math.max(window.innerWidth || 0, 320);
+        var availableW = Math.max(screenW - 24, 160);
+        var contentW = stage.offsetWidth || 794;
+        var scale = Math.min(1, availableW / contentW);
+        stage.style.transform = 'scale(' + scale.toFixed(4) + ')';
+        viewport.style.width = Math.round(contentW * scale) + 'px';
+        viewport.style.height = Math.round(stage.scrollHeight * scale) + 'px';
       }
       ${autoPrint ? "setTimeout(function(){ window.print(); }, 300);" : ""}
     });
@@ -71,13 +139,19 @@ export function printOnPage(
         '@page { size: A4; margin: 6mm; }',
         '@media print {',
         '  body > *:not(#__pfp_root__) { display: none !important; }',
-        '  #__pfp_root__ { display: block !important; width: 100% !important; }',
+        '  html, body { background: #fff !important; overflow: visible !important; }',
+        '  #__pfp_root__ { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }',
+        '  #__pfp_root__ > * { width: auto !important; max-width: 100% !important; margin: 0 auto !important; border-radius: 0 !important; box-shadow: none !important; }',
         '}'
     ].join('\n');
 
     const printEl = document.createElement('div');
     printEl.id = '__pfp_root__';
     printEl.innerHTML = element.innerHTML;
+    printEl.style.width = '210mm';
+    printEl.style.maxWidth = '210mm';
+    printEl.style.margin = '0 auto';
+    printEl.style.background = '#fff';
 
     document.head.appendChild(styleEl);
     document.body.appendChild(printEl);
