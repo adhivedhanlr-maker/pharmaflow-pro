@@ -69,10 +69,6 @@ export function printInvoiceNewWindow(
         max-width: calc(100vw - 12px) !important;
       }
 
-      .invoice-print-root {
-        font-size: 9px !important;
-      }
-
       .invoice-header {
         padding: 8px 6px 6px !important;
       }
@@ -85,7 +81,6 @@ export function printInvoiceNewWindow(
       .invoice-compliance {
         gap: 6px !important;
         padding: 4px 6px !important;
-        font-size: 8px !important;
       }
 
       .invoice-meta-grid,
@@ -123,7 +118,6 @@ export function printInvoiceNewWindow(
       .invoice-gst-table th,
       .invoice-gst-table td,
       .invoice-totals-table td {
-        font-size: 7px !important;
         line-height: 1.15 !important;
         padding: 3px 2px !important;
         white-space: normal !important;
@@ -145,7 +139,6 @@ export function printInvoiceNewWindow(
         display: flex !important;
         gap: 6px !important;
         flex-wrap: wrap !important;
-        font-size: 6.5px !important;
       }
 
       .invoice-items-table .item-col-packing,
@@ -168,10 +161,6 @@ export function printInvoiceNewWindow(
       .invoice-items-table .item-col-rate { width: 13% !important; }
       .invoice-items-table .item-col-taxable { width: 16% !important; }
 
-      .invoice-gst-table th,
-      .invoice-gst-table td {
-        font-size: 6.5px !important;
-      }
     }
 
     @media print {
