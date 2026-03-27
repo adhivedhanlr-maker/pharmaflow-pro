@@ -36,7 +36,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [isStandalone, setIsStandalone] = useState(false);
     const [launchedFromPWA, setLaunchedFromPWA] = useState(false);
 
-    const isLoginPage = pathname === "/login";
+    const isLoginPage = pathname === "/app/login";
 
     useEffect(() => {
         const standaloneMode =
