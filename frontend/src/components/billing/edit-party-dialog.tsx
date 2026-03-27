@@ -31,6 +31,7 @@ export function EditPartyDialog({ type, party, open, onOpenChange, onSuccess }: 
         name: "",
         gstin: "",
         phone: "",
+        landPhone: "",
         address: "",
         latitude: null,
         longitude: null
@@ -78,6 +79,7 @@ export function EditPartyDialog({ type, party, open, onOpenChange, onSuccess }: 
                 name: party.name || "",
                 gstin: party.gstin || "",
                 phone: party.phone || "",
+                landPhone: party.landPhone || "",
                 address: party.address || "",
                 latitude: party.latitude || null,
                 longitude: party.longitude || null
@@ -184,21 +186,31 @@ export function EditPartyDialog({ type, party, open, onOpenChange, onSuccess }: 
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Phone</label>
+                            <label className="text-sm font-medium">Mobile</label>
                             <Input
                                 placeholder="9876543210"
                                 value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                maxLength={10}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Address</label>
+                            <label className="text-sm font-medium">Landline <span className="text-slate-400 font-normal">(Optional)</span></label>
                             <Input
-                                placeholder="City"
-                                value={formData.address}
-                                onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                placeholder="04842345678"
+                                value={formData.landPhone}
+                                onChange={e => setFormData({ ...formData, landPhone: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                                maxLength={11}
                             />
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Address</label>
+                        <Input
+                            placeholder="City"
+                            value={formData.address}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                        />
                     </div>
                     <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200">
                         <div className="flex items-center justify-between">

@@ -60,18 +60,19 @@ export class PartiesService {
 
     async createCustomer(data: any, tenantId?: string) {
         try {
-            const { name, gstin, phone, address, latitude, longitude, creditLimit } = data;
-            return await this.prisma.customer.create({ 
-                data: { 
-                    name, 
-                    gstin, 
-                    phone, 
-                    address, 
-                    latitude: this.normalizeCoordinate(latitude), 
-                    longitude: this.normalizeCoordinate(longitude), 
+            const { name, gstin, phone, landPhone, address, latitude, longitude, creditLimit } = data;
+            return await this.prisma.customer.create({
+                data: {
+                    name,
+                    gstin,
+                    phone,
+                    landPhone: landPhone || null,
+                    address,
+                    latitude: this.normalizeCoordinate(latitude),
+                    longitude: this.normalizeCoordinate(longitude),
                     creditLimit: creditLimit || 0,
-                    tenantId 
-                } 
+                    tenantId
+                }
             });
         } catch (error) {
             console.error('Error creating customer:', error);
@@ -81,13 +82,14 @@ export class PartiesService {
 
     async updateCustomer(id: string, data: any, tenantId?: string) {
         const customer = await this.findCustomerById(id, tenantId);
-        const { name, gstin, phone, address, creditLimit, latitude, longitude } = data;
+        const { name, gstin, phone, landPhone, address, creditLimit, latitude, longitude } = data;
         return this.prisma.customer.update({
             where: { id: customer.id },
             data: {
                 ...(name !== undefined && { name }),
                 ...(gstin !== undefined && { gstin }),
                 ...(phone !== undefined && { phone }),
+                ...(landPhone !== undefined && { landPhone: landPhone || null }),
                 ...(address !== undefined && { address }),
                 ...(creditLimit !== undefined && { creditLimit }),
                 latitude: latitude !== undefined ? this.normalizeCoordinate(latitude) : undefined,
@@ -142,16 +144,17 @@ export class PartiesService {
 
     async createSupplier(data: any, tenantId?: string) {
         try {
-            const { name, gstin, phone, address } = data;
+            const { name, gstin, phone, landPhone, address } = data;
 
-            return await this.prisma.supplier.create({ 
-                data: { 
-                    name, 
-                    gstin, 
-                    phone, 
-                    address, 
-                    tenantId 
-                } 
+            return await this.prisma.supplier.create({
+                data: {
+                    name,
+                    gstin,
+                    phone,
+                    landPhone: landPhone || null,
+                    address,
+                    tenantId
+                }
             });
         } catch (error) {
             console.error('Error creating supplier:', error);
@@ -161,13 +164,14 @@ export class PartiesService {
 
     async updateSupplier(id: string, data: any, tenantId?: string) {
         const supplier = await this.findSupplierById(id, tenantId);
-        const { name, gstin, phone, address } = data;
+        const { name, gstin, phone, landPhone, address } = data;
         return this.prisma.supplier.update({
             where: { id: supplier.id },
             data: {
                 ...(name !== undefined && { name }),
                 ...(gstin !== undefined && { gstin }),
                 ...(phone !== undefined && { phone }),
+                ...(landPhone !== undefined && { landPhone: landPhone || null }),
                 ...(address !== undefined && { address }),
             },
         });

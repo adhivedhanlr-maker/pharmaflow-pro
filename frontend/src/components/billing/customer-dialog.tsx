@@ -39,6 +39,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
         name: "",
         gstin: "",
         phone: "",
+        landPhone: "",
         address: "",
         latitude: null,
         longitude: null
@@ -105,6 +106,12 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
             return;
         }
 
+        if (formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone)) {
+            alert("Landline number must start with 0 and be 8–11 digits (e.g. 04842345678).");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const endpoint = isCustomer ? "customers" : "suppliers";
             const payload = isCustomer
@@ -113,6 +120,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                     name: formData.name,
                     gstin: formData.gstin,
                     phone: formData.phone,
+                    landPhone: formData.landPhone,
                     address: formData.address,
                 };
             const response = await fetch(`${API_BASE}/parties/${endpoint}`, {
@@ -128,7 +136,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                 const newParty = await response.json();
                 onSuccess(newParty);
                 setOpen(false);
-                setFormData({ name: "", gstin: "", phone: "", address: "", latitude: null, longitude: null });
+                setFormData({ name: "", gstin: "", phone: "", landPhone: "", address: "", latitude: null, longitude: null });
             } else {
                 const err = await response.json().catch(() => ({ message: "Unknown error" }));
                 alert("Failed to create " + label + "\nDetails: " + JSON.stringify(err, null, 2));
@@ -206,7 +214,7 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Phone</label>
+                            <label className="text-sm font-medium">Mobile</label>
                             <Input
                                 placeholder="9876543210"
                                 className={cn(
@@ -222,6 +230,23 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
                             )}
                         </div>
                         <div className="space-y-2">
+                            <label className="text-sm font-medium">Landline <span className="text-slate-400 font-normal">(Optional)</span></label>
+                            <Input
+                                placeholder="04842345678"
+                                className={cn(
+                                    formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone) && "border-red-500"
+                                )}
+                                value={formData.landPhone}
+                                onChange={e => setFormData({ ...formData, landPhone: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                                maxLength={11}
+                            />
+                            {formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone) && (
+                                <p className="text-[10px] text-red-500 mt-1">Start with 0, 8–11 digits</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2 space-y-2">
                             <label className="text-sm font-medium">Address</label>
                             <div className="relative">
                                 <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />

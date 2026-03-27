@@ -29,6 +29,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
         name: "",
         gstin: "",
         phone: "",
+        landPhone: "",
         address: ""
     });
 
@@ -54,6 +55,12 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
             return;
         }
 
+        if (formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone)) {
+            alert("Landline number must start with 0 and be 8–11 digits (e.g. 04842345678).");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE}/parties/suppliers`, {
                 method: "POST",
@@ -65,6 +72,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                     name: formData.name,
                     gstin: formData.gstin,
                     phone: formData.phone,
+                    landPhone: formData.landPhone,
                     address: formData.address,
                 }),
             });
@@ -76,6 +84,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                         name: "",
                         gstin: "",
                         phone: "",
+                        landPhone: "",
                         address: ""
                     });
                     onOpenChange(false);
@@ -135,7 +144,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Phone</label>
+                            <label className="text-sm font-medium">Mobile</label>
                             <Input
                                 placeholder="9876543210"
                                 className={cn(
@@ -151,13 +160,28 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
                             )}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">City/Address</label>
+                            <label className="text-sm font-medium">Landline <span className="text-slate-400 font-normal">(Optional)</span></label>
                             <Input
-                                placeholder="City"
-                                value={formData.address}
-                                onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                placeholder="04842345678"
+                                className={cn(
+                                    formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone) && "border-red-500"
+                                )}
+                                value={formData.landPhone}
+                                onChange={e => setFormData({ ...formData, landPhone: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                                maxLength={11}
                             />
+                            {formData.landPhone && !/^0[0-9]{7,10}$/.test(formData.landPhone) && (
+                                <p className="text-[10px] text-red-500 mt-1">Start with 0, 8–11 digits</p>
+                            )}
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">City/Address</label>
+                        <Input
+                            placeholder="City"
+                            value={formData.address}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                        />
                     </div>
 
                     <div className="flex justify-end pt-4">

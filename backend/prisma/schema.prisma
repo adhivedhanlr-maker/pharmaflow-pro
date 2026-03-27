@@ -149,6 +149,7 @@ model Customer {
   gstin          String?
   address        String?
   phone          String?
+  landPhone      String?
   email          String?
   state          String?
   dlNo           String?
@@ -177,6 +178,7 @@ model Supplier {
   gstin          String?
   address        String?
   phone          String?
+  landPhone      String?
   latitude       Float?
   longitude      Float?
   currentBalance Float           @default(0)

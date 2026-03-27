@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Save, Printer, Loader2, ShoppingCart, ShieldAlert, Camera } from "lucide-react";
+import { Plus, Trash2, Save, Printer, Loader2, ShoppingCart, ShieldAlert, Camera, Eye, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InvoicePrint } from "@/components/billing/invoice-print";
 import { CustomerDialog } from "@/components/billing/customer-dialog";
 import { useAuth } from "@/context/auth-context";
@@ -112,7 +113,16 @@ function BillingContent() {
     const [customerType, setCustomerType] = useState<"PHARMACY" | "DISTRIBUTOR">("PHARMACY");
     const [extraDiscount, setExtraDiscount] = useState(0);
     const printRef = useRef<HTMLDivElement>(null);
+    const viewRef = useRef<HTMLDivElement>(null);
     const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState("");
+    const [savedInvoiceDialog, setSavedInvoiceDialog] = useState<{
+        invoiceNumber: string;
+        customer: { name: string; address: string; gstin?: string; phone?: string; email?: string; state?: string; dlNo?: string; fssaiNo?: string };
+        snapshotItems: BillingItem[];
+        snapshotTotals: { subtotal: number; gst: number; discount: number; net: number };
+        snapshotPaymentMethod: string;
+        snapshotCustomerType: "PHARMACY" | "DISTRIBUTOR";
+    } | null>(null);
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -295,7 +305,18 @@ function BillingContent() {
             });
 
             if (response.ok) {
-                alert("Invoice saved successfully!");
+                const savedInvoice = await response.json();
+                // Snapshot all data before clearing the form
+                const invoiceNo = savedInvoice.invoiceNumber || "INV";
+                flushSync(() => setCurrentInvoiceNumber(invoiceNo));
+                setSavedInvoiceDialog({
+                    invoiceNumber: invoiceNo,
+                    customer: { ...printCustomer },
+                    snapshotItems: [...items],
+                    snapshotTotals: { ...totals },
+                    snapshotPaymentMethod: paymentMethod,
+                    snapshotCustomerType: customerType,
+                });
                 setItems([]);
                 setSelectedCustomerId("");
                 setPaymentMethod("CASH");
@@ -902,6 +923,70 @@ function BillingContent() {
             />
             </div>
             <BarcodeScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleBarcodeScan} />
+
+            {/* Invoice Saved Dialog */}
+            <Dialog open={!!savedInvoiceDialog} onOpenChange={(open) => { if (!open) { setSavedInvoiceDialog(null); setCurrentInvoiceNumber(""); } }}>
+                <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+                    <DialogHeader className="px-4 pt-4 pb-3 flex-shrink-0 border-b">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                <DialogTitle className="text-base font-semibold">
+                                    Invoice Saved — {savedInvoiceDialog?.invoiceNumber}
+                                </DialogTitle>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 mr-8"
+                                onClick={() => {
+                                    if (viewRef.current && savedInvoiceDialog) {
+                                        printInvoiceNewWindow(viewRef.current, savedInvoiceDialog.invoiceNumber, savedInvoiceDialog.customer.name);
+                                    }
+                                }}
+                            >
+                                <Printer className="h-4 w-4" />
+                                Print / Save PDF
+                            </Button>
+                        </div>
+                    </DialogHeader>
+                    <div className="overflow-y-auto flex-1 p-4 bg-slate-50">
+                        {savedInvoiceDialog && (
+                            <div className="bg-white shadow rounded-lg overflow-hidden">
+                                <InvoicePrint
+                                    ref={viewRef}
+                                    preview={true}
+                                    invoiceNumber={savedInvoiceDialog.invoiceNumber}
+                                    date={new Date()}
+                                    businessProfile={businessProfile}
+                                    customer={savedInvoiceDialog.customer}
+                                    paymentMethod={savedInvoiceDialog.snapshotPaymentMethod}
+                                    customerType={savedInvoiceDialog.snapshotCustomerType}
+                                    items={savedInvoiceDialog.snapshotItems.map(item => ({
+                                        id: item.id,
+                                        name: item.name,
+                                        company: item.company,
+                                        packing: item.packing,
+                                        hsnCode: item.hsnCode,
+                                        batchNumber: item.batchNumber,
+                                        expiryDate: item.expiryDate,
+                                        quantity: item.quantity,
+                                        freeQuantity: item.freeQuantity || 0,
+                                        mrp: item.mrp || 0,
+                                        ptr: savedInvoiceDialog.snapshotCustomerType === "DISTRIBUTOR" ? (item.pts || item.unitPrice) : (item.ptr || item.unitPrice),
+                                        unitPrice: item.unitPrice,
+                                        discountPct: item.discountPct || 0,
+                                        gstRate: item.gstRate,
+                                        gstAmount: item.gstAmount,
+                                        total: item.total
+                                    }))}
+                                    totals={savedInvoiceDialog.snapshotTotals}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </RoleGate>
     );
 }
