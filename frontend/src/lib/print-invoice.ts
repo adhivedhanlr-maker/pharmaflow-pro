@@ -27,38 +27,16 @@ export function printInvoiceNewWindow(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #f5f5f5; color: #000; overflow-x: hidden; }
-    #inv { background: #fff; transform-origin: top left; width: fit-content; }
+    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; overflow-x: auto; }
     @page { size: A4; margin: 6mm; }
-    @media print { body { padding: 0; background: #fff; } #inv { transform: none !important; width: auto !important; } }
+    @media print { body { padding: 0; } }
     table { border-collapse: collapse; }
     ol, ul { padding-left: 16px; margin: 0; }
   </style>
 </head>
 <body>
-  <div id="inv">${element.innerHTML}</div>
-  <script>
-    function scaleToFit() {
-      var el = document.getElementById('inv');
-      if (!el) return;
-      var naturalWidth = el.offsetWidth;
-      var naturalHeight = el.offsetHeight;
-      var availWidth = window.innerWidth - 16;
-      if (naturalWidth > availWidth) {
-        var scale = availWidth / naturalWidth;
-        el.style.transform = 'scale(' + scale + ')';
-        document.body.style.height = (naturalHeight * scale + 16) + 'px';
-      } else {
-        el.style.transform = '';
-        document.body.style.height = '';
-      }
-    }
-    window.addEventListener('load', function() {
-      scaleToFit();
-      ${autoPrint ? "setTimeout(function() { window.print(); }, 400);" : ""}
-    });
-    window.addEventListener('resize', scaleToFit);
-  <\/script>
+  ${element.innerHTML}
+  ${autoPrint ? `<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},400);});<\/script>` : ""}
 </body>
 </html>`);
     win.document.close();
