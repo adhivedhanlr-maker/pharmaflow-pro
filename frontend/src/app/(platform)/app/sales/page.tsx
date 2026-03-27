@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { printInvoiceNewWindow } from "@/lib/print-invoice";
+import { printInvoiceNewWindow, printOnPage } from "@/lib/print-invoice";
 import { format } from "date-fns";
 import {
     Search,
@@ -171,7 +171,7 @@ export default function SalesHistoryPage() {
         setSelectedInvoice(sale);
         setTimeout(() => {
             if (printRef.current) {
-                printInvoiceNewWindow(printRef.current, sale.invoiceNumber, sale.customer.name, true);
+                printOnPage(printRef.current, sale.invoiceNumber, sale.customer.name);
             }
             setSelectedInvoice(null);
         }, 200);
