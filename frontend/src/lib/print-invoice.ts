@@ -38,18 +38,41 @@ export function printInvoiceNewWindow(
     }
 
     #pfp-preview-stage {
-      width: 210mm;
-      max-width: none;
+      width: 100%;
+      max-width: 210mm;
       margin: 0 auto;
-      transform-origin: top left;
     }
 
     #pfp-preview-stage > * {
-      width: 210mm !important;
-      max-width: none !important;
-      margin: 0 !important;
+      width: 100% !important;
+      max-width: 210mm !important;
+      margin: 0 auto !important;
       border-radius: 0 !important;
       box-shadow: none !important;
+    }
+
+    @media screen and (max-width: 768px) {
+      html, body {
+        background: #e7ecf3;
+      }
+
+      #pfp-preview-shell {
+        padding: 8px;
+      }
+
+      #pfp-preview-viewport {
+        width: 100% !important;
+        height: auto !important;
+      }
+
+      #pfp-preview-stage {
+        max-width: 100%;
+      }
+
+      #pfp-preview-stage > * {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+      }
     }
 
     @media print {
@@ -73,11 +96,18 @@ export function printInvoiceNewWindow(
       #pfp-preview-stage {
         width: auto !important;
         margin: 0 !important;
-        transform: none !important;
       }
 
       #pfp-preview-stage > * {
-        width: auto !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        min-width: 210mm !important;
+        margin: 0 auto !important;
+      }
+    }
+
+    @media print and (max-width: 210mm) {
+      #pfp-preview-stage > * {
         max-width: 100% !important;
       }
     }
@@ -93,17 +123,6 @@ export function printInvoiceNewWindow(
   </div>
   <script>
     window.addEventListener('load', function() {
-      var viewport = document.getElementById('pfp-preview-viewport');
-      var stage = document.getElementById('pfp-preview-stage');
-      if (viewport && stage) {
-        var screenW = Math.max(window.innerWidth || 0, 320);
-        var availableW = Math.max(screenW - 24, 160);
-        var contentW = stage.offsetWidth || 794;
-        var scale = Math.min(1, availableW / contentW);
-        stage.style.transform = 'scale(' + scale.toFixed(4) + ')';
-        viewport.style.width = Math.round(contentW * scale) + 'px';
-        viewport.style.height = Math.round(stage.scrollHeight * scale) + 'px';
-      }
       ${autoPrint ? "setTimeout(function(){ window.print(); }, 300);" : ""}
     });
   <\/script>
