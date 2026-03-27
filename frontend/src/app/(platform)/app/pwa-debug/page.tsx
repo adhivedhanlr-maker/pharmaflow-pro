@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RoleGate } from "@/components/auth/role-gate";
 
 type Diagnostics = {
     currentUrl: string;
@@ -199,6 +200,7 @@ export default function PWADebugPage() {
         : "border-amber-200 bg-amber-50 text-amber-900";
 
     return (
+        <RoleGate allowedRoles={["ADMIN"]}>
         <div className="mx-auto max-w-5xl space-y-6 pb-24">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -277,5 +279,6 @@ export default function PWADebugPage() {
                 </CardContent>
             </Card>
         </div>
+        </RoleGate>
     );
 }
