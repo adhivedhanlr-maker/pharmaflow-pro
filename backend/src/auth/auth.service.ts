@@ -136,6 +136,46 @@ export class AuthService {
         };
     }
 
+    async recoverAdmin(resetKey: string, newPassword?: string) {
+        const expectedKey = process.env.PLATFORM_RESET_KEY;
+        if (!expectedKey || resetKey !== expectedKey) {
+            throw new UnauthorizedException('Invalid reset key');
+        }
+
+        const defaultTenant = await this.prisma.tenantBranding.findFirst({
+            where: { isActive: true, isDefault: true },
+        });
+        if (!defaultTenant) {
+            throw new BadRequestException('Default tenant not found');
+        }
+
+        const admins = await this.prisma.user.findMany({
+            where: { tenantId: defaultTenant.id, role: 'ADMIN' },
+            select: { id: true, username: true, name: true, role: true },
+        });
+
+        if (!newPassword) {
+            // Just return the list of admin usernames — no password change
+            return { tenantName: defaultTenant.companyName, admins };
+        }
+
+        const validation = PasswordValidator.validate(newPassword);
+        if (!validation.isValid) {
+            throw new BadRequestException({ message: 'Password too weak', errors: validation.errors });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.updateMany({
+            where: { tenantId: defaultTenant.id, role: 'ADMIN' },
+            data: { password: hashed },
+        });
+
+        return {
+            message: 'Password reset for all platform admins',
+            admins: admins.map(a => a.username),
+        };
+    }
+
     async bootstrapAdmin(data: any, host?: string) {
         const tenant = await this.tenantBrandingService.resolveTenant(host);
         if (!tenant) {

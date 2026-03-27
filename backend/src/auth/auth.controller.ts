@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req, Headers, UnauthorizedException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -28,6 +28,15 @@ export class AuthController {
             userAgent: req.headers['user-agent'],
         });
         return user;
+    }
+
+    @Post('recover')
+    @HttpCode(HttpStatus.OK)
+    async recoverAdmin(
+        @Headers('x-reset-key') resetKey: string,
+        @Body() body: { newPassword?: string },
+    ) {
+        return this.authService.recoverAdmin(resetKey, body.newPassword);
     }
 
     @Post('bootstrap-admin')
