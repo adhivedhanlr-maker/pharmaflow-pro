@@ -127,18 +127,46 @@ export function printInvoiceNewWindow(
         line-height: 1.15 !important;
         padding: 3px 2px !important;
         white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
       }
 
+      .invoice-items-table .item-col-name {
+        width: 38% !important;
+        text-align: left !important;
+      }
+
+      .invoice-items-table .item-col-name div {
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+      }
+
+      .invoice-items-table .item-mobile-meta {
+        display: flex !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        font-size: 6.5px !important;
+      }
+
+      .invoice-items-table .item-col-packing,
+      .invoice-items-table .item-col-hsn,
+      .invoice-items-table .item-col-batch,
+      .invoice-items-table .item-col-exp,
+      .invoice-items-table .item-col-gst,
       .invoice-items-table th:nth-child(3),
-      .invoice-items-table td:nth-child(3),
       .invoice-items-table th:nth-child(4),
-      .invoice-items-table td:nth-child(4),
-      .invoice-items-table th:nth-child(11),
-      .invoice-items-table td:nth-child(11) {
+      .invoice-items-table th:nth-child(5),
+      .invoice-items-table th:nth-child(6),
+      .invoice-items-table th:nth-child(11) {
         display: none !important;
       }
+
+      .invoice-items-table .item-col-sno { width: 8% !important; }
+      .invoice-items-table .item-col-qty { width: 9% !important; }
+      .invoice-items-table .item-col-free { width: 9% !important; }
+      .invoice-items-table .item-col-mrp { width: 13% !important; }
+      .invoice-items-table .item-col-rate { width: 13% !important; }
+      .invoice-items-table .item-col-taxable { width: 16% !important; }
 
       .invoice-gst-table th,
       .invoice-gst-table td {

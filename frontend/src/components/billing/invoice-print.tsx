@@ -243,21 +243,26 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 const expFormatted = item.expiryDate ? format(new Date(item.expiryDate), "MM/yy") : "-";
                                 return (
                                     <tr key={item.id}>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{idx + 1}</td>
-                                        <td style={cellBase}>
+                                        <td className="item-col-sno" style={{ ...cellBase, textAlign: "center" }}>{idx + 1}</td>
+                                        <td className="item-col-name" style={cellBase}>
                                             <div style={{ fontWeight: 700 }}>{item.name}</div>
                                             {item.company && <div style={{ color: "#555", marginTop: "1px" }}>{item.company}</div>}
+                                            <div className="item-mobile-meta" style={{ display: "none", marginTop: "3px", color: "#444" }}>
+                                                {item.batchNumber ? <span>Batch: {item.batchNumber}</span> : null}
+                                                {expFormatted !== "-" ? <span>Exp: {expFormatted}</span> : null}
+                                                {item.packing ? <span>Pack: {item.packing}</span> : null}
+                                            </div>
                                         </td>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{item.packing || ""}</td>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{item.hsnCode || ""}</td>
-                                        <td style={{ ...cellBase, textAlign: "center", fontFamily: "monospace" }}>{item.batchNumber}</td>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{expFormatted}</td>
-                                        <td style={{ ...cellBase, textAlign: "center", fontWeight: 700 }}>{item.quantity}</td>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{item.freeQuantity || 0}</td>
-                                        <td style={{ ...cellBase, textAlign: "right" }}>{(item.mrp || 0).toFixed(2)}</td>
-                                        <td style={{ ...cellBase, textAlign: "right", fontWeight: 700 }}>{(item.ptr ?? item.unitPrice).toFixed(2)}</td>
-                                        <td style={{ ...cellBase, textAlign: "center" }}>{item.gstRate}</td>
-                                        <td style={{ ...cellBase, textAlign: "right" }}>{taxable.toFixed(2)}</td>
+                                        <td className="item-col-packing" style={{ ...cellBase, textAlign: "center" }}>{item.packing || ""}</td>
+                                        <td className="item-col-hsn" style={{ ...cellBase, textAlign: "center" }}>{item.hsnCode || ""}</td>
+                                        <td className="item-col-batch" style={{ ...cellBase, textAlign: "center", fontFamily: "monospace" }}>{item.batchNumber}</td>
+                                        <td className="item-col-exp" style={{ ...cellBase, textAlign: "center" }}>{expFormatted}</td>
+                                        <td className="item-col-qty" style={{ ...cellBase, textAlign: "center", fontWeight: 700 }}>{item.quantity}</td>
+                                        <td className="item-col-free" style={{ ...cellBase, textAlign: "center" }}>{item.freeQuantity || 0}</td>
+                                        <td className="item-col-mrp" style={{ ...cellBase, textAlign: "right" }}>{(item.mrp || 0).toFixed(2)}</td>
+                                        <td className="item-col-rate" style={{ ...cellBase, textAlign: "right", fontWeight: 700 }}>{(item.ptr ?? item.unitPrice).toFixed(2)}</td>
+                                        <td className="item-col-gst" style={{ ...cellBase, textAlign: "center" }}>{item.gstRate}</td>
+                                        <td className="item-col-taxable" style={{ ...cellBase, textAlign: "right" }}>{taxable.toFixed(2)}</td>
                                     </tr>
                                 );
                             })}
