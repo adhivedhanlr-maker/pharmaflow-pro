@@ -1,7 +1,6 @@
 /**
  * Opens the invoice in a new browser window for viewing (eye button).
  * On mobile, scales the invoice to fit the screen width.
- * autoPrint=false: view only. autoPrint=true: also triggers the print dialog.
  */
 export function printInvoiceNewWindow(
     element: HTMLElement,
@@ -28,8 +27,6 @@ export function printInvoiceNewWindow(
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
-    /* Prevent flex children from pushing page wider than viewport */
-    div[style*="display: flex"] > div { min-width: 0; }
     @page { size: A4; margin: 6mm; }
     @media print { body { padding: 0; zoom: 1 !important; transform: none !important; } }
     table { border-collapse: collapse; }
@@ -39,15 +36,33 @@ export function printInvoiceNewWindow(
 <body>
   ${element.innerHTML}
   <script>
-    window.addEventListener('load', function() {
-      var contentW = document.documentElement.scrollWidth;
-      var screenW = window.innerWidth;
-      if (screenW < 900 && contentW > screenW) {
-        document.body.style.zoom = (screenW / contentW).toFixed(4);
-        document.documentElement.style.overflowX = 'hidden';
+    function fixAndScale() {
+      // Fix flex children: set min-width:0 so they don't push page wider than viewport
+      var all = document.querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (window.getComputedStyle(el).display === 'flex') {
+          for (var j = 0; j < el.children.length; j++) {
+            el.children[j].style.minWidth = '0';
+          }
+        }
       }
-      ${autoPrint ? "setTimeout(function() { window.print(); }, 400);" : ""}
-    });
+      // After flex fix, measure content width and apply zoom if still overflowing on mobile
+      requestAnimationFrame(function() {
+        var contentW = document.documentElement.scrollWidth;
+        var screenW = window.innerWidth;
+        if (screenW < 900 && contentW > screenW) {
+          document.body.style.zoom = (screenW / contentW).toFixed(4);
+          document.documentElement.style.overflowX = 'hidden';
+        }
+        ${autoPrint ? "setTimeout(function(){ window.print(); }, 200);" : ""}
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fixAndScale);
+    } else {
+      fixAndScale();
+    }
   <\/script>
 </body>
 </html>`);
@@ -55,9 +70,9 @@ export function printInvoiceNewWindow(
 }
 
 /**
- * Prints the invoice using a hidden iframe — no new tab opens.
- * The iframe gets the same isolated HTML/CSS as printInvoiceNewWindow,
- * so the print output is identical (proper A4 layout, correct margins).
+ * Prints the invoice directly on the current page — no new tab opens.
+ * Works correctly on both desktop and mobile.
+ * InvoicePrint uses all inline styles so print output is clean.
  */
 export function printOnPage(
     element: HTMLElement,
@@ -67,41 +82,26 @@ export function printOnPage(
     const title = customerName
         ? `${customerName} (${invoiceNumber})`
         : `Invoice - ${invoiceNumber}`;
+    const originalTitle = document.title;
+    document.title = title;
 
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:1px;border:none;visibility:hidden;';
-    document.body.appendChild(iframe);
+    const styleEl = document.createElement('style');
+    styleEl.textContent = [
+        '@page { size: A4; margin: 6mm; }',
+        '@media print {',
+        '  body > *:not(#__pfp_root__) { display: none !important; }',
+        '  #__pfp_root__ { display: block !important; width: 100% !important; }',
+        '}'
+    ].join('\n');
 
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) {
-        document.body.removeChild(iframe);
-        return;
-    }
+    const printEl = document.createElement('div');
+    printEl.id = '__pfp_root__';
+    printEl.innerHTML = element.innerHTML;
 
-    doc.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>${title}</title>
-  <meta charset="utf-8">
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
-    @page { size: A4; margin: 6mm; }
-    @media print { body { padding: 0; } }
-    table { border-collapse: collapse; }
-    ol, ul { padding-left: 16px; margin: 0; }
-  </style>
-</head>
-<body>
-  ${element.innerHTML}
-</body>
-</html>`);
-    doc.close();
-
-    iframe.contentWindow?.focus();
-    iframe.contentWindow?.print();
-
-    setTimeout(() => {
-        if (document.body.contains(iframe)) document.body.removeChild(iframe);
-    }, 2000);
+    document.head.appendChild(styleEl);
+    document.body.appendChild(printEl);
+    window.print();
+    document.head.removeChild(styleEl);
+    document.body.removeChild(printEl);
+    document.title = originalTitle;
 }
