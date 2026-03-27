@@ -128,6 +128,16 @@ export function printOnPage(
     invoiceNumber: string,
     customerName?: string
 ) {
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+    const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
+    const isTouchDevice = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+
+    // Android/mobile print preview is much more reliable from a dedicated window.
+    if (isMobileViewport || isAndroid || isTouchDevice) {
+        printInvoiceNewWindow(element, invoiceNumber, customerName, true);
+        return;
+    }
+
     const title = customerName
         ? `${customerName} (${invoiceNumber})`
         : `Invoice - ${invoiceNumber}`;
