@@ -20,7 +20,9 @@ import {
     Save,
     Upload,
     Loader2,
-    ShieldAlert
+    ShieldAlert,
+    Database,
+    ArrowRight,
 } from "lucide-react";
 import TwoFactorSetup from "@/components/settings/two-factor-setup";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -508,6 +510,24 @@ export default function SettingsPage() {
                     </Card>
 
                     <TwoFactorSetup />
+
+                    {/* Data Management */}
+                    <a href="/app/settings/data" className="block">
+                        <Card className="hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
+                            <CardContent className="flex items-center justify-between p-5">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-blue-50 p-2.5 rounded-lg">
+                                        <Database className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-sm">Data Management</p>
+                                        <p className="text-xs text-slate-500">Export data to Excel, import customers / suppliers / products in bulk</p>
+                                    </div>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
+                            </CardContent>
+                        </Card>
+                    </a>
                 </div>
             </div>
         </RoleGate>

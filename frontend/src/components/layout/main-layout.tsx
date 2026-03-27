@@ -92,7 +92,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+            <div className="flex h-screen w-screen items-center justify-center bg-white">
                 <style>{`
                     @keyframes pfp-slide {
                         0%   { transform: translateX(-100%); }
@@ -103,22 +103,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     }
                 `}</style>
                 <div className="flex w-full max-w-xs flex-col items-center px-8 text-center">
-                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200">
-                        <img
-                            src={branding?.logoUrl || "/pharmaflow-logo.png"}
-                            alt={branding?.companyName || "PharmaFlow Pro"}
-                            className="h-10 w-10 object-contain"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                    </div>
-                    <p className="text-base font-semibold text-slate-900 tracking-tight">
+                    <img
+                        src={branding?.logoUrl || "/pharmaflow-logo.png"}
+                        alt={branding?.companyName || "PharmaFlow Pro"}
+                        className="mb-5 h-24 w-24 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <p className="text-lg font-bold text-slate-900 tracking-tight">
                         {branding?.companyName || "PharmaFlow Pro"}
                     </p>
                     <p className="mt-1 text-xs text-slate-400">
                         {isStandalone || launchedFromPWA ? "Opening your workspace…" : "Loading…"}
                     </p>
-                    <div className="mt-5 h-1 w-32 overflow-hidden rounded-full bg-slate-200">
-                        <div className="pfp-splash-bar h-full w-1/3 rounded-full bg-blue-500" />
+                    <div className="mt-6 h-1 w-28 overflow-hidden rounded-full bg-slate-100">
+                        <div className="pfp-splash-bar h-full w-1/3 rounded-full bg-blue-600" />
                     </div>
                 </div>
             </div>

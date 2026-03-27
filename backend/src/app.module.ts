@@ -25,6 +25,7 @@ import { OrdersModule } from './orders/orders.module';
 import { RoutesModule } from './routes/routes.module';
 import { TenantBrandingModule } from './tenant-branding/tenant-branding.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { ExportModule } from './export/export.module';
 
 
 @Module({
@@ -46,6 +47,7 @@ import { PermissionsModule } from './permissions/permissions.module';
     RoutesModule,
     TenantBrandingModule,
     PermissionsModule,
+    ExportModule,
 
     ScheduleModule.forRoot(),
     MailerModule.forRoot({

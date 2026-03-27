@@ -11,8 +11,8 @@
         "standalone",
         "minimal-ui"
     ],
-    "background_color": "#0f172a",
-    "theme_color": "#0f172a",
+    "background_color": "#ffffff",
+    "theme_color": "#1d4ed8",
     "prefer_related_applications": false,
     "orientation": "portrait-primary",
     "screenshots": [
