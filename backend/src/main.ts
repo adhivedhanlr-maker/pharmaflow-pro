@@ -19,11 +19,22 @@ async function bootstrap() {
     .split(',')
     .map(o => o.trim());
 
+  // Base domain for tenant subdomains (e.g. pharmaflow.eflybe.com)
+  const baseDomain = process.env.BASE_DOMAIN || 'pharmaflow.eflybe.com';
+
   app.enableCors({
     origin: (origin: any, callback: any) => {
       // Allow requests with no origin (mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
+      // Allow explicitly listed origins
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow all subdomains of the base domain (tenant subdomains)
+      try {
+        const hostname = new URL(origin).hostname;
+        if (hostname === baseDomain || hostname.endsWith(`.${baseDomain}`)) {
+          return callback(null, true);
+        }
+      } catch { /* invalid origin URL */ }
       callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
