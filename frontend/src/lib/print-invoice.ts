@@ -27,16 +27,28 @@ export function printInvoiceNewWindow(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; overflow-x: auto; }
+    body { margin: 0; padding: 8px; font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
+    /* Prevent flex children from pushing page wider than viewport */
+    div[style*="display: flex"] > div { min-width: 0; }
     @page { size: A4; margin: 6mm; }
-    @media print { body { padding: 0; } }
+    @media print { body { padding: 0; zoom: 1 !important; transform: none !important; } }
     table { border-collapse: collapse; }
     ol, ul { padding-left: 16px; margin: 0; }
   </style>
 </head>
 <body>
   ${element.innerHTML}
-  ${autoPrint ? `<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},400);});<\/script>` : ""}
+  <script>
+    window.addEventListener('load', function() {
+      var contentW = document.documentElement.scrollWidth;
+      var screenW = window.innerWidth;
+      if (screenW < 900 && contentW > screenW) {
+        document.body.style.zoom = (screenW / contentW).toFixed(4);
+        document.documentElement.style.overflowX = 'hidden';
+      }
+      ${autoPrint ? "setTimeout(function() { window.print(); }, 400);" : ""}
+    });
+  <\/script>
 </body>
 </html>`);
     win.document.close();
