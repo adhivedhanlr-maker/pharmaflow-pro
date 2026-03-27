@@ -163,6 +163,10 @@ export class SalesService {
         const sale = await this.prisma.sale.findFirst({ where: { id, ...(tenantId ? { tenantId } : {}) } });
         if (!sale) throw new NotFoundException('Invoice not found');
 
+        // Ensure the rep belongs to the same tenant
+        const rep = await this.prisma.user.findFirst({ where: { id: repId, ...(tenantId ? { tenantId } : {}) } });
+        if (!rep) throw new NotFoundException('Rep not found');
+
         return this.prisma.sale.update({
             where: { id },
             data: { repId },
@@ -171,11 +175,11 @@ export class SalesService {
     }
 
     async findAll(user?: any) {
-        const where: any = {};
-        if (user?.tenantId) {
-            where.tenantId = user.tenantId;
+        if (!user?.tenantId) {
+            return [];
         }
-        if (user && user.role === 'SALES_REP') {
+        const where: any = { tenantId: user.tenantId };
+        if (user?.role === 'SALES_REP' && user?.userId) {
             where.repId = user.userId;
         }
 

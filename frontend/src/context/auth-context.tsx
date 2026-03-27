@@ -98,9 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const restoreSessionFromServer = async (sessionToken: string) => {
         const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10_000);
+
         try {
             const response = await fetch(`${API_BASE}/users/me`, {
                 headers: { Authorization: `Bearer ${sessionToken}` },
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -122,6 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(null);
             setUser(null);
             clearStoredSession();
+            // Redirect to login — token expired or backend unreachable
+            if (typeof window !== "undefined" && !window.location.pathname.endsWith("/app/login")) {
+                router.push("/app/login");
+            }
+        } finally {
+            clearTimeout(timeout);
         }
     };
 
@@ -150,13 +160,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setToken(storedToken);
                 setUser(storedUser);
                 setIsLoading(false);
-
+                // Validate token in background; will redirect to login if expired
                 void restoreSessionFromServer(storedToken);
                 return;
             }
 
-            await restoreSessionFromServer(storedToken);
-            setIsLoading(false);
+            try {
+                await restoreSessionFromServer(storedToken);
+            } finally {
+                setIsLoading(false);
+            }
         };
 
         void bootstrapSession();
@@ -213,10 +226,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshUser = async () => {
         if (!token) return;
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10_000);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
             const response = await fetch(`${API_BASE}/users/me`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
             });
             if (response.ok) {
                 const userData = await response.json();
@@ -225,9 +241,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
                 setUser(userData);
                 localStorage.setItem("auth_user", JSON.stringify(userData));
+            } else if (response.status === 401) {
+                // Token expired — clear session and redirect
+                setToken(null);
+                setUser(null);
+                clearStoredSession();
+                router.push("/app/login");
             }
         } catch (error) {
             console.error("Failed to refresh user:", error);
+        } finally {
+            clearTimeout(timeout);
         }
     };
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Clock, LogOut, RefreshCw } from "lucide-react";
 
@@ -11,7 +10,6 @@ const WARNING_BEFORE = 2 * 60 * 1000;       // show warning 2 min before timeout
 
 export function SessionTimeoutModal() {
     const { logout, token, refreshUser } = useAuth();
-    const router = useRouter();
     const [showWarning, setShowWarning] = useState(false);
     const [countdown, setCountdown] = useState(120); // seconds
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -28,8 +26,7 @@ export function SessionTimeoutModal() {
         clearAllTimers();
         setShowWarning(false);
         logout();
-        router.push("/login");
-    }, [logout, router]);
+    }, [logout]);
 
     const startCountdown = useCallback(() => {
         setCountdown(120);

@@ -90,9 +90,9 @@ export default function OrdersPage() {
     };
 
     const filteredOrders = orders.filter(o =>
-        o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.rep.name.toLowerCase().includes(searchQuery.toLowerCase())
+        o.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.rep?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getStatusBadge = (status: string) => {
@@ -165,7 +165,7 @@ export default function OrdersPage() {
                                             <span className="text-[10px] text-slate-500">{format(new Date(order.createdAt), "dd MMM HH:mm")}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{order.customer.name}</TableCell>
+                                    <TableCell>{order.customer?.name ?? "—"}</TableCell>
                                     <TableCell>{order.items.length} Items</TableCell>
                                     <TableCell>₹{order.totalAmount.toLocaleString()}</TableCell>
                                     <TableCell>{getStatusBadge(order.status)}</TableCell>

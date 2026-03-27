@@ -21,14 +21,14 @@ import {
     Search,
     Filter,
     AlertTriangle,
-    Loader2,
     Edit2,
     Trash2,
     ShieldAlert,
     ArrowUpDown,
     ArrowDown,
     ArrowUp,
-    RefreshCw
+    RefreshCw,
+    Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RoleGate } from "@/components/auth/role-gate";
@@ -54,6 +54,7 @@ interface Product {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EditStockDialog } from "@/components/stock/edit-stock-dialog";
 import { AddStockDialog } from "@/components/stock/add-stock-dialog";
 import { EditProductDialog } from "@/components/stock/edit-product-dialog";
@@ -327,9 +328,20 @@ export default function StockPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {loading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={9} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
-                                            </TableRow>
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-6" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-5 w-16 mx-auto rounded-full" /></TableCell>
+                                                    <TableCell><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
+                                                </TableRow>
+                                            ))
                                         ) : allBatches.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">No stock matching your search.</TableCell>
@@ -401,9 +413,17 @@ export default function StockPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {loading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell>
-                                            </TableRow>
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-6" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-5 w-16 ml-auto rounded-full" /></TableCell>
+                                                    <TableCell><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
+                                                </TableRow>
+                                            ))
                                         ) : sortedProducts.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>

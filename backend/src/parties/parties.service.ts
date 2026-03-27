@@ -81,7 +81,19 @@ export class PartiesService {
 
     async updateCustomer(id: string, data: any, tenantId?: string) {
         const customer = await this.findCustomerById(id, tenantId);
-        return this.prisma.customer.update({ where: { id: customer.id }, data });
+        const { name, gstin, phone, address, creditLimit, latitude, longitude } = data;
+        return this.prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+                ...(name !== undefined && { name }),
+                ...(gstin !== undefined && { gstin }),
+                ...(phone !== undefined && { phone }),
+                ...(address !== undefined && { address }),
+                ...(creditLimit !== undefined && { creditLimit }),
+                latitude: latitude !== undefined ? this.normalizeCoordinate(latitude) : undefined,
+                longitude: longitude !== undefined ? this.normalizeCoordinate(longitude) : undefined,
+            },
+        });
     }
 
     // Supplier Methods
@@ -149,7 +161,16 @@ export class PartiesService {
 
     async updateSupplier(id: string, data: any, tenantId?: string) {
         const supplier = await this.findSupplierById(id, tenantId);
-        return this.prisma.supplier.update({ where: { id: supplier.id }, data });
+        const { name, gstin, phone, address } = data;
+        return this.prisma.supplier.update({
+            where: { id: supplier.id },
+            data: {
+                ...(name !== undefined && { name }),
+                ...(gstin !== undefined && { gstin }),
+                ...(phone !== undefined && { phone }),
+                ...(address !== undefined && { address }),
+            },
+        });
     }
 
     async deleteCustomer(id: string, tenantId?: string) {

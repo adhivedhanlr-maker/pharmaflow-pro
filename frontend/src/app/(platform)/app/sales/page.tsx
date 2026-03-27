@@ -119,7 +119,8 @@ export default function SalesHistoryPage() {
                 fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`),
             ]);
             const profileText = profileResponse.ok ? await profileResponse.text() : "";
-            const profile = profileText ? JSON.parse(profileText) : null;
+            let profile = null;
+            try { profile = profileText ? JSON.parse(profileText) : null; } catch { /* keep null */ }
             const branding = brandingResponse.ok ? await brandingResponse.json() : null;
             if (profile || branding) {
                 setBusinessProfile({
@@ -176,8 +177,8 @@ export default function SalesHistoryPage() {
     };
 
     const filteredSales = sales.filter(s =>
-        s.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.customer.name.toLowerCase().includes(searchQuery.toLowerCase())
+        s.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (

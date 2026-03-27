@@ -67,7 +67,7 @@ export class PurchasesService {
                 // Check if batch exists for this product + batch number + supplier combination
                 let batch = await tx.batch.findFirst({
                     where: {
-                        productId: item.productId,
+                        productId: product.id,
                         batchNumber: item.batchNumber,
                         supplierId: supplierId,
                         ...(tenantId ? { tenantId } : {}),

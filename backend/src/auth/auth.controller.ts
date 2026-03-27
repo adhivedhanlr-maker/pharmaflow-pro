@@ -15,6 +15,7 @@ export class AuthController {
     ) { }
 
     @Post('register')
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     async register(@Body() registerDto: any, @Req() req: any) {
         const user = await this.authService.register(registerDto, resolveTenantHostFromRequest(req));
         await this.auditLogService.log({

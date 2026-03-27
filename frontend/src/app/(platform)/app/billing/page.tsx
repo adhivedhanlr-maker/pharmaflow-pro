@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Save, Printer, Loader2, ShoppingCart, ShieldAlert, Camera } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -531,10 +532,14 @@ function BillingContent() {
                                     <Input placeholder="Search customers..." value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} />
                                     <div className="flex gap-4">
                                         <div className="flex-1">
-                                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
-                                                <option value="">Select Customer</option>
-                                                {customers.map(c => <option key={c.id} value={c.id}>{c.name} - {c.gstin}</option>)}
-                                            </select>
+                                            {loading ? (
+                                                <Skeleton className="h-10 w-full rounded-md" />
+                                            ) : (
+                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
+                                                    <option value="">Select Customer</option>
+                                                    {customers.map(c => <option key={c.id} value={c.id}>{c.name} - {c.gstin}</option>)}
+                                                </select>
+                                            )}
                                         </div>
                                         <CustomerDialog
                                             type="customer"
@@ -566,7 +571,14 @@ function BillingContent() {
                                                         <CommandInput placeholder="Search product..." value={productSearch} onValueChange={setProductSearch} />
                                                         <CommandList>
                                                             {loadingProducts ? (
-                                                                <div className="py-6 text-center text-sm"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>
+                                                                <div className="p-2 space-y-2">
+                                                                    {Array.from({ length: 5 }).map((_, i) => (
+                                                                        <div key={i} className="flex justify-between items-center px-2 py-1">
+                                                                            <Skeleton className="h-4 w-36" />
+                                                                            <Skeleton className="h-4 w-12" />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             ) : products.length === 0 ? (
                                                                 <CommandEmpty>Type to search products...</CommandEmpty>
                                                             ) : (
