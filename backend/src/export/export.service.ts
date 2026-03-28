@@ -323,19 +323,20 @@ export class ExportService {
                     if (mm && yyyy) expiryDate = new Date(parseInt(yyyy), parseInt(mm) - 1, 1);
                 }
 
-                const product = await this.prisma.product.upsert({
-                    where: { name_tenantId: { name, tenantId } },
-                    create: {
-                        tenantId,
-                        name,
-                        company: (row['Company'] || '').toString().trim() || null,
-                        packing: (row['Packing'] || '').toString().trim() || null,
-                        hsnCode: (row['HSN Code'] || '').toString().trim() || null,
-                        gstRate: parseFloat(row['GST %'] || '0') || 0,
-                        mrp: parseInt(row['MRP'] || '0') || 0,
-                    },
-                    update: {},
-                });
+                let product = await this.prisma.product.findFirst({ where: { name, tenantId } });
+                if (!product) {
+                    product = await this.prisma.product.create({
+                        data: {
+                            tenantId,
+                            name,
+                            company: (row['Company'] || '').toString().trim() || null,
+                            packing: (row['Packing'] || '').toString().trim() || null,
+                            hsnCode: (row['HSN Code'] || '').toString().trim() || null,
+                            gstRate: parseFloat(row['GST %'] || '0') || 0,
+                            mrp: parseFloat(row['MRP'] || '0') || 0,
+                        },
+                    });
+                }
 
                 const batchNo = (row['Batch No'] || 'OPENING').toString().trim();
                 const stock = parseInt(row['Opening Stock'] || '0') || 0;

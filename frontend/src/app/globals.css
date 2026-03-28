@@ -2,6 +2,12 @@
 @import "tw-animate-css";
 @import "leaflet/dist/leaflet.css";
 
+/* Date inputs — force light color-scheme so the format hint is visible on mobile */
+input[type="date"] {
+  color-scheme: light;
+  min-width: 130px;
+}
+
 /* Hide number input spinner arrows globally — values display fully without truncation */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {

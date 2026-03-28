@@ -73,6 +73,7 @@ export default function Dashboard() {
   const { socket } = useSocket();
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [loading, setLoading] = useState(false);
+  const [warmingUp, setWarmingUp] = useState(false);
   const [dashboardWarning, setDashboardWarning] = useState<string | null>(null);
   const [profileAlertMessage, setProfileAlertMessage] = useState<string | null>(null);
 
@@ -95,7 +96,7 @@ export default function Dashboard() {
     else setProfileAlertMessage(null);
   }, [authLoading, token, role]);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (isRetry = false) => {
     if (!token || !role) {
       setStats(EMPTY_STATS);
       setDashboardWarning("Your session is still being restored. Please refresh if this continues.");
@@ -103,11 +104,11 @@ export default function Dashboard() {
     }
 
     const requestDefinitions = [
-      { key: "products", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"]), request: () => fetchJsonWithTimeout<{ data?: ProductWithBatches[] }>(`${API_BASE}/inventory/products`, { headers }) },
-      { key: "customers", enabled: hasRoleAccess(role, ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]), request: () => fetchJsonWithTimeout<{ data?: unknown[] }>(`${API_BASE}/parties/customers`, { headers }) },
-      { key: "expiring", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/inventory/alerts/expiring`, { headers }) },
-      { key: "lowStock", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/inventory/alerts/low-stock`, { headers }) },
-      { key: "sales", enabled: hasRoleAccess(role, ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/sales/invoices`, { headers }) },
+      { key: "products", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"]), request: () => fetchJsonWithTimeout<{ data?: ProductWithBatches[] }>(`${API_BASE}/inventory/products`, { headers }, isRetry ? 45000 : REQUEST_TIMEOUT_MS) },
+      { key: "customers", enabled: hasRoleAccess(role, ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]), request: () => fetchJsonWithTimeout<{ data?: unknown[] }>(`${API_BASE}/parties/customers`, { headers }, isRetry ? 45000 : REQUEST_TIMEOUT_MS) },
+      { key: "expiring", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/inventory/alerts/expiring`, { headers }, isRetry ? 45000 : REQUEST_TIMEOUT_MS) },
+      { key: "lowStock", enabled: hasRoleAccess(role, ["ADMIN", "WAREHOUSE_MANAGER"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/inventory/alerts/low-stock`, { headers }, isRetry ? 45000 : REQUEST_TIMEOUT_MS) },
+      { key: "sales", enabled: hasRoleAccess(role, ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"]), request: () => fetchJsonWithTimeout<unknown[]>(`${API_BASE}/sales/invoices`, { headers }, isRetry ? 45000 : REQUEST_TIMEOUT_MS) },
     ] as const;
 
     setLoading(true);
@@ -121,10 +122,19 @@ export default function Dashboard() {
       }));
 
       const results = Object.fromEntries(settled) as Record<string, { ok: boolean; data: unknown; error?: string }>;
-      const warnings = settled.reduce<string[]>((msgs, [key, result]) => {
-        if (!result.ok) msgs.push(`${key}: ${"error" in result ? result.error || "failed" : "failed"}`);
-        return msgs;
-      }, []);
+      const enabledKeys = requestDefinitions.filter(d => d.enabled).map(d => d.key);
+      const failedEnabled = enabledKeys.filter(k => !results[k]?.ok);
+      const allFailed = failedEnabled.length === enabledKeys.length && enabledKeys.length > 0;
+
+      // Cold start detected — all requests timed out on first try
+      if (allFailed && !isRetry) {
+        setLoading(false);
+        setWarmingUp(true);
+        await new Promise(resolve => setTimeout(resolve, 20000));
+        setWarmingUp(false);
+        void fetchStats(true);
+        return;
+      }
 
       const productsData = (results.products?.data ?? null) as { data?: ProductWithBatches[] } | null;
       const customersData = (results.customers?.data ?? null) as { data?: unknown[] } | null;
@@ -143,9 +153,9 @@ export default function Dashboard() {
       const inventoryHealth = totalBatches > 0 ? Math.round((healthyCount / totalBatches) * 100) : 0;
 
       setStats({ salesToday: sales.length, stockItems: totalBatches, customersCount: customers.length, expiringSoon: expiring.length, inventoryHealth });
-      if (warnings.length > 0) {
+      if (failedEnabled.length > 0) {
         setDashboardWarning("Some dashboard data could not be loaded. You can keep using the app and refresh once the connection stabilizes.");
-        console.error("Dashboard partial failures:", warnings);
+        console.error("Dashboard partial failures:", failedEnabled);
       }
     } finally {
       setLoading(false);
@@ -232,7 +242,7 @@ export default function Dashboard() {
         <Button
           variant="outline"
           onClick={() => void fetchStats()}
-          disabled={loading || !token || !role}
+          disabled={loading || warmingUp || !token || !role}
           className="self-start transition-colors hover:bg-blue-50 hover:text-blue-600 sm:self-auto"
         >
           <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
@@ -240,7 +250,17 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {dashboardWarning && (
+      {warmingUp && (
+        <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+          <RefreshCw className="h-4 w-4 !text-amber-600 animate-spin" />
+          <AlertTitle>Server is starting up…</AlertTitle>
+          <AlertDescription>
+            The server was idle overnight and is waking up. Your data will load automatically in a few seconds — no action needed.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!warmingUp && dashboardWarning && (
         <Alert className="border-blue-200 bg-blue-50 text-blue-900">
           <AlertCircle className="h-4 w-4 !text-blue-700" />
           <AlertTitle>Dashboard data is partially available</AlertTitle>
