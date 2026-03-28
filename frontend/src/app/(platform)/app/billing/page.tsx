@@ -660,8 +660,8 @@ function BillingContent() {
                                                                 {products.find(p => p.id === item.productId)?.batches.map(b => <option key={b.id} value={b.id}>{b.batchNumber}{b.supplier ? ` · ${b.supplier.name}` : ""} ({b.currentStock})</option>)}
                                                             </select>
                                                         </TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-16 ml-auto text-right" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} /></TableCell>
-                                                        <TableCell className="text-right"><Input type="number" min={0} className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="text" inputMode="numeric" pattern="[0-9]*" className="h-8 w-16 ml-auto text-right" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} /></TableCell>
+                                                        <TableCell className="text-right"><Input type="text" inputMode="numeric" pattern="[0-9]*" className="h-8 w-14 ml-auto text-right text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} /></TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-slate-500">₹{(item.mrp || 0).toFixed(2)}</TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-emerald-600">₹{item.unitPrice.toFixed(2)}</TableCell>
                                                         <TableCell className="text-right font-mono text-sm text-slate-400">{item.gstRate}%</TableCell>
@@ -706,11 +706,11 @@ function BillingContent() {
                                                         <div className="grid grid-cols-3 gap-2 text-xs">
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Qty</p>
-                                                                <Input type="number" min={0} className="h-8 text-right text-sm font-semibold" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} />
+                                                                <Input type="text" inputMode="numeric" pattern="[0-9]*" className="h-8 text-right text-sm font-semibold" value={item.quantity === 0 ? "" : item.quantity} placeholder="0" onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "quantity", isNaN(v) ? 0 : v); }} />
                                                             </div>
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Free</p>
-                                                                <Input type="number" min={0} className="h-8 text-right text-sm text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} />
+                                                                <Input type="text" inputMode="numeric" pattern="[0-9]*" className="h-8 text-right text-sm text-green-700 bg-green-50" placeholder="0" value={(item.freeQuantity || 0) === 0 ? "" : item.freeQuantity} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value)); updateItem(item.id, "freeQuantity", isNaN(v) ? 0 : v); }} />
                                                             </div>
                                                             <div>
                                                                 <p className="text-slate-500 mb-1">Total</p>
@@ -752,7 +752,7 @@ function BillingContent() {
                                             <span className="text-slate-500">Extra Discount</span>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">₹</span>
-                                                <Input type="number" min={0} className="h-7 w-20 text-right pl-5 pr-2 text-sm" value={extraDiscount} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseFloat(e.target.value)); setExtraDiscount(isNaN(v) ? 0 : v); }} />
+                                                <Input type="text" inputMode="decimal" pattern="[0-9.]*" className="h-7 w-20 text-right pl-5 pr-2 text-sm" value={extraDiscount === 0 ? "" : extraDiscount} placeholder="0" onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseFloat(e.target.value)); setExtraDiscount(isNaN(v) ? 0 : v); }} />
                                             </div>
                                         </div>
                                         {totals.discount > 0 && (
@@ -817,11 +817,13 @@ function BillingContent() {
                                                 <div className="relative">
                                                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
                                                     <Input
-                                                        type="number"
-                                                        min={0}
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        pattern="[0-9.]*"
                                                         className="h-8 w-24 bg-slate-50 border-slate-200 text-right pr-2 pl-6 text-sm font-bold focus:bg-white transition-all rounded-md"
                                                         value={extraDiscount === 0 ? "" : extraDiscount}
                                                         placeholder="0"
+                                                        onFocus={(e) => e.target.select()}
                                                         onChange={(e) => { const v = e.target.value === "" ? 0 : Math.max(0, parseFloat(e.target.value)); setExtraDiscount(isNaN(v) ? 0 : v); }}
                                                     />
                                                 </div>
