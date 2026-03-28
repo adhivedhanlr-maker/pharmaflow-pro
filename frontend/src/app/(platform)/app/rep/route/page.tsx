@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, MapPin, CheckCircle, Navigation, Clock } from "lucide-react";
 import { format } from "date-fns";
-
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -76,20 +76,20 @@ export default function MyRoutePage() {
             });
 
             if (res.ok) {
-                alert(`Success: Stop marked as ${status.toLowerCase()}`);
-                fetchTodayRoute(); // Refresh
+                toast.success(status === "COMPLETED" ? "Stop marked as visited" : "Stop skipped");
+                fetchTodayRoute();
             } else {
-                alert("Error: Failed to update stop");
+                toast.error("Failed to update stop");
             }
         } catch (error) {
-            alert("Error: Network error");
+            toast.error("Network error");
         }
     };
 
     if (loading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
     return (
-        <RoleGate allowedRoles={["STAFF", "REP", "ADMIN"]}>
+        <RoleGate allowedRoles={["SALES_REP", "ADMIN"]}>
             <div className="space-y-4 max-w-md mx-auto pb-20">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Today's Route</h1>

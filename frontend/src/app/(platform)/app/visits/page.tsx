@@ -16,6 +16,8 @@ import {
 import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { CustomerDialog } from "@/components/billing/customer-dialog";
 
@@ -24,6 +26,7 @@ const CHECK_IN_RADIUS_METERS = 100;
 
 export default function VisitsPage() {
     const { token } = useAuth();
+    const router = useRouter();
     const [customers, setCustomers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -38,13 +41,13 @@ export default function VisitsPage() {
     const toggleNearby = () => {
         if (!nearbyMode) {
             if (!navigator.geolocation) {
-                alert("Geolocation not supported");
+                toast.error("Geolocation not supported by your browser");
                 return;
             }
             navigator.geolocation.getCurrentPosition((pos) => {
                 setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                 setNearbyMode(true);
-            }, (err) => alert("Failed to get location: " + err.message));
+            }, (err) => toast.error("Failed to get location: " + err.message));
         } else {
             setNearbyMode(false);
             setUserLocation(null);
@@ -87,19 +90,21 @@ export default function VisitsPage() {
         setCheckingIn(customer.id);
 
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser");
+            toast.error("Geolocation is not supported by your browser");
+            setCheckingIn(null);
+            return;
+        }
+
+        // Block check-in for customers with no GPS coordinates
+        if (!customer.latitude || !customer.longitude) {
+            toast.warning(`${customer.name} has no GPS coordinates. Ask admin to map this customer's location first.`);
             setCheckingIn(null);
             return;
         }
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
-
-            // Default to 0,0 if customer coords are missing (handle with caution)
-            const custLat = customer.latitude || 0;
-            const custLng = customer.longitude || 0;
-
-            const distance = calculateDistance(latitude, longitude, custLat, custLng);
+            const distance = calculateDistance(latitude, longitude, customer.latitude, customer.longitude);
             const isValid = distance <= CHECK_IN_RADIUS_METERS;
 
             try {
@@ -120,25 +125,23 @@ export default function VisitsPage() {
 
                 if (response.ok) {
                     if (isValid) {
-                        alert(`Success! Check-in verified at ${customer.name}. You are within ${Math.round(distance)}m.`);
-                        // Navigate to orders page to capture requirements
-                        window.location.href = `/orders?customerId=${customer.id}`;
+                        toast.success(`Checked in at ${customer.name} (${Math.round(distance)}m away)`);
+                        router.push(`/app/orders?customerId=${customer.id}`);
                     } else {
-                        alert(`Check-in recorded, but you are ${Math.round(distance)}m away. Allowed radius is ${CHECK_IN_RADIUS_METERS}m.`);
-                        // Optional: Still navigate but with a flag? For now just stay.
+                        toast.warning(`Check-in recorded but you are ${Math.round(distance)}m away — allowed radius is ${CHECK_IN_RADIUS_METERS}m.`);
                     }
                 } else {
-                    const errorMsg = await response.text();
-                    alert(`Server Error: ${response.status} - ${errorMsg || "Failed to record check-in"}`);
+                    const errorMsg = await response.text().catch(() => "");
+                    toast.error(`Check-in failed: ${errorMsg || response.status}`);
                 }
             } catch (error) {
                 console.error("Check-in Error:", error);
-                alert("Network Error: Could not connect to the server. Please check your internet.");
+                toast.error("Network error — check your internet connection.");
             } finally {
                 setCheckingIn(null);
             }
         }, (error) => {
-            alert("Location Error: " + error.message + ". Please ensure GPS is enabled and signal is strong.");
+            toast.error("GPS error: " + error.message + ". Make sure GPS is enabled.");
             setCheckingIn(null);
         }, {
             enableHighAccuracy: true,

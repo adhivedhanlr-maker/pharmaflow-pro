@@ -12,9 +12,12 @@ export class UsersService {
         private notifications: NotificationsService
     ) { }
 
-    async findAll(tenantId?: string) {
+    async findAll(tenantId?: string, role?: string) {
         const users = await this.prisma.user.findMany({
-            where: tenantId ? { tenantId } : undefined,
+            where: {
+                ...(tenantId ? { tenantId } : {}),
+                ...(role ? { role: role as any } : {}),
+            },
             select: {
                 id: true,
                 username: true,

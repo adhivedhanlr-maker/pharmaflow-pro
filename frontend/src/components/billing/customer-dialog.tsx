@@ -348,10 +348,11 @@ export function CustomerDialog({ type, onSuccess, trigger }: CustomerDialogProps
 
             {isCustomer && (
                 <Dialog open={mapPickerOpen} onOpenChange={setMapPickerOpen}>
-                    <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden border-none shadow-2xl">
+                    <DialogContent className="sm:max-w-[800px] w-[95vw] p-0 overflow-hidden border-none shadow-2xl [&>button]:hidden">
                         <PharmacyMapPicker
                             initialSearch={formData.name}
                             onSelect={selectPharmacy}
+                            onClose={() => setMapPickerOpen(false)}
                         />
                     </DialogContent>
                 </Dialog>

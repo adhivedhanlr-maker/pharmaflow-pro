@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Calendar as CalendarIcon, Save, Search, Plus, X, MapPin } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, Save, Search, Plus, X, MapPin, List, Route } from "lucide-react";
 import { format } from "date-fns";
-
+import { toast } from "sonner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -42,6 +42,7 @@ export default function RoutePlannerPage() {
     // Route Building
     const [routeStops, setRouteStops] = useState<Customer[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [mobileTab, setMobileTab] = useState<"customers" | "route">("customers");
 
     useEffect(() => {
         if (token) {
@@ -52,12 +53,11 @@ export default function RoutePlannerPage() {
 
     const fetchReps = async () => {
         try {
-            const res = await fetch(`${API_BASE}/users`, {
+            const res = await fetch(`${API_BASE}/users?role=SALES_REP`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const data = await res.json();
-                // Filter only staff/reps if needed, or show all
                 setReps(data);
             }
         } catch (error) {
@@ -96,7 +96,7 @@ export default function RoutePlannerPage() {
 
     const saveRoute = async () => {
         if (!selectedRep || !selectedDate || routeStops.length === 0) {
-            alert("Error: Please select a rep, date, and at least one stop.");
+            toast.error("Please select a rep, date, and at least one stop.");
             return;
         }
 
@@ -116,14 +116,14 @@ export default function RoutePlannerPage() {
             });
 
             if (res.ok) {
-                alert("Success: Route created successfully!");
+                toast.success(`Route published — ${routeStops.length} stop${routeStops.length !== 1 ? "s" : ""} assigned.`);
                 setRouteStops([]);
             } else {
-                const err = await res.json();
-                alert(`Error: ${err.message || "Failed to create route"}`);
+                const err = await res.json().catch(() => ({}));
+                toast.error(err.message || "Failed to create route");
             }
         } catch (error) {
-            alert("Error: Network error");
+            toast.error("Network error");
         } finally {
             setLoading(false);
         }
@@ -136,26 +136,27 @@ export default function RoutePlannerPage() {
     );
 
     return (
-        <RoleGate allowedRoles={["ADMIN", "MANAGER"]}>
-            <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <RoleGate allowedRoles={["ADMIN"]}>
+            <div className="space-y-4 h-[calc(100vh-100px)] flex flex-col">
+                {/* Header */}
+                <div className="flex justify-between items-center gap-4 shrink-0">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Route Planner</h1>
-                        <p className="text-muted-foreground">Assign daily routes to sales representatives.</p>
+                        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Route Planner</h1>
+                        <p className="text-muted-foreground text-xs md:text-sm hidden md:block">Assign daily routes to sales representatives.</p>
                     </div>
-                    <Button onClick={saveRoute} disabled={loading || routeStops.length === 0}>
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                        Publish Route
+                    <Button onClick={saveRoute} disabled={loading || routeStops.length === 0} size="sm" className="md:h-10 md:text-sm">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Save className="h-4 w-4 mr-1.5" />}
+                        Publish{routeStops.length > 0 ? ` (${routeStops.length})` : ""}
                     </Button>
                 </div>
 
                 {/* Controls */}
-                <Card>
-                    <CardContent className="p-4 flex flex-col md:flex-row gap-4">
-                        <div className="w-full md:w-1/3">
-                            <label className="text-xs font-medium mb-1 block">Select Representative</label>
+                <Card className="shrink-0">
+                    <CardContent className="p-3 md:p-4 grid grid-cols-2 md:flex md:flex-row gap-3 md:gap-4">
+                        <div className="w-full">
+                            <label className="text-xs font-medium mb-1 block">Representative</label>
                             <Select onValueChange={setSelectedRep} value={selectedRep}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-9 text-sm">
                                     <SelectValue placeholder="Select Rep" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -165,10 +166,11 @@ export default function RoutePlannerPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="w-full md:w-1/3">
-                            <label className="text-xs font-medium mb-1 block">Select Date</label>
+                        <div className="w-full">
+                            <label className="text-xs font-medium mb-1 block">Date</label>
                             <Input
                                 type="date"
+                                className="h-9 text-sm"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                             />
@@ -176,30 +178,46 @@ export default function RoutePlannerPage() {
                     </CardContent>
                 </Card>
 
+                {/* Mobile Tab Switcher */}
+                <div className="flex md:hidden border rounded-lg overflow-hidden shrink-0">
+                    <button
+                        onClick={() => setMobileTab("customers")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${mobileTab === "customers" ? "bg-slate-900 text-white" : "bg-white text-slate-600"}`}
+                    >
+                        <List className="h-4 w-4" /> Customers {customers.length > 0 && `(${filteredCustomers.length})`}
+                    </button>
+                    <button
+                        onClick={() => setMobileTab("route")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${mobileTab === "route" ? "bg-slate-900 text-white" : "bg-white text-slate-600"}`}
+                    >
+                        <Route className="h-4 w-4" /> Route {routeStops.length > 0 && <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{routeStops.length}</span>}
+                    </button>
+                </div>
+
                 {/* Planner Workspace */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
                     {/* Left: Available Customers */}
-                    <Card className="flex flex-col min-h-0">
-                        <CardHeader className="py-3 px-4 border-b">
-                            <CardTitle className="text-base">Available Customers</CardTitle>
+                    <Card className={`flex flex-col min-h-0 ${mobileTab === "route" ? "hidden md:flex" : "flex"}`}>
+                        <CardHeader className="py-3 px-3 md:px-4 border-b shrink-0">
+                            <CardTitle className="text-sm md:text-base">Available Customers</CardTitle>
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Search customers..."
-                                    className="pl-8 h-9"
+                                    className="pl-8 h-9 text-sm"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </CardHeader>
-                        <CardContent className="flex-1 overflow-y-auto p-2 space-y-2">
+                        <CardContent className="flex-1 overflow-y-auto p-2 space-y-1.5">
                             {filteredCustomers.map(customer => (
-                                <div key={customer.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
-                                    <div className="overflow-hidden">
-                                        <p className="font-medium truncate">{customer.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{customer.address}, {customer.city}</p>
+                                <div key={customer.id} className="flex justify-between items-center p-2.5 border rounded-lg hover:bg-slate-50 active:bg-slate-100">
+                                    <div className="overflow-hidden flex-1 mr-2">
+                                        <p className="font-medium text-sm truncate">{customer.name}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{customer.address}{customer.city ? `, ${customer.city}` : ""}</p>
                                     </div>
-                                    <Button size="sm" variant="ghost" onClick={() => addToRoute(customer)}>
+                                    <Button size="sm" variant="ghost" onClick={() => { addToRoute(customer); setMobileTab("route"); }} className="h-8 w-8 p-0 shrink-0">
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -211,26 +229,26 @@ export default function RoutePlannerPage() {
                     </Card>
 
                     {/* Right: Selected Route */}
-                    <Card className="flex flex-col min-h-0 border-primary/20 bg-primary/5">
-                        <CardHeader className="py-3 px-4 border-b bg-primary/10">
-                            <CardTitle className="text-base text-primary">
+                    <Card className={`flex flex-col min-h-0 border-primary/20 bg-primary/5 ${mobileTab === "customers" ? "hidden md:flex" : "flex"}`}>
+                        <CardHeader className="py-3 px-3 md:px-4 border-b bg-primary/10 shrink-0">
+                            <CardTitle className="text-sm md:text-base text-primary">
                                 Route Sequence ({routeStops.length})
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-xs">
                                 Stops will be visited in this order.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 overflow-y-auto p-2 space-y-2">
+                        <CardContent className="flex-1 overflow-y-auto p-2 space-y-1.5">
                             {routeStops.map((customer, index) => (
-                                <div key={customer.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg shadow-sm">
-                                    <div className="flex-none w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                                <div key={customer.id} className="flex items-center gap-2.5 p-2.5 bg-white border rounded-lg shadow-sm">
+                                    <div className="flex-none w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
                                         {index + 1}
                                     </div>
                                     <div className="flex-1 overflow-hidden">
-                                        <p className="font-medium truncate">{customer.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{customer.address}, {customer.city}</p>
+                                        <p className="font-medium text-sm truncate">{customer.name}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{customer.address}{customer.city ? `, ${customer.city}` : ""}</p>
                                     </div>
-                                    <Button size="sm" variant="ghost" onClick={() => removeFromRoute(customer.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                    <Button size="sm" variant="ghost" onClick={() => removeFromRoute(customer.id)} className="h-8 w-8 p-0 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50">
                                         <X className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -238,7 +256,8 @@ export default function RoutePlannerPage() {
                             {routeStops.length === 0 && (
                                 <div className="text-center text-muted-foreground py-12 flex flex-col items-center gap-2">
                                     <MapPin className="h-8 w-8 opacity-20" />
-                                    <p className="text-sm">Add customers from the left list to build a route.</p>
+                                    <p className="text-sm">Add customers to build a route.</p>
+                                    <button onClick={() => setMobileTab("customers")} className="md:hidden text-xs text-blue-600 underline mt-1">Browse customers</button>
                                 </div>
                             )}
                         </CardContent>

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -53,8 +53,8 @@ export class UsersController {
 
     @Roles(Role.ADMIN)
     @Get()
-    findAll(@Request() req: any) {
-        return this.usersService.findAll(req.user.tenantId);
+    findAll(@Request() req: any, @Query('role') role?: string) {
+        return this.usersService.findAll(req.user.tenantId, role);
     }
 
     @Post()
