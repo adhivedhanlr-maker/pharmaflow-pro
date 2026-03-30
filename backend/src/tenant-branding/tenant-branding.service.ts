@@ -30,18 +30,28 @@ export class TenantBrandingService {
         const normalizedHost = this.normalizeHost(host);
         const tenant = await this.findTenant(normalizedHost);
 
+        // Fall back to BusinessProfile.logoUrl if TenantBranding has no logo
+        let logoUrl = tenant?.logoUrl ?? null;
+        if (!logoUrl && tenant?.id) {
+            const profile = await this.prisma.businessProfile.findFirst({
+                where: { tenantId: tenant.id },
+                select: { logoUrl: true },
+            });
+            logoUrl = profile?.logoUrl ?? null;
+        }
+
         return {
             id: tenant?.id,
             slug: tenant?.slug ?? 'default',
             companyName: tenant?.companyName ?? 'PharmaFlow Pro',
-            logoUrl: tenant?.logoUrl ?? null,
+            logoUrl,
             primaryColor: tenant?.primaryColor ?? '#2563eb',
             accentColor: tenant?.accentColor ?? '#0f172a',
             loginTitle: tenant?.loginTitle ?? 'Welcome Back',
             loginSubtitle:
                 tenant?.loginSubtitle ??
                 'Sign in to manage your pharmaceutical distribution',
-            faviconUrl: tenant?.logoUrl ?? tenant?.faviconUrl ?? null,
+            faviconUrl: logoUrl ?? tenant?.faviconUrl ?? null,
             requiresSetup: tenant ? (await this.prisma.user.count({
                 where: { tenantId: tenant.id },
             })) === 0 : false,
