@@ -64,12 +64,12 @@ export class PurchasesService {
                     throw new Error("Each item must have a productId or a name");
                 }
 
-                // Check if batch exists for this product + batch number + supplier combination
+                // Check if batch exists for this product + batch number (supplier-agnostic)
+                // This prevents duplicates when the same batch was previously added without a supplier
                 let batch = await tx.batch.findFirst({
                     where: {
                         productId: product.id,
                         batchNumber: item.batchNumber,
-                        supplierId: supplierId,
                         ...(tenantId ? { tenantId } : {}),
                     },
                 });

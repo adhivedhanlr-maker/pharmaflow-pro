@@ -26,10 +26,21 @@ export class BusinessProfileService {
     }
 
     async updateLogo(userId: string, tenantId: string | undefined, logoUrl: string) {
-        return this.prisma.businessProfile.upsert({
+        // Save to BusinessProfile (used on invoices/settings preview)
+        const result = await this.prisma.businessProfile.upsert({
             where: { userId },
             update: { logoUrl, tenantId },
             create: { userId, tenantId, logoUrl, companyName: 'My Company' },
         });
+
+        // Also sync to TenantBranding so the header/branding API picks it up
+        if (tenantId) {
+            await this.prisma.tenantBranding.updateMany({
+                where: { id: tenantId },
+                data: { logoUrl },
+            });
+        }
+
+        return result;
     }
 }
