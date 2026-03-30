@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Building2, Loader2, LogIn, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Building2, Loader2, LogIn, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -58,6 +58,9 @@ export default function TenantManagementPage() {
     const [startingSupportAccess, setStartingSupportAccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
+    const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+    const [deleteDialogTenant, setDeleteDialogTenant] = useState<Tenant | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [isPlatformHost, setIsPlatformHost] = useState<boolean | null>(null);
 
     useEffect(() => {
@@ -167,27 +170,51 @@ export default function TenantManagementPage() {
         }
     };
 
-    const deleteTenant = async (tenant: Tenant) => {
-        if (!confirm(`Delete tenant "${tenant.companyName}"? This only works if it has no data.`)) {
-            return;
-        }
-
+    const handleEditTenant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingTenant) return;
+        setSaving(true);
+        setError(null);
         try {
-            const response = await fetch(`${API_BASE}/tenant-branding/admin/${tenant.id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            const response = await fetch(`${API_BASE}/tenant-branding/admin/${editingTenant.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                    companyName: formData.companyName.trim(),
+                    customDomain: formData.customDomain.trim() || null,
+                    logoUrl: formData.logoUrl.trim() || null,
+                    loginTitle: formData.loginTitle.trim() || null,
+                    loginSubtitle: formData.loginSubtitle.trim() || null,
+                }),
             });
-
             const data = await response.json().catch(() => null);
-            if (!response.ok) {
-                throw new Error(data?.message || "Failed to delete tenant");
-            }
+            if (!response.ok) throw new Error(data?.message || "Failed to update tenant");
+            setEditingTenant(null);
+            setFormData(INITIAL_FORM);
+            await fetchTenants();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to update tenant");
+        } finally {
+            setSaving(false);
+        }
+    };
 
+    const deleteTenant = async () => {
+        if (!deleteDialogTenant) return;
+        setDeleting(true);
+        try {
+            const response = await fetch(`${API_BASE}/tenant-branding/admin/${deleteDialogTenant.id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) throw new Error(data?.message || "Failed to delete tenant");
+            setDeleteDialogTenant(null);
             await fetchTenants();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to delete tenant");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -339,6 +366,58 @@ export default function TenantManagementPage() {
                             </form>
                         </DialogContent>
                     </Dialog>
+                    {/* Edit Tenant Dialog */}
+                    <Dialog open={!!editingTenant} onOpenChange={(open) => { if (!open) { setEditingTenant(null); setFormData(INITIAL_FORM); } }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Edit Client — {editingTenant?.companyName}</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleEditTenant} className="space-y-4 pt-2">
+                                <div className="space-y-2">
+                                    <Label>Company Name</Label>
+                                    <Input value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Client Domain</Label>
+                                    <Input placeholder="bluedots.pharmaflow.eflybe.com" value={formData.customDomain} onChange={(e) => setFormData({ ...formData, customDomain: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Login Title</Label>
+                                    <Input placeholder="Welcome Back" value={formData.loginTitle} onChange={(e) => setFormData({ ...formData, loginTitle: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Login Subtitle</Label>
+                                    <Input placeholder="Sign in to manage your distribution" value={formData.loginSubtitle} onChange={(e) => setFormData({ ...formData, loginSubtitle: e.target.value })} />
+                                </div>
+                                <Button type="submit" className="w-full" disabled={saving}>
+                                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Save Changes
+                                </Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Delete Confirmation Dialog */}
+                    <Dialog open={!!deleteDialogTenant} onOpenChange={(open) => { if (!open) setDeleteDialogTenant(null); }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Delete Client Tenant</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-2">
+                                <p className="text-sm text-slate-600">
+                                    Are you sure you want to delete <span className="font-semibold">{deleteDialogTenant?.companyName}</span>? This cannot be undone and will only succeed if the tenant has no data.
+                                </p>
+                                <div className="flex gap-3">
+                                    <Button variant="outline" className="flex-1" onClick={() => setDeleteDialogTenant(null)}>Cancel</Button>
+                                    <Button variant="destructive" className="flex-1" onClick={() => void deleteTenant()} disabled={deleting}>
+                                        {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                        Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
                     <Dialog
                         open={!!supportDialogTenant}
                         onOpenChange={(open) => {
@@ -428,7 +507,7 @@ export default function TenantManagementPage() {
                                         <p><span className="font-medium text-slate-700">Slug:</span> {tenant.slug}</p>
                                         <p><span className="font-medium text-slate-700">Created:</span> {new Date(tenant.createdAt).toLocaleDateString()}</p>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 flex-wrap justify-end">
                                         {!tenant.isDefault && (
                                             <Button
                                                 type="button"
@@ -441,21 +520,43 @@ export default function TenantManagementPage() {
                                                 Access Client
                                             </Button>
                                         )}
-                                        {!tenant.isDefault && tenant.userCount === 0 && (
+                                        {!tenant.isDefault && (
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => deleteTenant(tenant)}
                                                 className="gap-2"
+                                                onClick={() => {
+                                                    setEditingTenant(tenant);
+                                                    setFormData({
+                                                        slug: tenant.slug,
+                                                        companyName: tenant.companyName,
+                                                        customDomain: tenant.customDomain || "",
+                                                        logoUrl: tenant.logoUrl || "",
+                                                        loginTitle: tenant.loginTitle || "",
+                                                        loginSubtitle: tenant.loginSubtitle || "",
+                                                    });
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                                Edit
+                                            </Button>
+                                        )}
+                                        {!tenant.isDefault && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                                                onClick={() => setDeleteDialogTenant(tenant)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                                 Delete
                                             </Button>
                                         )}
-                                        <Label className="text-sm">
+                                        <span className="text-sm text-slate-500 px-1">
                                             {tenant.isActive ? "Active" : "Disabled"}
-                                        </Label>
+                                        </span>
                                         <Button
                                             type="button"
                                             variant={tenant.isActive ? "default" : "outline"}
