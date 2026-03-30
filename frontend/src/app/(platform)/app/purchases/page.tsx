@@ -117,6 +117,9 @@ interface PurchaseRecord {
     netAmount: number;
     totalAmount: number;
     gstAmount: number;
+    roundOff: number;
+    invoiceDate?: string;
+    dueDate?: string;
     supplier: { id: string; name: string };
     items: {
         id: string;
@@ -298,24 +301,33 @@ export default function PurchasesPage() {
         setEditingPurchaseId(p.id);
         setSelectedSupplierId(p.supplier.id);
         setBillNumber(p.billNumber);
-        setItems(p.items.map(item => ({
-            id: Math.random().toString(36).substr(2, 9),
-            productId: item.product?.id || "",
-            name: item.product?.name || "",
-            composition: item.product?.composition || "",
-            hsnCode: (item.product as any)?.hsnCode || "",
-            packing: item.product?.packing || "",
-            batchNumber: item.batch?.batchNumber || "",
-            expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
-            quantity: item.quantity,
-            freeQty: item.freeQty || 0,
-            discountPct: item.discountPct || 0,
-            purchasePrice: item.purchasePrice,
-            salePrice: item.batch?.salePrice || 0,
-            ptr: item.batch?.ptr || 0,
-            pts: item.batch?.pts || 0,
-            nr: item.batch?.nr || 0,
-        })));
+        setRoundOff(p.roundOff || 0);
+        if (p.invoiceDate) setInvoiceDate(p.invoiceDate.slice(0, 10));
+        if (p.dueDate) setDueDate(p.dueDate.slice(0, 10));
+        setItems(p.items.map(item => {
+            const pts = item.batch?.pts || 0;
+            const discountPct = item.discountPct || 0;
+            // Always derive NR and purchasePrice from PTS so old records with wrong rate are corrected
+            const nr = parseFloat((pts * (1 - discountPct / 100)).toFixed(2));
+            return {
+                id: Math.random().toString(36).substr(2, 9),
+                productId: item.product?.id || "",
+                name: item.product?.name || "",
+                composition: item.product?.composition || "",
+                hsnCode: (item.product as any)?.hsnCode || "",
+                packing: item.product?.packing || "",
+                batchNumber: item.batch?.batchNumber || "",
+                expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
+                quantity: item.quantity,
+                freeQty: item.freeQty || 0,
+                discountPct,
+                purchasePrice: nr || item.purchasePrice,
+                salePrice: item.batch?.salePrice || 0,
+                ptr: item.batch?.ptr || 0,
+                pts,
+                nr: nr || item.batch?.nr || 0,
+            };
+        }));
         setActiveTab("entry");
         setError(null);
         setSuccess(null);
@@ -429,6 +441,7 @@ export default function PurchasesPage() {
                     billNumber,
                     invoiceDate: invoiceDate || undefined,
                     dueDate: dueDate || undefined,
+                    roundOff,
                     items: items.map(item => ({
                         productId: item.productId || undefined,
                         name: item.name,

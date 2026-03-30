@@ -286,6 +286,7 @@ model Purchase {
   supplier    Supplier        @relation(fields: [supplierId], references: [id])
   totalAmount Float
   gstAmount   Float
+  roundOff    Float           @default(0)
   netAmount   Float
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt

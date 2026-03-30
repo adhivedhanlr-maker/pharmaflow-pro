@@ -6,7 +6,7 @@ export class PurchasesService {
     constructor(private prisma: PrismaService) { }
 
     async createPurchase(data: any, tenantId?: string) {
-        const { supplierId, billNumber, items, invoiceDate, dueDate } = data;
+        const { supplierId, billNumber, items, invoiceDate, dueDate, roundOff } = data;
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Supplier
@@ -134,7 +134,8 @@ export class PurchasesService {
                 });
             }
 
-            const netAmount = totalAmount + totalGst;
+            const roundOffAmount = roundOff || 0;
+            const netAmount = totalAmount + totalGst + roundOffAmount;
 
             // 3. Update Supplier Balance
             await tx.supplier.update({
@@ -150,6 +151,7 @@ export class PurchasesService {
                     supplierId,
                     totalAmount,
                     gstAmount: totalGst,
+                    roundOff: roundOffAmount,
                     netAmount,
                     ...(invoiceDate ? { invoiceDate: new Date(invoiceDate) } : {}),
                     ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
@@ -180,7 +182,7 @@ export class PurchasesService {
         });
         if (!old) throw new NotFoundException('Purchase not found');
 
-        const { supplierId, billNumber, items } = data;
+        const { supplierId, billNumber, items, invoiceDate, dueDate, roundOff } = data;
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Reverse old stock
@@ -248,7 +250,8 @@ export class PurchasesService {
                 purchaseItems.push({ productId: product.id, tenantId, batchId: batch.id, quantity: item.quantity, freeQty, discountPct, purchasePrice: item.purchasePrice, gstRate: product.gstRate, gstAmount: itemGst, totalAmount: itemTaxable + itemGst });
             }
 
-            const netAmount = totalAmount + totalGst;
+            const roundOffAmount = roundOff || 0;
+            const netAmount = totalAmount + totalGst + roundOffAmount;
 
             // 5. Update new supplier balance
             await tx.supplier.update({ where: { id: supplierId }, data: { currentBalance: { increment: netAmount } } });
@@ -256,7 +259,12 @@ export class PurchasesService {
             // 6. Update purchase record
             return tx.purchase.update({
                 where: { id },
-                data: { billNumber, supplierId, totalAmount, gstAmount: totalGst, netAmount, items: { create: purchaseItems } },
+                data: {
+                    billNumber, supplierId, totalAmount, gstAmount: totalGst, roundOff: roundOffAmount, netAmount,
+                    ...(invoiceDate ? { invoiceDate: new Date(invoiceDate) } : {}),
+                    ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
+                    items: { create: purchaseItems }
+                },
                 include: { items: true, supplier: true },
             });
         });
