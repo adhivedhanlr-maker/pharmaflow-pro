@@ -255,16 +255,21 @@ export default function Dashboard() {
           <RefreshCw className="h-4 w-4 !text-amber-600 animate-spin" />
           <AlertTitle>Server is starting up…</AlertTitle>
           <AlertDescription>
-            The server was idle overnight and is waking up. Your data will load automatically in a few seconds — no action needed.
+            The server was idle and is waking up. Your data will load automatically — this usually takes 30–60 seconds. Please wait.
           </AlertDescription>
         </Alert>
       )}
 
       {!warmingUp && dashboardWarning && (
-        <Alert className="border-blue-200 bg-blue-50 text-blue-900">
-          <AlertCircle className="h-4 w-4 !text-blue-700" />
-          <AlertTitle>Dashboard data is partially available</AlertTitle>
-          <AlertDescription>{dashboardWarning}</AlertDescription>
+        <Alert className="border-red-200 bg-red-50 text-red-900">
+          <AlertCircle className="h-4 w-4 !text-red-700" />
+          <AlertTitle>Could not load data</AlertTitle>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>Server is not responding. Click Retry to try again.</span>
+            <Button size="sm" variant="outline" className="border-red-300 bg-white hover:bg-red-50 shrink-0" onClick={() => void fetchStats()}>
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Retry
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
 

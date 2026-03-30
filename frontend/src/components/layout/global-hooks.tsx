@@ -7,6 +7,8 @@ import { usePWARegistration } from "@/hooks/use-pwa-registration";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Ping interval: 4 minutes — keeps Railway/Render free-tier backend awake (sleeps after 5 min idle)
+const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000;
 
 function useTenantTitle() {
     const pathname = usePathname();
@@ -22,10 +24,22 @@ function useTenantTitle() {
     }, [pathname]);
 }
 
+function useKeepAlive() {
+    useEffect(() => {
+        const ping = () => {
+            fetch(`${API_BASE}/health`, { method: 'GET' }).catch(() => { /* silent — just keeping the server warm */ });
+        };
+        ping(); // ping immediately on mount
+        const id = window.setInterval(ping, KEEPALIVE_INTERVAL_MS);
+        return () => window.clearInterval(id);
+    }, []);
+}
+
 export function GlobalHooks() {
     usePWARegistration();
     useGPSSync();
     usePushNotifications();
     useTenantTitle();
+    useKeepAlive();
     return null;
 }
