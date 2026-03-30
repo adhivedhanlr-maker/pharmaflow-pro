@@ -130,7 +130,7 @@ export default function Dashboard() {
       if (allFailed && !isRetry) {
         setLoading(false);
         setWarmingUp(true);
-        await new Promise(resolve => setTimeout(resolve, 20000));
+        await new Promise(resolve => setTimeout(resolve, 35000));
         setWarmingUp(false);
         void fetchStats(true);
         return;

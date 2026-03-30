@@ -47,10 +47,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         setLaunchedFromPWA(new URLSearchParams(window.location.search).get("source") === "pwa");
         document.documentElement.dataset.displayMode = standaloneMode ? "standalone" : "browser";
 
-        const loadBranding = async () => {
+        const loadBranding = async (attemptsLeft = 4) => {
             try {
-                const response = await fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`);
-                if (!response.ok) return;
+                const controller = new AbortController();
+                const tid = window.setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(`${API_BASE}/public/tenant-branding?host=${window.location.host}`, { signal: controller.signal });
+                window.clearTimeout(tid);
+                if (!response.ok) {
+                    if (attemptsLeft > 1) {
+                        await new Promise(r => window.setTimeout(r, 15000));
+                        return loadBranding(attemptsLeft - 1);
+                    }
+                    return;
+                }
 
                 const data = await response.json();
                 setBranding(data);
@@ -80,6 +89,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     link.href = "/logo.png";
                 }
             } catch (error) {
+                if (attemptsLeft > 1) {
+                    await new Promise(r => window.setTimeout(r, 15000));
+                    return loadBranding(attemptsLeft - 1);
+                }
                 console.error("Failed to load tenant branding:", error);
             }
         };
