@@ -99,27 +99,15 @@ export function Header({ branding }: HeaderProps) {
     return (
         <header className="h-16 border-b bg-background flex items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center gap-3">
-                {branding?.logoUrl ? (
+                {branding?.logoUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={branding.logoUrl}
                         alt={branding.companyName || "Client Logo"}
                         className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-200 p-1"
-                        onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const sibling = target.nextElementSibling as HTMLElement | null;
-                            if (sibling) sibling.style.display = "flex";
-                        }}
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
-                ) : null}
-                {/* Fallback initial avatar shown when logo fails to load */}
-                <div
-                    className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shrink-0"
-                    style={{ display: "none" }}
-                >
-                    {(branding?.companyName || "P").charAt(0).toUpperCase()}
-                </div>
+                )}
                 <h2 className="text-lg font-semibold text-slate-800">{branding?.companyName || "System Overview"}</h2>
             </div>
             <div className="flex items-center gap-6">
