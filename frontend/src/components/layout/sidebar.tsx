@@ -95,70 +95,29 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
       <div className="p-6 flex items-center gap-3 border-b relative">
         {!isCollapsed && (
           <>
-            {branding?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={branding.logoUrl}
-                alt={branding.companyName || "Logo"}
-                width={40}
-                height={40}
-                className="rounded-lg object-contain shrink-0"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const sibling = target.nextElementSibling as HTMLElement | null;
-                  if (sibling) sibling.style.display = "flex";
-                }}
-              />
-            ) : (
-              <Image
-                src="/pharmaflow-logo.png"
-                alt="PharmaFlow Pro"
-                width={40}
-                height={40}
-                className="rounded-lg"
-              />
-            )}
-            {/* Fallback initial shown when client logo fails */}
-            <div
-              className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 items-center justify-center text-white font-bold text-lg shrink-0"
-              style={{ display: "none" }}
-            >
-              {(branding?.companyName || "P").charAt(0).toUpperCase()}
-            </div>
+            <Image
+              src="/pharmaflow-logo.png"
+              alt="PharmaFlow Pro"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
             <div>
-              <h1 className="text-base font-bold text-slate-800 leading-tight truncate max-w-[140px]">
-                {branding?.companyName || "PharmaFlow Pro"}
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                PharmaFlow Pro
               </h1>
               <p className="text-[10px] text-muted-foreground font-medium">Client Portal</p>
             </div>
           </>
         )}
         {isCollapsed && (
-          branding?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={branding.logoUrl}
-              alt={branding.companyName || "Logo"}
-              width={32}
-              height={32}
-              className="rounded-lg object-contain mx-auto"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = "none";
-                const sibling = target.nextElementSibling as HTMLElement | null;
-                if (sibling) sibling.style.display = "flex";
-              }}
-            />
-          ) : (
-            <Image
-              src="/pharmaflow-logo.png"
-              alt="PharmaFlow Pro"
-              width={32}
-              height={32}
-              className="rounded-lg mx-auto"
-            />
-          )
+          <Image
+            src="/pharmaflow-logo.png"
+            alt="PharmaFlow Pro"
+            width={32}
+            height={32}
+            className="rounded-lg mx-auto"
+          />
         )}
 
         <button
