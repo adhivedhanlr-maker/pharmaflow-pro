@@ -280,6 +280,8 @@ model Purchase {
   tenantId    String?
   tenant      TenantBranding? @relation(fields: [tenantId], references: [id])
   date        DateTime        @default(now())
+  invoiceDate DateTime?
+  dueDate     DateTime?
   supplierId  String
   supplier    Supplier        @relation(fields: [supplierId], references: [id])
   totalAmount Float

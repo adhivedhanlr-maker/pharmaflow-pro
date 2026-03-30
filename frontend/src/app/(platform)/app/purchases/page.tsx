@@ -143,6 +143,10 @@ export default function PurchasesPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [gstPercent, setGstPercent] = useState(5); // Default to 5% as per user request
+    const [roundOff, setRoundOff] = useState<number>(0);
+    const today = new Date().toISOString().slice(0, 10);
+    const [invoiceDate, setInvoiceDate] = useState(today);
+    const [dueDate, setDueDate] = useState(today);
 
     // History state
     const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
@@ -364,6 +368,14 @@ export default function PurchasesPage() {
                         updated.packing = product.packing || "";
                     }
                 }
+                // Auto-calculate NR and purchasePrice when PTS or discount changes
+                if (field === 'pts' || field === 'discountPct') {
+                    const pts = field === 'pts' ? value : updated.pts;
+                    const disc = field === 'discountPct' ? value : updated.discountPct;
+                    const nr = parseFloat((pts * (1 - disc / 100)).toFixed(2));
+                    updated.nr = nr;
+                    updated.purchasePrice = nr;
+                }
                 return updated;
             }
             return item;
@@ -373,8 +385,8 @@ export default function PurchasesPage() {
     const totals = useMemo(() => {
         const subtotal = items.reduce((acc, item) => acc + (item.quantity * (item.purchasePrice || 0)), 0);
         const tax = subtotal * (gstPercent / 100);
-        return { subtotal, tax, net: subtotal + tax };
-    }, [items, gstPercent]);
+        return { subtotal, tax, net: subtotal + tax + roundOff };
+    }, [items, gstPercent, roundOff]);
 
     const validateForm = () => {
         if (!selectedSupplierId) return "Please select a supplier.";
@@ -415,6 +427,8 @@ export default function PurchasesPage() {
                 body: JSON.stringify({
                     supplierId: selectedSupplierId,
                     billNumber,
+                    invoiceDate: invoiceDate || undefined,
+                    dueDate: dueDate || undefined,
                     items: items.map(item => ({
                         productId: item.productId || undefined,
                         name: item.name,
@@ -441,6 +455,9 @@ export default function PurchasesPage() {
                 setBillNumber("");
                 setSelectedSupplierId("");
                 setEditingPurchaseId(null);
+                setRoundOff(0);
+                setInvoiceDate(new Date().toISOString().slice(0, 10));
+                setDueDate(new Date().toISOString().slice(0, 10));
                 localStorage.removeItem(PURCHASE_DRAFT_STORAGE_KEY);
                 fetchData();
             } else {
@@ -610,7 +627,7 @@ export default function PurchasesPage() {
                 </div>
             }
         >
-            <div className="p-3 sm:p-6 space-y-4 max-w-7xl mx-auto pb-24 md:pb-6">
+            <div className="space-y-6 pb-24 md:pb-6">
                 {error && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -800,13 +817,33 @@ export default function PurchasesPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-1.5 w-full sm:w-48">
+                                <div className="space-y-1.5 w-full sm:w-40">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase">Invoice Number</label>
                                     <Input
                                         className="h-9 border-slate-200 font-mono text-sm"
                                         placeholder="Enter Bill No."
                                         value={billNumber}
                                         onChange={(e) => setBillNumber(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5 w-full sm:w-36">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase">Invoice Date</label>
+                                    <Input
+                                        type="date"
+                                        className="h-9 border-slate-200 text-sm"
+                                        value={invoiceDate}
+                                        onChange={(e) => setInvoiceDate(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5 w-full sm:w-36">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase">Due Date</label>
+                                    <Input
+                                        type="date"
+                                        className="h-9 border-slate-200 text-sm"
+                                        value={dueDate}
+                                        onChange={(e) => setDueDate(e.target.value)}
                                     />
                                 </div>
 
@@ -828,9 +865,9 @@ export default function PurchasesPage() {
                             </div>
                             <div className="flex justify-between items-center text-xs">
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-slate-500">Tax</span>
-                                    <input 
-                                        type="number" 
+                                    <span className="text-slate-500">GST</span>
+                                    <input
+                                        type="number"
                                         className="w-8 bg-transparent border-none p-0 text-[10px] font-bold text-slate-600 focus:ring-0 text-center"
                                         value={gstPercent === 0 ? "" : gstPercent}
                                         placeholder="0"
@@ -839,6 +876,25 @@ export default function PurchasesPage() {
                                     <span className="text-[10px] font-bold text-slate-400">%</span>
                                 </div>
                                 <span className="font-mono font-semibold">₹{totals.tax.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] pl-2">
+                                <span className="text-slate-400">SGST ({(gstPercent / 2).toFixed(1)}%)</span>
+                                <span className="font-mono text-slate-500">₹{(totals.tax / 2).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] pl-2">
+                                <span className="text-slate-400">CGST ({(gstPercent / 2).toFixed(1)}%)</span>
+                                <span className="font-mono text-slate-500">₹{(totals.tax / 2).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">Round Off</span>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    className="w-20 bg-transparent border-none p-0 text-[11px] font-mono text-right text-slate-600 focus:ring-0"
+                                    value={roundOff === 0 ? "" : roundOff}
+                                    placeholder="0.00"
+                                    onChange={(e) => { const v = parseFloat(e.target.value); setRoundOff(isNaN(v) ? 0 : v); }}
+                                />
                             </div>
                             <div className="flex justify-between items-center border-t border-slate-200 pt-1 mt-1">
                                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Bill:</span>
@@ -859,7 +915,7 @@ export default function PurchasesPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-0 border-t overflow-x-auto">
-                        <Table style={{ minWidth: "1520px" }}>
+                        <Table style={{ minWidth: "1400px" }}>
                             <TableHeader>
                                 <TableRow className="bg-slate-50/50">
                                     <TableHead className="w-10 text-center text-[10px] font-bold uppercase">S NO</TableHead>
@@ -872,7 +928,6 @@ export default function PurchasesPage() {
                                     <TableHead className="w-[75px] text-right text-[10px] font-bold uppercase">QTY</TableHead>
                                     <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">FREE</TableHead>
                                     <TableHead className="w-[65px] text-right text-[10px] font-bold uppercase">DISC%</TableHead>
-                                    <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">RATE</TableHead>
                                     <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">MRP</TableHead>
                                     <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">PTR</TableHead>
                                     <TableHead className="w-[95px] text-right text-[10px] font-bold uppercase">PTS</TableHead>
@@ -883,7 +938,7 @@ export default function PurchasesPage() {
                             <TableBody>
                                 {items.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={16} className="text-center py-12 text-muted-foreground italic text-sm">
+                                        <TableCell colSpan={15} className="text-center py-12 text-muted-foreground italic text-sm">
                                             Click 'Add Item' to start recording purchase entry.
                                         </TableCell>
                                     </TableRow>
@@ -1006,20 +1061,6 @@ export default function PurchasesPage() {
                                         <TableCell className="text-right">
                                             <Input
                                                 type="number"
-                                                className="h-8 w-full text-right text-[11px] font-mono"
-                                                value={item.purchasePrice === 0 ? "" : item.purchasePrice}
-                                                placeholder="0.00"
-                                                min="0"
-                                                step="0.01"
-                                                onChange={(e) => {
-                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                    updateItem(item.id, 'purchasePrice', isNaN(val) ? 0 : val);
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Input
-                                                type="number"
                                                 className="h-8 w-full text-right text-[11px] font-mono text-slate-700"
                                                 value={item.salePrice === 0 ? "" : item.salePrice}
                                                 placeholder="0.00"
@@ -1060,18 +1101,9 @@ export default function PurchasesPage() {
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Input
-                                                type="number"
-                                                className="h-8 w-full text-right text-[11px] font-mono text-orange-600"
-                                                value={item.nr === 0 ? "" : item.nr}
-                                                placeholder="0.00"
-                                                min="0"
-                                                step="0.01"
-                                                onChange={(e) => {
-                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                    updateItem(item.id, 'nr', isNaN(val) ? 0 : val);
-                                                }}
-                                            />
+                                            <span className="text-[11px] font-mono font-semibold text-orange-600 pr-2">
+                                                {item.nr > 0 ? item.nr.toFixed(2) : "—"}
+                                            </span>
                                         </TableCell>
                                         <TableCell>
                                             <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="h-8 w-8 text-destructive hover:bg-red-50">

@@ -6,7 +6,7 @@ export class PurchasesService {
     constructor(private prisma: PrismaService) { }
 
     async createPurchase(data: any, tenantId?: string) {
-        const { supplierId, billNumber, items } = data;
+        const { supplierId, billNumber, items, invoiceDate, dueDate } = data;
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Supplier
@@ -151,6 +151,8 @@ export class PurchasesService {
                     totalAmount,
                     gstAmount: totalGst,
                     netAmount,
+                    ...(invoiceDate ? { invoiceDate: new Date(invoiceDate) } : {}),
+                    ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
                     items: {
                         create: purchaseItems,
                     },

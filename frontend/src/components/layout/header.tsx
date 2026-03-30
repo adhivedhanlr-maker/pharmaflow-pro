@@ -105,8 +105,21 @@ export function Header({ branding }: HeaderProps) {
                         src={branding.logoUrl}
                         alt={branding.companyName || "Client Logo"}
                         className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-200 p-1"
+                        onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const sibling = target.nextElementSibling as HTMLElement | null;
+                            if (sibling) sibling.style.display = "flex";
+                        }}
                     />
                 ) : null}
+                {/* Fallback initial avatar shown when logo fails to load */}
+                <div
+                    className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shrink-0"
+                    style={{ display: "none" }}
+                >
+                    {(branding?.companyName || "P").charAt(0).toUpperCase()}
+                </div>
                 <h2 className="text-lg font-semibold text-slate-800">{branding?.companyName || "System Overview"}</h2>
             </div>
             <div className="flex items-center gap-6">

@@ -33,10 +33,17 @@ export class BusinessProfileController {
     @UseInterceptors(
         FileInterceptor('file', {
             storage: memoryStorage(),
+            limits: { fileSize: 500 * 1024 }, // 500 KB max
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.startsWith('image/')) {
+                    return cb(new Error('Only image files are allowed'), false);
+                }
+                cb(null, true);
+            },
         }),
     )
-    async uploadLogo(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
-        // Convert buffer to base64 data URI
+    async uploadLogo(@Request() req: any, @UploadedFile() file: any) {
+        if (!file) throw new Error('No file uploaded');
         const base64Image = file.buffer.toString('base64');
         const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
         return this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
