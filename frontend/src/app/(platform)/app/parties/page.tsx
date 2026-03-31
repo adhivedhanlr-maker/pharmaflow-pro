@@ -26,6 +26,7 @@ import {
     Building2,
     Phone,
     Loader2,
+    RefreshCw,
     Trash2,
     Edit,
     ShieldAlert
@@ -194,8 +195,8 @@ export default function PartiesPage() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button variant="outline" size="icon" onClick={fetchParties}>
-                                <Loader2 className={cn("h-4 w-4", loading && "animate-spin")} />
+                            <Button variant="outline" size="icon" onClick={fetchParties} disabled={loading}>
+                                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                             </Button>
                         </div>
                     </div>

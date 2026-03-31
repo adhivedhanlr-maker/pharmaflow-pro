@@ -807,8 +807,8 @@ export default function PurchasesPage() {
                             <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Bill Details</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4">
-                            <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
-                                <div className="space-y-1.5 min-w-[280px] flex-1">
+                            <div className="space-y-3">
+                                <div className="space-y-1.5">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase">Supplier</label>
                                     <div className="flex gap-1.5">
                                         <select
@@ -819,8 +819,8 @@ export default function PurchasesPage() {
                                             <option value="">Select Supplier</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             className="h-9 w-9 p-0 shrink-0 border-primary/20 text-primary hover:bg-primary/5"
                                             onClick={() => setShowSupplierDialog(true)}
                                             title="Add New Supplier"
@@ -830,7 +830,8 @@ export default function PurchasesPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-1.5 w-full sm:w-40">
+                                <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3">
+                                <div className="space-y-1.5 col-span-2 md:w-40">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase">Invoice Number</label>
                                     <Input
                                         className="h-9 border-slate-200 font-mono text-sm"
@@ -840,7 +841,7 @@ export default function PurchasesPage() {
                                     />
                                 </div>
 
-                                <div className="space-y-1.5 w-full sm:w-36">
+                                <div className="space-y-1.5 md:w-36">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase">Invoice Date</label>
                                     <Input
                                         type="date"
@@ -850,7 +851,7 @@ export default function PurchasesPage() {
                                     />
                                 </div>
 
-                                <div className="space-y-1.5 w-full sm:w-36">
+                                <div className="space-y-1.5 md:w-36">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase">Due Date</label>
                                     <Input
                                         type="date"
@@ -860,8 +861,6 @@ export default function PurchasesPage() {
                                     />
                                 </div>
 
-                                <div className="hidden xl:block pb-1 italic text-[10px] text-muted-foreground ml-auto">
-                                    * Ensure details match physical invoice
                                 </div>
                             </div>
                         </CardContent>

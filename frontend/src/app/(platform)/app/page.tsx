@@ -232,21 +232,22 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-24 md:pb-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Welcome back, <span className="font-semibold text-foreground">{displayName}</span>. Here&apos;s what&apos;s happening today in {roleLabel}.
           </p>
         </div>
         <Button
           variant="outline"
+          size="icon"
           onClick={() => void fetchStats()}
           disabled={loading || warmingUp || !token || !role}
-          className="self-start transition-colors hover:bg-blue-50 hover:text-blue-600 sm:self-auto"
+          className="shrink-0 hover:bg-blue-50 hover:text-blue-600"
+          title="Refresh"
         >
-          <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
-          Refresh
+          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
         </Button>
       </div>
 

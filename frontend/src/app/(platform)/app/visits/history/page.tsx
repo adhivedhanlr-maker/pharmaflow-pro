@@ -173,43 +173,40 @@ export default function RouteHistoryPage() {
                 : [12.9716, 77.5946];
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Route History</h1>
-                    <p className="text-muted-foreground">Visualize actual daily travel paths.</p>
-                </div>
+        <div className="space-y-4">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight">Route History</h1>
+                <p className="text-muted-foreground text-sm">Visualize actual daily travel paths.</p>
+            </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                    {isAdminLikeRole(user?.role) && (
-                        <div className="w-full sm:w-[200px]">
-                            <Select value={selectedRepId} onValueChange={setSelectedRepId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Rep" />
-                                </SelectTrigger>
-                                <SelectContent className="z-[1200]">
-                                    {reps.map(rep => (
-                                        <SelectItem key={rep.id} value={rep.id}>{rep.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                    <div className="w-full sm:w-[180px]">
-                        <Input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            max={new Date().toISOString().split('T')[0]}
-                        />
-                    </div>
-                    <Button onClick={fetchData} disabled={loading}>
+            <div className="space-y-2">
+                {isAdminLikeRole(user?.role) && (
+                    <Select value={selectedRepId} onValueChange={setSelectedRepId}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Rep" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[1200]">
+                            {reps.map(rep => (
+                                <SelectItem key={rep.id} value={rep.id}>{rep.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+                <div className="flex gap-2">
+                    <Input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className="flex-1"
+                    />
+                    <Button onClick={fetchData} disabled={loading} className="shrink-0">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load Route"}
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card>
                     <CardHeader className="pb-2 p-4">
                         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

@@ -309,36 +309,36 @@ export default function ReportsPage() {
                 </Card>
 
                 {/* ── Stat Cards ── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <Card>
-                        <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Sales</CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalSales)}</div>
+                        <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sales Revenue</p>
+                            <div className="text-xl font-bold text-slate-900">{inr(stats.totalSales)}</div>
                             <div className="text-xs text-green-600 flex items-center mt-1">
                                 <TrendingUp className="h-3 w-3 mr-1" /> {filteredSales.length} invoices
                             </div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">GST Collected</CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalGst)}</div>
+                        <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">GST Collected</p>
+                            <div className="text-xl font-bold text-slate-900">{inr(stats.totalGst)}</div>
                             <p className="text-xs text-muted-foreground mt-1">CGST + SGST on sales</p>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Purchases</CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-slate-900">{inr(stats.totalPurchases)}</div>
+                        <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Total Purchases</p>
+                            <div className="text-xl font-bold text-slate-900">{inr(stats.totalPurchases)}</div>
                             <div className="text-xs text-blue-600 flex items-center mt-1">
                                 <TrendingDown className="h-3 w-3 mr-1" /> {filteredPurchases.length} bills
                             </div>
                         </CardContent>
                     </Card>
                     <Card className="border-red-100 bg-red-50/20">
-                        <CardHeader className="pb-2 text-red-500 font-bold uppercase tracking-wider text-[10px]">Expiry Stock Value</CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-red-600">{inr(stats.expiryRisk)}</div>
+                        <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-1">Expiry Stock Value</p>
+                            <div className="text-xl font-bold text-red-600">{inr(stats.expiryRisk)}</div>
                             <div className="text-xs text-red-500 flex items-center mt-1">
                                 <AlertOctagon className="h-3 w-3 mr-1" /> {expiring.length} batches near expiry
                             </div>

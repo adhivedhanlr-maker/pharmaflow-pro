@@ -91,12 +91,24 @@ export class TenantBrandingService {
             counts.map((entry) => [entry.tenantId, entry._count._all]),
         );
 
-        return tenants.map((tenant) => ({
-            ...tenant,
-            faviconUrl: tenant.logoUrl ?? tenant.faviconUrl ?? null,
-            userCount: countMap.get(tenant.id) ?? 0,
-            initialized: (countMap.get(tenant.id) ?? 0) > 0,
-        }));
+        // For tenants without a logo URL, fall back to their BusinessProfile logo
+        const tenantsWithoutLogo = tenants.filter(t => !t.logoUrl).map(t => t.id);
+        const profileLogos = tenantsWithoutLogo.length === 0 ? [] : await this.prisma.businessProfile.findMany({
+            where: { tenantId: { in: tenantsWithoutLogo } },
+            select: { tenantId: true, logoUrl: true },
+        });
+        const profileLogoMap = new Map(profileLogos.map(p => [p.tenantId, p.logoUrl]));
+
+        return tenants.map((tenant) => {
+            const effectiveLogo = tenant.logoUrl ?? profileLogoMap.get(tenant.id) ?? null;
+            return {
+                ...tenant,
+                logoUrl: effectiveLogo,
+                faviconUrl: effectiveLogo ?? tenant.faviconUrl ?? null,
+                userCount: countMap.get(tenant.id) ?? 0,
+                initialized: (countMap.get(tenant.id) ?? 0) > 0,
+            };
+        });
     }
 
     async createTenant(data: {
