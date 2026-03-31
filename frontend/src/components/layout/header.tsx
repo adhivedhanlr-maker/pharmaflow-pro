@@ -104,7 +104,7 @@ export function Header({ branding }: HeaderProps) {
                     <img
                         src={branding.logoUrl}
                         alt={branding.companyName || "Client Logo"}
-                        className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-200 p-1"
+                        className="h-10 w-10 rounded-lg object-contain"
                         onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                 )}
