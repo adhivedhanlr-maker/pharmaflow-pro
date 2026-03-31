@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { SalesGateway } from '../sales/sales.gateway';
@@ -91,6 +91,22 @@ export class UsersService {
             }
             throw error;
         }
+    }
+
+    async changePassword(userId: string, tenantId: string | undefined, currentPassword: string, newPassword: string) {
+        if (!newPassword || newPassword.length < 6) {
+            throw new BadRequestException('New password must be at least 6 characters');
+        }
+        const user = await this.prisma.user.findFirst({
+            where: { id: userId, ...(tenantId ? { tenantId } : {}) },
+            select: { id: true, password: true },
+        });
+        if (!user) throw new NotFoundException('User not found');
+        const valid = await bcrypt.compare(currentPassword, user.password);
+        if (!valid) throw new UnauthorizedException('Current password is incorrect');
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+        return { message: 'Password updated successfully' };
     }
 
     async update(id: string, data: any, tenantId?: string) {

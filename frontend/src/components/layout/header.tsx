@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Bell, User, Info, AlertTriangle, XCircle, LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Badge } from "@/components/ui/badge";
@@ -182,6 +183,12 @@ export function Header({ branding }: HeaderProps) {
                                 Exit Support Access
                             </button>
                         )}
+                        <Link href="/app/account" className="w-full">
+                            <button className="w-full flex items-center gap-2 p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md transition-colors">
+                                <User className="h-4 w-4" />
+                                My Account
+                            </button>
+                        </Link>
                         <button
                             onClick={logout}
                             className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"

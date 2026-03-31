@@ -31,12 +31,16 @@ import { isAdminLikeRole } from "@/lib/roles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+const DEFAULT_GST_RATE_KEY = "pharmaflow_default_gst_rate";
+
 export default function SettingsPage() {
     const { token, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [defaultGstRate, setDefaultGstRate] = useState<number>(5);
+    const [gstSaved, setGstSaved] = useState(false);
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -56,6 +60,11 @@ export default function SettingsPage() {
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
+
+    useEffect(() => {
+        const saved = localStorage.getItem(DEFAULT_GST_RATE_KEY);
+        if (saved !== null) setDefaultGstRate(parseFloat(saved) || 5);
+    }, []);
 
     useEffect(() => {
         if (token && isAdminLikeRole(user?.role)) {
@@ -400,6 +409,45 @@ export default function SettingsPage() {
                                         </Button>
                                     </div>
                                 </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Billing Preferences */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Billing Preferences</CardTitle>
+                            <CardDescription>Default values used when creating new purchase entries.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-end gap-3">
+                                <div className="space-y-1.5 flex-1 max-w-[180px]">
+                                    <label className="text-sm font-medium">Default GST Rate (%)</label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            max={28}
+                                            step={0.1}
+                                            value={defaultGstRate}
+                                            onChange={e => { setDefaultGstRate(parseFloat(e.target.value) || 0); setGstSaved(false); }}
+                                            className="h-9 w-24 font-mono"
+                                        />
+                                        <span className="text-sm text-slate-500">%</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400">Common: 5%, 12%, 18%</p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant={gstSaved ? "outline" : "default"}
+                                    className={gstSaved ? "text-green-600 border-green-300" : ""}
+                                    onClick={() => {
+                                        localStorage.setItem(DEFAULT_GST_RATE_KEY, String(defaultGstRate));
+                                        setGstSaved(true);
+                                    }}
+                                >
+                                    {gstSaved ? "✓ Saved" : "Save"}
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

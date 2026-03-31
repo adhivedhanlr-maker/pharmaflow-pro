@@ -69,11 +69,13 @@ export default function DataManagementPage() {
     // Export loading states
     const [exporting, setExporting] = useState<string | null>(null);
 
-    // Date range for invoices/purchases
-    const [invoiceFrom, setInvoiceFrom] = useState("");
-    const [invoiceTo, setInvoiceTo] = useState("");
-    const [purchaseFrom, setPurchaseFrom] = useState("");
-    const [purchaseTo, setPurchaseTo] = useState("");
+    // Date range for invoices/purchases — default to current month
+    const today = new Date().toISOString().slice(0, 10);
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+    const [invoiceFrom, setInvoiceFrom] = useState(monthStart);
+    const [invoiceTo, setInvoiceTo] = useState(today);
+    const [purchaseFrom, setPurchaseFrom] = useState(monthStart);
+    const [purchaseTo, setPurchaseTo] = useState(today);
 
     // Import states
     const [importing, setImporting] = useState<string | null>(null);
@@ -242,28 +244,19 @@ export default function DataManagementPage() {
                                     <p className="text-xs text-slate-500">Invoice headers + line items — filter by date range</p>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 pl-8">
-                                <Input
-                                    type="date"
-                                    className="h-8 text-xs w-36"
-                                    value={invoiceFrom}
-                                    onChange={e => setInvoiceFrom(e.target.value)}
-                                    placeholder="From"
-                                />
-                                <span className="text-xs text-slate-400">to</span>
-                                <Input
-                                    type="date"
-                                    className="h-8 text-xs w-36"
-                                    value={invoiceTo}
-                                    onChange={e => setInvoiceTo(e.target.value)}
-                                    placeholder="To"
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={exporting === "invoices"}
-                                    onClick={() => handleExport("invoices", `export/invoices${invoiceQuery ? `?${invoiceQuery}` : ""}`, "invoices.xlsx")}
-                                >
+                            <div className="pl-8 space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">From</p>
+                                        <Input type="date" className="h-8 text-xs" value={invoiceFrom} onChange={e => setInvoiceFrom(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">To</p>
+                                        <Input type="date" className="h-8 text-xs" value={invoiceTo} onChange={e => setInvoiceTo(e.target.value)} />
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="w-full" disabled={exporting === "invoices"}
+                                    onClick={() => handleExport("invoices", `export/invoices${invoiceQuery ? `?${invoiceQuery}` : ""}`, "invoices.xlsx")}>
                                     {exporting === "invoices" ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Download className="h-4 w-4 mr-1" />}
                                     Download
                                 </Button>
@@ -279,28 +272,19 @@ export default function DataManagementPage() {
                                     <p className="text-xs text-slate-500">Purchase bills + line items — filter by date range</p>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 pl-8">
-                                <Input
-                                    type="date"
-                                    className="h-8 text-xs w-36"
-                                    value={purchaseFrom}
-                                    onChange={e => setPurchaseFrom(e.target.value)}
-                                    placeholder="From"
-                                />
-                                <span className="text-xs text-slate-400">to</span>
-                                <Input
-                                    type="date"
-                                    className="h-8 text-xs w-36"
-                                    value={purchaseTo}
-                                    onChange={e => setPurchaseTo(e.target.value)}
-                                    placeholder="To"
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={exporting === "purchases"}
-                                    onClick={() => handleExport("purchases", `export/purchases${purchaseQuery ? `?${purchaseQuery}` : ""}`, "purchases.xlsx")}
-                                >
+                            <div className="pl-8 space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">From</p>
+                                        <Input type="date" className="h-8 text-xs" value={purchaseFrom} onChange={e => setPurchaseFrom(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">To</p>
+                                        <Input type="date" className="h-8 text-xs" value={purchaseTo} onChange={e => setPurchaseTo(e.target.value)} />
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="w-full" disabled={exporting === "purchases"}
+                                    onClick={() => handleExport("purchases", `export/purchases${purchaseQuery ? `?${purchaseQuery}` : ""}`, "purchases.xlsx")}>
                                     {exporting === "purchases" ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Download className="h-4 w-4 mr-1" />}
                                     Download
                                 </Button>

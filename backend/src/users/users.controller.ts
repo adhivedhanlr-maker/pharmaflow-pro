@@ -16,6 +16,12 @@ export class UsersController {
         return this.usersService.update(req.user.userId, { isOnDuty: body.isOnDuty });
     }
 
+    @Patch('me/password')
+    changePassword(@Body() body: any, @Request() req: any) {
+        const { currentPassword, newPassword } = body;
+        return this.usersService.changePassword(req.user.userId, req.user.tenantId, currentPassword, newPassword);
+    }
+
     @Get('me')
     getProfile(@Request() req: any) {
         if (req.user?.supportAccess?.active) {

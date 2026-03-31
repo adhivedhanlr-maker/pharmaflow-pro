@@ -221,42 +221,38 @@ export default function ReportsPage() {
             <div className="space-y-6 pb-24 md:pb-0">
 
                 {/* ── Header ── */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Business Reports</h1>
-                        <p className="text-muted-foreground text-sm">Financial analytics and GST filing reports.</p>
-                    </div>
-                    {/* Date filter */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
-                        <span className="text-slate-400 text-sm">to</span>
-                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Business Reports</h1>
+                    <p className="text-muted-foreground text-sm">Financial analytics and GST filing reports.</p>
+                </div>
+                {/* Date filter */}
+                <div className="flex items-center gap-2">
+                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                        className="flex-1 h-9 rounded-md border border-slate-200 px-3 text-sm bg-white min-w-0" />
+                    <span className="text-slate-400 text-sm shrink-0">to</span>
+                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                        className="flex-1 h-9 rounded-md border border-slate-200 px-3 text-sm bg-white min-w-0" />
                 </div>
 
                 {/* ── GST Report Download Cards ── */}
                 <Card className="border-slate-200">
-                    <CardHeader className="pb-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <CardTitle className="text-sm font-bold text-slate-700">GST Reports</CardTitle>
-                            {/* Summary / Detailed toggle */}
-                            <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit">
-                                {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
-                                    <button key={m}
-                                        onClick={() => setReportMode(m)}
-                                        className={`px-4 py-1.5 text-xs font-bold transition-colors ${
-                                            reportMode === m
-                                                ? "bg-slate-800 text-white"
-                                                : "bg-white text-slate-500 hover:bg-slate-50"
-                                        }`}>
-                                        {m === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed"}
-                                    </button>
-                                ))}
-                            </div>
+                    <CardHeader className="pb-4 text-center">
+                        <CardTitle className="text-base font-bold text-slate-700 mb-3">GST Reports</CardTitle>
+                        {/* Summary / Detailed toggle — full width, centered */}
+                        <div className="flex rounded-lg border border-slate-200 overflow-hidden w-full">
+                            {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
+                                <button key={m}
+                                    onClick={() => setReportMode(m)}
+                                    className={`flex-1 py-2 text-xs font-bold transition-colors ${
+                                        reportMode === m
+                                            ? "bg-slate-800 text-white"
+                                            : "bg-white text-slate-500 hover:bg-slate-50"
+                                    }`}>
+                                    {m === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed"}
+                                </button>
+                            ))}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-400 mt-2">
                             {reportMode === "SUMMARY"
                                 ? "Totals grouped by date — ideal for quick GST filing overview"
                                 : "One row per invoice/bill — full detail for auditing"}

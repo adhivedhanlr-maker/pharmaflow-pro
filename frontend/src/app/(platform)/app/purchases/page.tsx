@@ -145,7 +145,12 @@ export default function PurchasesPage() {
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [gstPercent, setGstPercent] = useState(5); // Default to 5% as per user request
+    const [gstPercent, setGstPercent] = useState(() => {
+        try {
+            const saved = localStorage.getItem("pharmaflow_default_gst_rate");
+            return saved !== null ? (parseFloat(saved) || 5) : 5;
+        } catch { return 5; }
+    });
     const [roundOff, setRoundOff] = useState<number>(0);
     const today = new Date().toISOString().slice(0, 10);
     const [invoiceDate, setInvoiceDate] = useState(today);
@@ -803,9 +808,9 @@ export default function PurchasesPage() {
 
                 <div className="flex flex-col md:flex-row gap-4">
                     <Card className="flex-1">
-                        <CardHeader className="py-2 px-4 border-b bg-slate-50/50">
-                            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Bill Details</CardTitle>
-                        </CardHeader>
+                        <div className="py-2 px-4 border-b bg-slate-50/50">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Bill Details</p>
+                        </div>
                         <CardContent className="p-4">
                             <div className="space-y-3">
                                 <div className="space-y-1.5">
@@ -867,9 +872,9 @@ export default function PurchasesPage() {
                     </Card>
 
                     <Card className="md:w-72 bg-slate-50 border-dashed">
-                        <CardHeader className="py-2 px-4 border-b">
-                            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Summary</CardTitle>
-                        </CardHeader>
+                        <div className="py-2 px-4 border-b">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Summary</p>
+                        </div>
                         <CardContent className="p-3 space-y-1">
                             <div className="flex justify-between items-center text-xs">
                                 <span className="text-slate-500">Gross:</span>
@@ -917,15 +922,15 @@ export default function PurchasesPage() {
                 </div>
 
                 <Card>
-                    <CardHeader className="flex flex-wrap items-center justify-between py-2 px-4 border-b gap-2">
-                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-tight">Item Entry Details</CardTitle>
+                    <div className="flex flex-wrap items-center justify-between py-2 px-4 border-b gap-2">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">Item Entry Details</p>
                         <div className="flex gap-2 items-center">
                             <AddProductDialog onProductAdded={fetchData} />
                             <Button size="sm" onClick={addItem} className="h-8 px-3 text-xs">
                                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Item
                             </Button>
                         </div>
-                    </CardHeader>
+                    </div>
                     <CardContent className="p-0 border-t overflow-x-auto">
                         <Table style={{ minWidth: "1400px" }}>
                             <TableHeader>

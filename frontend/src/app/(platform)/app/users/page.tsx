@@ -527,9 +527,9 @@ export default function UsersPage() {
                 </div>
 
                 <Card className="shadow-sm border-slate-200">
-                    <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
-                        <CardTitle className="text-lg font-semibold text-slate-800">System Users</CardTitle>
-                    </CardHeader>
+                    <div className="bg-slate-50/50 border-b border-slate-100 py-3 px-6">
+                        <p className="text-base font-semibold text-slate-800">System Users</p>
+                    </div>
                     <CardContent className="p-0 overflow-x-auto">
                         <Table className="min-w-[600px]">
                             <TableHeader className="bg-slate-50/30">

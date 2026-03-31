@@ -232,23 +232,23 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-24 md:pb-0">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
+        <div className="flex items-center justify-between gap-2 mt-0.5">
           <p className="text-muted-foreground text-sm">
             Welcome back, <span className="font-semibold text-foreground">{displayName}</span>. Here&apos;s what&apos;s happening today in {roleLabel}.
           </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void fetchStats()}
+            disabled={loading || warmingUp || !token || !role}
+            className="shrink-0 h-7 px-2 text-xs text-slate-400 hover:text-blue-600 hover:bg-blue-50 gap-1"
+          >
+            <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+            Refresh
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => void fetchStats()}
-          disabled={loading || warmingUp || !token || !role}
-          className="shrink-0 hover:bg-blue-50 hover:text-blue-600"
-          title="Refresh"
-        >
-          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-        </Button>
       </div>
 
       {warmingUp && (
