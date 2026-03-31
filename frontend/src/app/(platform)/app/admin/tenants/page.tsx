@@ -382,6 +382,11 @@ export default function TenantManagementPage() {
                                     <Input placeholder="bluedots.pharmaflow.eflybe.com" value={formData.customDomain} onChange={(e) => setFormData({ ...formData, customDomain: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>Logo URL</Label>
+                                    <Input placeholder="https://example.com/logo.png (leave blank to use Settings logo)" value={formData.logoUrl} onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })} />
+                                    <p className="text-xs text-muted-foreground">Clear this field to automatically use the logo uploaded in the client&apos;s Settings page.</p>
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Login Title</Label>
                                     <Input placeholder="Welcome Back" value={formData.loginTitle} onChange={(e) => setFormData({ ...formData, loginTitle: e.target.value })} />
                                 </div>
