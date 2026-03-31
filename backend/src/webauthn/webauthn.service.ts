@@ -12,17 +12,21 @@ import { TenantBrandingService } from '../tenant-branding/tenant-branding.servic
 const RP_NAME = 'PharmaFlow Pro';
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
+// host here is always the FRONTEND hostname sent by the browser, never the backend server host
+function validateClientHost(host: string): string {
+    if (!host) throw new BadRequestException('Host is required');
+    if (host.includes('localhost') || host.includes('127.0.0.1')) return host;
+    if (!host.endsWith('pharmaflow.eflybe.com')) throw new BadRequestException('Invalid host');
+    return host;
+}
+
 function getRpId(host: string): string {
-    if (!host || host.includes('localhost') || host.includes('127.0.0.1')) {
-        return 'localhost';
-    }
+    if (host.includes('localhost') || host.includes('127.0.0.1')) return 'localhost';
     return 'pharmaflow.eflybe.com';
 }
 
 function getOrigin(host: string): string {
-    if (!host || host.includes('localhost') || host.includes('127.0.0.1')) {
-        return `http://${host || 'localhost:3000'}`;
-    }
+    if (host.includes('localhost') || host.includes('127.0.0.1')) return `http://${host}`;
     return `https://${host}`;
 }
 
@@ -37,7 +41,8 @@ export class WebAuthnService {
     ) { }
 
     async getRegistrationOptions(userId: string, username: string, host: string) {
-        const rpID = getRpId(host);
+        const safeHost = validateClientHost(host);
+        const rpID = getRpId(safeHost);
 
         const existingCreds = await this.prisma.webAuthnCredential.findMany({
             where: { userId },
@@ -70,6 +75,7 @@ export class WebAuthnService {
     }
 
     async verifyRegistration(userId: string, tenantId: string | undefined, credential: any, host: string, deviceName?: string) {
+        const safeHost = validateClientHost(host);
         const stored = this.challenges.get(`reg:${userId}`);
         if (!stored || stored.expires < Date.now()) {
             this.challenges.delete(`reg:${userId}`);
@@ -77,8 +83,8 @@ export class WebAuthnService {
         }
         this.challenges.delete(`reg:${userId}`);
 
-        const rpID = getRpId(host);
-        const origin = getOrigin(host);
+        const rpID = getRpId(safeHost);
+        const origin = getOrigin(safeHost);
 
         const verification = await verifyRegistrationResponse({
             response: credential,
@@ -110,7 +116,8 @@ export class WebAuthnService {
     }
 
     async getAuthenticationOptions(username: string, host: string) {
-        const tenant = await this.tenantBrandingService.resolveTenant(host);
+        const safeHost = validateClientHost(host);
+        const tenant = await this.tenantBrandingService.resolveTenant(safeHost);
         const tenantId = tenant?.id;
 
         const user = await this.prisma.user.findFirst({
@@ -123,7 +130,7 @@ export class WebAuthnService {
         }
 
         const cred = user.webAuthnCredentials[0];
-        const rpID = getRpId(host);
+        const rpID = getRpId(safeHost);
 
         const options = await generateAuthenticationOptions({
             rpID,
@@ -144,6 +151,7 @@ export class WebAuthnService {
     }
 
     async verifyAuthentication(userId: string, credential: any, host: string) {
+        const safeHost = validateClientHost(host);
         const stored = this.challenges.get(`auth:${userId}`);
         if (!stored || stored.expires < Date.now()) {
             this.challenges.delete(`auth:${userId}`);
@@ -154,8 +162,8 @@ export class WebAuthnService {
         const dbCred = await this.prisma.webAuthnCredential.findFirst({ where: { userId } });
         if (!dbCred) throw new NotFoundException('No biometric credential found');
 
-        const rpID = getRpId(host);
-        const origin = getOrigin(host);
+        const rpID = getRpId(safeHost);
+        const origin = getOrigin(safeHost);
 
         const verification = await verifyAuthenticationResponse({
             response: credential,

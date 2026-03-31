@@ -132,7 +132,7 @@ function LoginContent() {
             const challengeRes = await fetch(`${API_BASE}/auth/webauthn/auth-challenge`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: biometricUsername }),
+                body: JSON.stringify({ username: biometricUsername, host: window.location.host }),
                 signal: controller.signal,
             });
             window.clearTimeout(tid);
@@ -148,7 +148,7 @@ function LoginContent() {
             const verifyRes = await fetch(`${API_BASE}/auth/webauthn/verify`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, credential: assertion }),
+                body: JSON.stringify({ userId, credential: assertion, host: window.location.host }),
                 signal: controller2.signal,
             });
             window.clearTimeout(tid2);

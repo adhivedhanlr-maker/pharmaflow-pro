@@ -71,7 +71,9 @@ export default function MyAccountPage() {
             const controller = new AbortController();
             const tid = window.setTimeout(() => controller.abort(), 10000);
             const res = await fetch(`${API_BASE}/auth/webauthn/register-challenge`, {
-                headers: { Authorization: `Bearer ${token}` },
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ host: window.location.host }),
                 signal: controller.signal,
             });
             window.clearTimeout(tid);
@@ -85,7 +87,7 @@ export default function MyAccountPage() {
             const verifyRes = await fetch(`${API_BASE}/auth/webauthn/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ credential: attResp }),
+                body: JSON.stringify({ credential: attResp, host: window.location.host }),
                 signal: controller2.signal,
             });
             window.clearTimeout(tid2);
@@ -181,16 +183,28 @@ export default function MyAccountPage() {
                 <div className="space-y-6">
                     {/* Profile info */}
                     <Card>
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
-                                <User className="h-8 w-8 text-white" />
+                        <CardContent className="p-6 space-y-4">
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
+                                    <User className="h-7 w-7 text-white" />
+                                </div>
+                                <div className="space-y-1 min-w-0">
+                                    <p className="font-semibold text-lg leading-tight truncate">{user?.name || "—"}</p>
+                                    <p className="text-sm text-muted-foreground truncate">@{user?.username || "—"}</p>
+                                    <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[role] || "bg-slate-100 text-slate-600"}`}>
+                                        {ROLE_LABELS[role] || role}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="space-y-1 min-w-0">
-                                <p className="font-semibold text-xl leading-tight truncate">{user?.name || "—"}</p>
-                                <p className="text-sm text-muted-foreground truncate">@{user?.username || "—"}</p>
-                                <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[role] || "bg-slate-100 text-slate-600"}`}>
-                                    {ROLE_LABELS[role] || role}
-                                </span>
+                            <div className="border-t pt-4">
+                                <Button
+                                    variant="outline"
+                                    className="text-red-600 border-red-200 hover:bg-red-50 gap-2 w-full"
+                                    onClick={logout}
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Sign Out
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -310,16 +324,6 @@ export default function MyAccountPage() {
                 </Card>
             </div>
 
-            <div className="pt-2">
-                <Button
-                    variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
-                    onClick={logout}
-                >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                </Button>
-            </div>
         </div>
     );
 }

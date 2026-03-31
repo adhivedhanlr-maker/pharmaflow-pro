@@ -9,23 +9,20 @@ export class WebAuthnController {
     // ── Protected: requires JWT ──────────────────────────────────────
 
     @UseGuards(JwtAuthGuard)
-    @Get('register-challenge')
-    getRegistrationChallenge(@Request() req: any) {
-        const host = req.headers.host as string;
-        return this.webAuthnService.getRegistrationOptions(req.user.userId, req.user.username, host);
+    @Post('register-challenge')
+    getRegistrationChallenge(@Body() body: { host: string }, @Request() req: any) {
+        return this.webAuthnService.getRegistrationOptions(req.user.userId, req.user.username, body.host);
     }
 
     @UseGuards(JwtAuthGuard)
     @Post('register')
-    register(@Body() body: any, @Request() req: any) {
-        const { credential, deviceName } = body;
-        const host = req.headers.host as string;
+    register(@Body() body: { credential: any; host: string; deviceName?: string }, @Request() req: any) {
         return this.webAuthnService.verifyRegistration(
             req.user.userId,
             req.user.tenantId,
-            credential,
-            host,
-            deviceName,
+            body.credential,
+            body.host,
+            body.deviceName,
         );
     }
 
@@ -45,14 +42,12 @@ export class WebAuthnController {
     // ── Public: user is not logged in yet ────────────────────────────
 
     @Post('auth-challenge')
-    getAuthenticationChallenge(@Body() body: { username: string }, @Request() req: any) {
-        const host = req.headers.host as string;
-        return this.webAuthnService.getAuthenticationOptions(body.username, host);
+    getAuthenticationChallenge(@Body() body: { username: string; host: string }) {
+        return this.webAuthnService.getAuthenticationOptions(body.username, body.host);
     }
 
     @Post('verify')
-    verifyAuthentication(@Body() body: { userId: string; credential: any }, @Request() req: any) {
-        const host = req.headers.host as string;
-        return this.webAuthnService.verifyAuthentication(body.userId, body.credential, host);
+    verifyAuthentication(@Body() body: { userId: string; credential: any; host: string }) {
+        return this.webAuthnService.verifyAuthentication(body.userId, body.credential, body.host);
     }
 }
