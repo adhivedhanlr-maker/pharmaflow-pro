@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { User, KeyRound, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, KeyRound, Eye, EyeOff, Loader2, Fingerprint, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { startRegistration } from "@simplewebauthn/browser";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -36,6 +36,102 @@ export default function MyAccountPage() {
     const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    const [biometricAvailable, setBiometricAvailable] = useState(false);
+    const [biometricEnabled, setBiometricEnabled] = useState(false);
+    const [biometricLoading, setBiometricLoading] = useState(false);
+
+    useEffect(() => {
+        const checkBiometric = async () => {
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                setBiometricAvailable(available);
+                if (!available) return;
+                const controller = new AbortController();
+                const tid = window.setTimeout(() => controller.abort(), 10000);
+                const res = await fetch(`${API_BASE}/auth/webauthn/status`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: controller.signal,
+                });
+                window.clearTimeout(tid);
+                if (res.ok) {
+                    const d = await res.json();
+                    setBiometricEnabled(d.enabled);
+                }
+            } catch {
+                // biometrics not supported or request failed
+            }
+        };
+        if (token) checkBiometric();
+    }, [token]);
+
+    const handleEnableBiometric = useCallback(async () => {
+        setBiometricLoading(true);
+        try {
+            const controller = new AbortController();
+            const tid = window.setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(`${API_BASE}/auth/webauthn/register-challenge`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+            });
+            window.clearTimeout(tid);
+            if (!res.ok) throw new Error("Could not start biometric registration");
+            const options = await res.json();
+
+            const attResp = await startRegistration(options);
+
+            const controller2 = new AbortController();
+            const tid2 = window.setTimeout(() => controller2.abort(), 10000);
+            const verifyRes = await fetch(`${API_BASE}/auth/webauthn/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ credential: attResp }),
+                signal: controller2.signal,
+            });
+            window.clearTimeout(tid2);
+            const data = await verifyRes.json().catch(() => ({}));
+            if (!verifyRes.ok) throw new Error(data.message || "Biometric registration failed");
+
+            // Save username to localStorage so login page can show biometric button
+            const hostname = window.location.hostname;
+            if (user?.username) {
+                localStorage.setItem(`pharmaflow_biometric_${hostname}`, user.username);
+            }
+            setBiometricEnabled(true);
+            toast.success("Biometric login enabled for this device");
+        } catch (err: any) {
+            if (err?.name === "NotAllowedError") {
+                toast.error("Biometric prompt was dismissed. Please try again.");
+            } else {
+                toast.error(err.message || "Failed to enable biometric login");
+            }
+        } finally {
+            setBiometricLoading(false);
+        }
+    }, [token, user]);
+
+    const handleDisableBiometric = useCallback(async () => {
+        setBiometricLoading(true);
+        try {
+            const controller = new AbortController();
+            const tid = window.setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(`${API_BASE}/auth/webauthn/credential`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+            });
+            window.clearTimeout(tid);
+            if (!res.ok) throw new Error("Failed to disable biometric login");
+            const hostname = window.location.hostname;
+            localStorage.removeItem(`pharmaflow_biometric_${hostname}`);
+            setBiometricEnabled(false);
+            toast.success("Biometric login disabled");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to disable biometric login");
+        } finally {
+            setBiometricLoading(false);
+        }
+    }, [token]);
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,7 +167,7 @@ export default function MyAccountPage() {
         }
     };
 
-    const role = user?.role || "";
+    const role = user?.role ?? "";
 
     return (
         <div className="space-y-6 max-w-md">
@@ -95,6 +191,54 @@ export default function MyAccountPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Biometric login */}
+            {biometricAvailable && (
+                <Card>
+                    <div className="py-3 px-5 border-b bg-slate-50/50">
+                        <div className="flex items-center gap-2">
+                            <Fingerprint className="h-4 w-4 text-slate-500" />
+                            <p className="text-sm font-semibold text-slate-700">Biometric Login</p>
+                        </div>
+                    </div>
+                    <CardContent className="p-5">
+                        {biometricEnabled ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+                                    <ShieldCheck className="h-4 w-4 shrink-0" />
+                                    <span>Biometric login is <strong>enabled</strong> on this device. You can sign in using your fingerprint or phone PIN.</span>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={handleDisableBiometric}
+                                    disabled={biometricLoading}
+                                >
+                                    {biometricLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Disable Biometric Login
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <p className="text-sm text-slate-600">
+                                    Use your fingerprint or phone PIN to sign in instantly — no password needed on this device.
+                                </p>
+                                <Button
+                                    className="w-full gap-2"
+                                    onClick={handleEnableBiometric}
+                                    disabled={biometricLoading}
+                                >
+                                    {biometricLoading
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : <Fingerprint className="h-4 w-4" />
+                                    }
+                                    Enable Biometric Login
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Change password */}
             <Card>

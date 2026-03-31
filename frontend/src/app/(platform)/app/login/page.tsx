@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building2, Loader2, Lock, User } from "lucide-react";
+import { Building2, Fingerprint, Loader2, Lock, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { startAuthentication } from "@simplewebauthn/browser";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -66,6 +67,8 @@ function LoginContent() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [branding, setBranding] = useState<TenantBranding>(DEFAULT_BRANDING);
+    const [biometricUsername, setBiometricUsername] = useState<string | null>(null);
+    const [biometricLoading, setBiometricLoading] = useState(false);
     const { login, establishSession } = useAuth();
 
 
@@ -103,6 +106,71 @@ function LoginContent() {
 
         fetchBranding();
     }, []);
+
+    useEffect(() => {
+        const checkBiometric = async () => {
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!available) return;
+                const hostname = window.location.hostname;
+                const stored = localStorage.getItem(`pharmaflow_biometric_${hostname}`);
+                if (stored) setBiometricUsername(stored);
+            } catch {
+                // biometrics not supported
+            }
+        };
+        checkBiometric();
+    }, []);
+
+    const handleBiometricLogin = useCallback(async () => {
+        if (!biometricUsername) return;
+        setBiometricLoading(true);
+        setError(null);
+        try {
+            const controller = new AbortController();
+            const tid = window.setTimeout(() => controller.abort(), 10000);
+            const challengeRes = await fetch(`${API_BASE}/auth/webauthn/auth-challenge`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: biometricUsername }),
+                signal: controller.signal,
+            });
+            window.clearTimeout(tid);
+            if (!challengeRes.ok) {
+                const d = await challengeRes.json().catch(() => ({}));
+                throw new Error(d.message || "Biometric login unavailable");
+            }
+            const { options, userId } = await challengeRes.json();
+            const assertion = await startAuthentication(options);
+
+            const controller2 = new AbortController();
+            const tid2 = window.setTimeout(() => controller2.abort(), 10000);
+            const verifyRes = await fetch(`${API_BASE}/auth/webauthn/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, credential: assertion }),
+                signal: controller2.signal,
+            });
+            window.clearTimeout(tid2);
+            const data = await verifyRes.json().catch(() => ({}));
+            if (!verifyRes.ok) throw new Error(data.message || "Biometric authentication failed");
+            login(data.access_token, data.user);
+        } catch (err: any) {
+            if (err?.name === "NotAllowedError") {
+                setError("Biometric prompt was dismissed. Please try again or use your password.");
+            } else {
+                setError(err.message || "Biometric login failed");
+            }
+        } finally {
+            setBiometricLoading(false);
+        }
+    }, [biometricUsername, login]);
+
+    const clearBiometric = () => {
+        const hostname = window.location.hostname;
+        localStorage.removeItem(`pharmaflow_biometric_${hostname}`);
+        setBiometricUsername(null);
+    };
 
     useEffect(() => {
         const supportToken = searchParams.get("support_token");
@@ -401,6 +469,36 @@ function LoginContent() {
                                         )}
                                     </Button>
                                 </form>
+
+                                {biometricUsername && (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="relative flex items-center gap-2">
+                                            <div className="flex-1 border-t border-slate-200" />
+                                            <span className="text-xs text-slate-400 shrink-0">or</span>
+                                            <div className="flex-1 border-t border-slate-200" />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full h-11 gap-2"
+                                            onClick={handleBiometricLogin}
+                                            disabled={biometricLoading}
+                                        >
+                                            {biometricLoading
+                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                : <Fingerprint className="h-4 w-4 text-blue-600" />
+                                            }
+                                            Sign in as <span className="font-semibold">{biometricUsername}</span>
+                                        </Button>
+                                        <button
+                                            type="button"
+                                            onClick={clearBiometric}
+                                            className="w-full text-xs text-slate-400 hover:text-slate-600 py-1"
+                                        >
+                                            Not you? Remove biometric
+                                        </button>
+                                    </div>
+                                )}
 
                             </>
                         ) : (

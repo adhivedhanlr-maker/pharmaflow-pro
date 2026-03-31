@@ -50,8 +50,9 @@ model User {
   attendance       Attendance[]
   routes           Route[]
   locationLogs     LocationLog[]
-  businessProfile  BusinessProfile?
-  pushSubscriptions PushSubscription[]
+  businessProfile      BusinessProfile?
+  pushSubscriptions    PushSubscription[]
+  webAuthnCredentials  WebAuthnCredential[]
 
   @@unique([tenantId, username])
   @@index([tenantId])
@@ -601,6 +602,21 @@ model TenantBranding {
   @@index([slug])
   @@index([customDomain])
   @@index([isActive])
+}
+
+model WebAuthnCredential {
+  id           String   @id @default(cuid())
+  userId       String
+  tenantId     String?
+  credentialId String   @unique
+  publicKey    String
+  counter      BigInt   @default(0)
+  deviceName   String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tenantId])
 }
 
 model PushSubscription {
