@@ -170,140 +170,145 @@ export default function MyAccountPage() {
     const role = user?.role ?? "";
 
     return (
-        <div className="space-y-6 max-w-md">
+        <div className="max-w-3xl space-y-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
-                <p className="text-muted-foreground text-sm">Your profile and password settings.</p>
+                <p className="text-muted-foreground text-sm">Your profile and security settings.</p>
             </div>
 
-            {/* Profile info */}
-            <Card>
-                <CardContent className="p-5 flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
-                        <User className="h-7 w-7 text-white" />
-                    </div>
-                    <div className="space-y-1 min-w-0">
-                        <p className="font-semibold text-lg leading-tight truncate">{user?.name || "—"}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{user?.username || "—"}</p>
-                        <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[role] || "bg-slate-100 text-slate-600"}`}>
-                            {ROLE_LABELS[role] || role}
-                        </span>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Left column: profile + biometric */}
+                <div className="space-y-6">
+                    {/* Profile info */}
+                    <Card>
+                        <CardContent className="p-6 flex items-center gap-4">
+                            <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
+                                <User className="h-8 w-8 text-white" />
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                                <p className="font-semibold text-xl leading-tight truncate">{user?.name || "—"}</p>
+                                <p className="text-sm text-muted-foreground truncate">@{user?.username || "—"}</p>
+                                <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[role] || "bg-slate-100 text-slate-600"}`}>
+                                    {ROLE_LABELS[role] || role}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-            {/* Biometric login */}
-            {biometricAvailable && (
+                    {/* Biometric login */}
+                    {biometricAvailable && (
+                        <Card>
+                            <div className="py-3 px-5 border-b bg-slate-50/50">
+                                <div className="flex items-center gap-2">
+                                    <Fingerprint className="h-4 w-4 text-slate-500" />
+                                    <p className="text-sm font-semibold text-slate-700">Biometric Login</p>
+                                </div>
+                            </div>
+                            <CardContent className="p-5">
+                                {biometricEnabled ? (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+                                            <ShieldCheck className="h-4 w-4 shrink-0" />
+                                            <span>Biometric login is <strong>enabled</strong> on this device.</span>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                                            onClick={handleDisableBiometric}
+                                            disabled={biometricLoading}
+                                        >
+                                            {biometricLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            Disable Biometric Login
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-slate-600">
+                                            Use your fingerprint or phone PIN to sign in instantly — no password needed on this device.
+                                        </p>
+                                        <Button
+                                            className="w-full gap-2"
+                                            onClick={handleEnableBiometric}
+                                            disabled={biometricLoading}
+                                        >
+                                            {biometricLoading
+                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                : <Fingerprint className="h-4 w-4" />
+                                            }
+                                            Enable Biometric Login
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+
+                {/* Right column: change password */}
                 <Card>
                     <div className="py-3 px-5 border-b bg-slate-50/50">
                         <div className="flex items-center gap-2">
-                            <Fingerprint className="h-4 w-4 text-slate-500" />
-                            <p className="text-sm font-semibold text-slate-700">Biometric Login</p>
+                            <KeyRound className="h-4 w-4 text-slate-500" />
+                            <p className="text-sm font-semibold text-slate-700">Change Password</p>
                         </div>
                     </div>
                     <CardContent className="p-5">
-                        {biometricEnabled ? (
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
-                                    <ShieldCheck className="h-4 w-4 shrink-0" />
-                                    <span>Biometric login is <strong>enabled</strong> on this device. You can sign in using your fingerprint or phone PIN.</span>
+                        <form onSubmit={handleChangePassword} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Current Password</label>
+                                <div className="relative">
+                                    <Input
+                                        type={showCurrent ? "text" : "password"}
+                                        placeholder="Enter current password"
+                                        value={currentPassword}
+                                        onChange={e => setCurrentPassword(e.target.value)}
+                                        required
+                                        className="pr-10"
+                                    />
+                                    <button type="button" onClick={() => setShowCurrent(v => !v)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                        {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    className="w-full text-red-600 border-red-200 hover:bg-red-50"
-                                    onClick={handleDisableBiometric}
-                                    disabled={biometricLoading}
-                                >
-                                    {biometricLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Disable Biometric Login
-                                </Button>
                             </div>
-                        ) : (
-                            <div className="space-y-3">
-                                <p className="text-sm text-slate-600">
-                                    Use your fingerprint or phone PIN to sign in instantly — no password needed on this device.
-                                </p>
-                                <Button
-                                    className="w-full gap-2"
-                                    onClick={handleEnableBiometric}
-                                    disabled={biometricLoading}
-                                >
-                                    {biometricLoading
-                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : <Fingerprint className="h-4 w-4" />
-                                    }
-                                    Enable Biometric Login
-                                </Button>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-500 uppercase">New Password</label>
+                                <div className="relative">
+                                    <Input
+                                        type={showNew ? "text" : "password"}
+                                        placeholder="At least 6 characters"
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                        required
+                                        className="pr-10"
+                                    />
+                                    <button type="button" onClick={() => setShowNew(v => !v)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                        {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
-                        )}
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Confirm New Password</label>
+                                <Input
+                                    type="password"
+                                    placeholder="Re-enter new password"
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <Button type="submit" className="w-full" disabled={saving}>
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Update Password
+                            </Button>
+                        </form>
                     </CardContent>
                 </Card>
-            )}
-
-            {/* Change password */}
-            <Card>
-                <div className="py-3 px-5 border-b bg-slate-50/50">
-                    <div className="flex items-center gap-2">
-                        <KeyRound className="h-4 w-4 text-slate-500" />
-                        <p className="text-sm font-semibold text-slate-700">Change Password</p>
-                    </div>
-                </div>
-                <CardContent className="p-5">
-                    <form onSubmit={handleChangePassword} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase">Current Password</label>
-                            <div className="relative">
-                                <Input
-                                    type={showCurrent ? "text" : "password"}
-                                    placeholder="Enter current password"
-                                    value={currentPassword}
-                                    onChange={e => setCurrentPassword(e.target.value)}
-                                    required
-                                    className="pr-10"
-                                />
-                                <button type="button" onClick={() => setShowCurrent(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase">New Password</label>
-                            <div className="relative">
-                                <Input
-                                    type={showNew ? "text" : "password"}
-                                    placeholder="At least 6 characters"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                    required
-                                    className="pr-10"
-                                />
-                                <button type="button" onClick={() => setShowNew(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase">Confirm New Password</label>
-                            <Input
-                                type="password"
-                                placeholder="Re-enter new password"
-                                value={confirmPassword}
-                                onChange={e => setConfirmPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <Button type="submit" className="w-full" disabled={saving}>
-                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Update Password
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+            </div>
         </div>
     );
 }

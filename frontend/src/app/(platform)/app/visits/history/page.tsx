@@ -253,8 +253,8 @@ export default function RouteHistoryPage() {
                 </Card>
             </div>
 
-            <Card className="h-[500px] flex flex-col overflow-hidden border-slate-200 shadow-sm">
-                <CardContent className="p-0 flex-1 relative">
+            <Card className="h-[500px] flex flex-col overflow-hidden border-slate-200 shadow-sm isolate">
+                <CardContent className="p-0 flex-1 relative isolate">
                     {leafletReady && typeof window !== 'undefined' ? (
                         <MapContainer
                             center={center}

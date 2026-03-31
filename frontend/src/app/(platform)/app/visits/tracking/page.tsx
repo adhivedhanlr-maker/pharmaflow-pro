@@ -133,8 +133,8 @@ export default function TrackingPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-3 border-slate-200 shadow-sm overflow-hidden h-[600px]">
-                    <CardContent className="p-0 relative h-full">
+                <Card className="lg:col-span-3 border-slate-200 shadow-sm overflow-hidden h-[600px] isolate">
+                    <CardContent className="p-0 relative h-full isolate">
                         {leafletReady && typeof window !== "undefined" ? (
                             <MapContainer
                                 center={selectedRep ? [selectedRep.lastLat, selectedRep.lastLng] : nileshwarCenter}
