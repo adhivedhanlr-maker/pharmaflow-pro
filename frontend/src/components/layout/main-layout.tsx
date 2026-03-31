@@ -5,18 +5,13 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useAuth } from "@/context/auth-context";
-import { Menu, LogOut, User, ShieldAlert } from "lucide-react";
+import { Menu, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
     SheetContent,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import { useEffect, useState } from "react";
 import { SessionTimeoutModal } from "@/components/session-timeout-modal";
 
@@ -149,7 +144,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40 no-print">
                     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="mr-2">
+                            <Button variant="ghost" size="icon" className="mr-2 shrink-0">
                                 <Menu className="h-6 w-6 text-slate-600" />
                             </Button>
                         </SheetTrigger>
@@ -157,36 +152,29 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <Sidebar className="w-full h-full border-none" onNavigate={() => setIsMobileMenuOpen(false)} branding={branding} />
                         </SheetContent>
                     </Sheet>
-                    <span className="font-bold text-lg text-slate-900 flex-1">
-                        {branding?.companyName || "PharmaFlow"}
-                    </span>
-                    <div className="flex items-center gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center cursor-pointer shadow-sm hover:opacity-90">
-                                    <User className="h-5 w-5 text-white" />
-                                </div>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-48 p-2 shadow-xl border-slate-200" align="end">
-                                {user?.supportAccess?.active && (
-                                    <button
-                                        onClick={() => void exitSupportAccess()}
-                                        className="w-full flex items-center gap-2 p-2 text-sm text-amber-700 hover:bg-amber-50 rounded-md transition-colors font-medium"
-                                    >
-                                        <ShieldAlert className="h-4 w-4" />
-                                        Exit Support Access
-                                    </button>
-                                )}
-                                <button
-                                    onClick={logout}
-                                    className="w-full flex items-center gap-2 p-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"
-                                >
-                                    <LogOut className="h-4 w-4" />
-                                    Sign Out
-                                </button>
-                            </PopoverContent>
-                        </Popover>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {branding?.logoUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={branding.logoUrl}
+                                alt=""
+                                className="h-8 w-8 rounded-lg object-contain shrink-0"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                        )}
+                        <span className="font-bold text-base text-slate-900 truncate">
+                            {branding?.companyName || "PharmaFlow"}
+                        </span>
                     </div>
+                    {user?.supportAccess?.active && (
+                        <button
+                            onClick={() => void exitSupportAccess()}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-amber-700 bg-amber-50 rounded-md font-medium shrink-0"
+                        >
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                            Exit
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible print:h-auto">

@@ -5,8 +5,7 @@ import { useAuth } from "@/context/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { User, KeyRound, Eye, EyeOff, Loader2, Fingerprint, ShieldCheck, Building2, Users, ShieldAlert, Database, ChevronRight, Settings } from "lucide-react";
+import { User, KeyRound, Eye, EyeOff, Loader2, Fingerprint, ShieldCheck, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { startRegistration } from "@simplewebauthn/browser";
 
@@ -29,7 +28,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function MyAccountPage() {
-    const { user, token } = useAuth();
+    const { user, token, logout } = useAuth();
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -196,9 +195,9 @@ export default function MyAccountPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Biometric login */}
+                    {/* Biometric login — mobile only */}
                     {biometricAvailable && (
-                        <Card>
+                        <Card className="md:hidden">
                             <div className="py-3 px-5 border-b bg-slate-50/50">
                                 <div className="flex items-center gap-2">
                                     <Fingerprint className="h-4 w-4 text-slate-500" />
@@ -311,38 +310,16 @@ export default function MyAccountPage() {
                 </Card>
             </div>
 
-            {/* System Settings — ADMIN only */}
-            {role === "ADMIN" && (
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2 pt-2">
-                        <Settings className="h-4 w-4 text-slate-500" />
-                        <p className="text-sm font-semibold text-slate-700">System Settings</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {[
-                            { href: "/app/settings", icon: <Building2 className="h-5 w-5 text-blue-600" />, bg: "bg-blue-50", title: "Business Profile", desc: "Company info, GST, bank details, billing preferences" },
-                            { href: "/app/users", icon: <Users className="h-5 w-5 text-indigo-600" />, bg: "bg-indigo-50", title: "User Management", desc: "Add, edit and manage staff accounts" },
-                            { href: "/app/settings/roles", icon: <ShieldAlert className="h-5 w-5 text-violet-600" />, bg: "bg-violet-50", title: "Role Permissions", desc: "Configure what each role can access" },
-                            { href: "/app/settings/data", icon: <Database className="h-5 w-5 text-amber-600" />, bg: "bg-amber-50", title: "Data Management", desc: "Export data, import customers, suppliers and products" },
-                        ].map(item => (
-                            <Link key={item.href} href={item.href}>
-                                <Card className="hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer">
-                                    <CardContent className="flex items-center justify-between p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`${item.bg} p-2 rounded-lg shrink-0`}>{item.icon}</div>
-                                            <div className="min-w-0">
-                                                <p className="font-medium text-sm">{item.title}</p>
-                                                <p className="text-xs text-slate-500 leading-snug">{item.desc}</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="h-4 w-4 text-slate-400 shrink-0 ml-2" />
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <div className="pt-2">
+                <Button
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
+                    onClick={logout}
+                >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                </Button>
+            </div>
         </div>
     );
 }
