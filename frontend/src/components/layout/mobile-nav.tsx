@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import {
-    LayoutDashboard, Receipt, Package, Settings,
+    LayoutDashboard, Receipt, Package,
     ClipboardList, LogIn, MapPin, PackagePlus,
-    BarChart3, Users, FileText, RotateCcw, UserCircle
+    BarChart3, Users, FileText, RotateCcw, UserCircle, CalendarCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -49,9 +49,9 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
 
 const DEFAULT_NAV: NavItem[] = [
     HOME,
-    { title: "Billing", href: "/app/billing", icon: Receipt },
+    { title: "Parties", href: "/app/parties", icon: Users },
     { title: "Stock", href: "/app/stock", icon: Package },
-    { title: "Settings", href: "/app/settings", icon: Settings },
+    { title: "Attendance", href: "/app/attendance", icon: CalendarCheck },
     ACCOUNT,
 ];
 
