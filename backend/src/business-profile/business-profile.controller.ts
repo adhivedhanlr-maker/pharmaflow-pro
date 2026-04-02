@@ -48,4 +48,24 @@ export class BusinessProfileController {
         const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
         return this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
     }
+
+    @Post('upload-qr')
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: memoryStorage(),
+            limits: { fileSize: 1024 * 1024 }, // 1 MB max — QR images can be larger
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.startsWith('image/')) {
+                    return cb(new Error('Only image files are allowed'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async uploadPaymentQr(@Request() req: any, @UploadedFile() file: any) {
+        if (!file) throw new Error('No file uploaded');
+        const base64Image = file.buffer.toString('base64');
+        const paymentQrUrl = `data:${file.mimetype};base64,${base64Image}`;
+        return this.businessProfileService.updatePaymentQr(req.user.userId, req.user.tenantId, paymentQrUrl);
+    }
 }

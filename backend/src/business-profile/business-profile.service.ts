@@ -25,6 +25,14 @@ export class BusinessProfileService {
         });
     }
 
+    async updatePaymentQr(userId: string, tenantId: string | undefined, paymentQrUrl: string) {
+        return this.prisma.businessProfile.upsert({
+            where: { userId },
+            update: { paymentQrUrl, tenantId },
+            create: { userId, tenantId, paymentQrUrl, companyName: 'My Company' },
+        });
+    }
+
     async updateLogo(userId: string, tenantId: string | undefined, logoUrl: string) {
         // Save to BusinessProfile (used on invoices/settings preview)
         const result = await this.prisma.businessProfile.upsert({

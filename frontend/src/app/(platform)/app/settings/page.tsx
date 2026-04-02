@@ -39,6 +39,9 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [qrFile, setQrFile] = useState<File | null>(null);
+    const [qrPreview, setQrPreview] = useState<string | null>(null);
+    const [qrSaving, setQrSaving] = useState(false);
     const [defaultGstRate, setDefaultGstRate] = useState<number>(5);
     const [gstSaved, setGstSaved] = useState(false);
 
@@ -91,6 +94,12 @@ export default function SettingsPage() {
 
             setBrandingName(brandingData?.companyName || "");
             setBrandingLogoUrl(brandingData?.logoUrl || "");
+
+            if (profileData?.paymentQrUrl) {
+                setQrPreview(profileData.paymentQrUrl);
+            } else {
+                setQrPreview(null);
+            }
             setFormData({
                 companyName,
                 gstin: profileData?.gstin || "",
@@ -144,6 +153,65 @@ export default function SettingsPage() {
             const file = e.target.files[0];
             setLogoFile(file);
             setLogoPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setQrFile(file);
+            setQrPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleQrUpload = async () => {
+        if (!qrFile) return;
+        setQrSaving(true);
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const uploadData = new FormData();
+            uploadData.append("file", qrFile);
+            const res = await fetch(`${API_BASE}/business-profile/upload-qr`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: uploadData,
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!res.ok) throw new Error("Upload failed");
+            const data = await res.json();
+            setQrPreview(data?.paymentQrUrl || qrPreview);
+            setQrFile(null);
+            alert("Payment QR code uploaded successfully!");
+        } catch {
+            alert("Failed to upload QR code. Please try again.");
+        } finally {
+            setQrSaving(false);
+        }
+    };
+
+    const handleQrRemove = async () => {
+        if (!confirm("Remove the payment QR code from invoices?")) return;
+        setQrSaving(true);
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(`${API_BASE}/business-profile`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ paymentQrUrl: null }),
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!res.ok) throw new Error("Failed to remove QR");
+            setQrPreview(null);
+            setQrFile(null);
+            alert("Payment QR code removed.");
+        } catch {
+            alert("Failed to remove QR code.");
+        } finally {
+            setQrSaving(false);
         }
     };
 
@@ -407,6 +475,74 @@ export default function SettingsPage() {
                                             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                             Save Configuration
                                         </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Payment QR Code */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Payment QR Code</CardTitle>
+                            <CardDescription>
+                                Upload your UPI payment QR code. It will appear on printed invoices so customers can scan and pay directly.
+                                Your bank or UPI app (PhonePe, GPay, PayTM) provides a downloadable QR image.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row items-start gap-6">
+                                <div>
+                                    <div
+                                        className="border-2 border-dashed border-slate-200 rounded-lg p-4 w-40 h-40 flex flex-col items-center justify-center relative bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                                        onClick={() => document.getElementById('qr-upload')?.click()}
+                                    >
+                                        {qrPreview ? (
+                                            <img
+                                                src={qrPreview}
+                                                alt="QR Preview"
+                                                className="h-full w-full object-contain"
+                                                onError={() => setQrPreview(null)}
+                                            />
+                                        ) : (
+                                            <div className="text-center text-slate-400">
+                                                <Upload className="h-8 w-8 mx-auto mb-2" />
+                                                <span className="text-xs">Upload QR</span>
+                                            </div>
+                                        )}
+                                        <input
+                                            id="qr-upload"
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleQrFileChange}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2 text-center w-40">Max 1 MB · PNG or JPG</p>
+                                </div>
+                                <div className="space-y-3 flex-1">
+                                    <p className="text-sm text-slate-600">
+                                        The QR will be shown at the bottom of invoices with a <strong>"Scan to Pay"</strong> label.
+                                        Your company logo will appear in the center of the QR automatically.
+                                    </p>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {qrFile && (
+                                            <Button size="sm" onClick={handleQrUpload} disabled={qrSaving}>
+                                                {qrSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                Upload QR Code
+                                            </Button>
+                                        )}
+                                        {qrPreview && !qrFile && (
+                                            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleQrRemove} disabled={qrSaving}>
+                                                {qrSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                Remove QR
+                                            </Button>
+                                        )}
+                                        {qrFile && (
+                                            <Button size="sm" variant="ghost" onClick={() => { setQrFile(null); setQrPreview(null); fetchProfile(); }}>
+                                                Cancel
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

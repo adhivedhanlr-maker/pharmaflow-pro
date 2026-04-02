@@ -48,6 +48,7 @@ interface InvoicePrintProps {
         bankBranch?: string;
         bankAccountNo?: string;
         bankIfsc?: string;
+        paymentQrUrl?: string;
     };
     customer: {
         name: string;
@@ -354,13 +355,44 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             {businessProfile?.bankIfsc && <div><b>IFSC:</b> {businessProfile.bankIfsc}</div>}
                         </div>
 
-                        <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", position: "relative" }}>
-                            <div style={{ textAlign: "right" }}>For</div>
-                            <div style={{ textAlign: "right", fontWeight: 700, marginTop: "24px" }}>{companyName}</div>
-                            <div style={{ position: "absolute", right: "8px", bottom: "16px", left: "34%", borderTop: "1px solid #444", textAlign: "right", paddingTop: "3px" }}>
-                                Authorised Signatory
+                        <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                            {businessProfile?.paymentQrUrl && (
+                                <div style={{ textAlign: "center", flexShrink: 0 }}>
+                                    <div style={{ fontSize: 9, marginBottom: 4, color: "#555" }}>Scan to Pay</div>
+                                    <div style={{ position: "relative", width: 90, height: 90 }}>
+                                        <img
+                                            src={businessProfile.paymentQrUrl}
+                                            alt="Payment QR"
+                                            style={{ width: 90, height: 90, display: "block" }}
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                        />
+                                        {logoUrl && businessProfile?.showLogo !== false && (
+                                            <div style={{
+                                                position: "absolute", top: "50%", left: "50%",
+                                                transform: "translate(-50%, -50%)",
+                                                width: 18, height: 18,
+                                                background: "white", padding: 2, borderRadius: 3,
+                                            }}>
+                                                <img
+                                                    src={logoUrl}
+                                                    alt=""
+                                                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", minHeight: "100px", justifyContent: "space-between" }}>
+                                <div style={{ textAlign: "right" }}>
+                                    <div>For</div>
+                                    <div style={{ fontWeight: 700 }}>{companyName}</div>
+                                </div>
+                                <div style={{ textAlign: "right" }}>
+                                    <div style={{ borderTop: "1px solid #444", paddingTop: "3px" }}>Authorised Signatory</div>
+                                    <div style={{ fontSize: "9px", color: "#666" }}>E.&amp;O.E.</div>
+                                </div>
                             </div>
-                            <div style={{ position: "absolute", right: "8px", bottom: "3px", fontSize: "9px", color: "#666" }}>E.&amp;O.E.</div>
                         </div>
                     </div>
                 </div>
