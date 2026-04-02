@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/auth-context";
+import jsQR from "jsqr";
+import { QRCodeSVG } from "qrcode.react";
 import {
     Card,
     CardContent,
@@ -39,9 +41,10 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
-    const [qrFile, setQrFile] = useState<File | null>(null);
-    const [qrPreview, setQrPreview] = useState<string | null>(null);
+    const [qrUpiString, setQrUpiString] = useState<string | null>(null);
+    const [qrDecodeError, setQrDecodeError] = useState<string | null>(null);
     const [qrSaving, setQrSaving] = useState(false);
+    const qrCanvasRef = useRef<HTMLCanvasElement>(null);
     const [defaultGstRate, setDefaultGstRate] = useState<number>(5);
     const [gstSaved, setGstSaved] = useState(false);
 
@@ -95,11 +98,7 @@ export default function SettingsPage() {
             setBrandingName(brandingData?.companyName || "");
             setBrandingLogoUrl(brandingData?.logoUrl || "");
 
-            if (profileData?.paymentQrUrl) {
-                setQrPreview(profileData.paymentQrUrl);
-            } else {
-                setQrPreview(null);
-            }
+            setQrUpiString(profileData?.paymentUpiString || null);
             setFormData({
                 companyName,
                 gstin: profileData?.gstin || "",
@@ -157,35 +156,54 @@ export default function SettingsPage() {
     };
 
     const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setQrFile(file);
-            setQrPreview(URL.createObjectURL(file));
-        }
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setQrDecodeError(null);
+
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            URL.revokeObjectURL(url);
+            if (code?.data) {
+                setQrUpiString(code.data);
+            } else {
+                setQrDecodeError("Could not read QR code from this image. Make sure the image is clear and try again.");
+            }
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            setQrDecodeError("Failed to load the image. Please try a different file.");
+        };
+        img.src = url;
+        // Reset file input so same file can be re-selected
+        e.target.value = "";
     };
 
-    const handleQrUpload = async () => {
-        if (!qrFile) return;
+    const handleQrSave = async () => {
+        if (!qrUpiString) return;
         setQrSaving(true);
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
-            const uploadData = new FormData();
-            uploadData.append("file", qrFile);
-            const res = await fetch(`${API_BASE}/business-profile/upload-qr`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-                body: uploadData,
+            const res = await fetch(`${API_BASE}/business-profile`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ paymentUpiString: qrUpiString }),
                 signal: controller.signal,
             });
             clearTimeout(timeout);
-            if (!res.ok) throw new Error("Upload failed");
-            const data = await res.json();
-            setQrPreview(data?.paymentQrUrl || qrPreview);
-            setQrFile(null);
-            alert("Payment QR code uploaded successfully!");
+            if (!res.ok) throw new Error("Save failed");
+            alert("Payment QR code saved successfully!");
         } catch {
-            alert("Failed to upload QR code. Please try again.");
+            alert("Failed to save QR code. Please try again.");
         } finally {
             setQrSaving(false);
         }
@@ -200,13 +218,12 @@ export default function SettingsPage() {
             const res = await fetch(`${API_BASE}/business-profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ paymentQrUrl: null }),
+                body: JSON.stringify({ paymentUpiString: null }),
                 signal: controller.signal,
             });
             clearTimeout(timeout);
             if (!res.ok) throw new Error("Failed to remove QR");
-            setQrPreview(null);
-            setQrFile(null);
+            setQrUpiString(null);
             alert("Payment QR code removed.");
         } catch {
             alert("Failed to remove QR code.");
@@ -486,64 +503,85 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="text-base">Payment QR Code</CardTitle>
                             <CardDescription>
-                                Upload your UPI payment QR code. It will appear on printed invoices so customers can scan and pay directly.
-                                Your bank or UPI app (PhonePe, GPay, PayTM) provides a downloadable QR image.
+                                Upload your UPI QR image from PhonePe, GPay, PayTM, or your bank app. The app reads the payment data and generates a clean vector QR — your company logo will appear in the center automatically.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row items-start gap-6">
-                                <div>
-                                    <div
-                                        className="border-2 border-dashed border-slate-200 rounded-lg p-4 w-40 h-40 flex flex-col items-center justify-center relative bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                                        onClick={() => document.getElementById('qr-upload')?.click()}
-                                    >
-                                        {qrPreview ? (
-                                            <img
-                                                src={qrPreview}
-                                                alt="QR Preview"
-                                                className="h-full w-full object-contain"
-                                                onError={() => setQrPreview(null)}
+                                {/* Preview */}
+                                <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                                    {qrUpiString ? (
+                                        <div className="border border-slate-200 rounded-lg p-3 bg-white">
+                                            <QRCodeSVG
+                                                value={qrUpiString}
+                                                size={140}
+                                                level="H"
+                                                imageSettings={
+                                                    (logoPreview || formData.logoUrl)
+                                                        ? {
+                                                            src: logoPreview || formData.logoUrl,
+                                                            width: 28,
+                                                            height: 28,
+                                                            excavate: true,
+                                                        }
+                                                        : undefined
+                                                }
                                             />
-                                        ) : (
-                                            <div className="text-center text-slate-400">
-                                                <Upload className="h-8 w-8 mx-auto mb-2" />
-                                                <span className="text-xs">Upload QR</span>
-                                            </div>
-                                        )}
-                                        <input
-                                            id="qr-upload"
-                                            type="file"
-                                            className="hidden"
-                                            accept="image/*"
-                                            onChange={handleQrFileChange}
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 mt-2 text-center w-40">Max 1 MB · PNG or JPG</p>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="border-2 border-dashed border-slate-200 rounded-lg w-40 h-40 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                                            onClick={() => document.getElementById('qr-upload')?.click()}
+                                        >
+                                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                                            <span className="text-xs text-slate-400">Upload QR Image</span>
+                                        </div>
+                                    )}
+                                    <p className="text-[10px] text-slate-400 text-center w-40">Upload a QR image to decode it</p>
                                 </div>
+
+                                {/* Controls */}
                                 <div className="space-y-3 flex-1">
-                                    <p className="text-sm text-slate-600">
-                                        The QR will be shown at the bottom of invoices with a <strong>"Scan to Pay"</strong> label.
-                                        Your company logo will appear in the center of the QR automatically.
-                                    </p>
+                                    {qrUpiString ? (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-slate-600">Decoded UPI Payment String</label>
+                                            <div className="bg-slate-50 border rounded px-3 py-2 text-xs font-mono text-slate-700 break-all">{qrUpiString}</div>
+                                            <p className="text-xs text-slate-500">This is the payment data inside your QR code. Verify it looks correct before saving.</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-600">
+                                            Upload the QR image your bank or UPI app provides. The app will read the payment data and regenerate it as a crisp vector QR on every invoice — no photo quality issues.
+                                        </p>
+                                    )}
+
+                                    {qrDecodeError && (
+                                        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{qrDecodeError}</p>
+                                    )}
+
                                     <div className="flex gap-2 flex-wrap">
-                                        {qrFile && (
-                                            <Button size="sm" onClick={handleQrUpload} disabled={qrSaving}>
-                                                {qrSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                                Upload QR Code
+                                        <Button size="sm" variant="outline" onClick={() => document.getElementById('qr-upload')?.click()}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            {qrUpiString ? "Replace QR Image" : "Upload QR Image"}
+                                        </Button>
+                                        {qrUpiString && (
+                                            <Button size="sm" onClick={handleQrSave} disabled={qrSaving}>
+                                                {qrSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                                Save QR Code
                                             </Button>
                                         )}
-                                        {qrPreview && !qrFile && (
-                                            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleQrRemove} disabled={qrSaving}>
-                                                {qrSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                                Remove QR
-                                            </Button>
-                                        )}
-                                        {qrFile && (
-                                            <Button size="sm" variant="ghost" onClick={() => { setQrFile(null); setQrPreview(null); fetchProfile(); }}>
-                                                Cancel
+                                        {qrUpiString && (
+                                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={handleQrRemove} disabled={qrSaving}>
+                                                Remove
                                             </Button>
                                         )}
                                     </div>
+                                    <input
+                                        id="qr-upload"
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleQrFileChange}
+                                    />
                                 </div>
                             </div>
                         </CardContent>

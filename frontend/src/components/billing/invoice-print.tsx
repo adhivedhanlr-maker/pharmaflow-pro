@@ -1,5 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
+import { QRCodeSVG } from "qrcode.react";
 
 function numberToWords(n: number): string {
     const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -49,6 +50,7 @@ interface InvoicePrintProps {
         bankAccountNo?: string;
         bankIfsc?: string;
         paymentQrUrl?: string;
+        paymentUpiString?: string;
     };
     customer: {
         name: string;
@@ -356,31 +358,19 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
 
                         <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                            {businessProfile?.paymentQrUrl && (
+                            {businessProfile?.paymentUpiString && (
                                 <div style={{ textAlign: "center", flexShrink: 0 }}>
                                     <div style={{ fontSize: 9, marginBottom: 4, color: "#555" }}>Scan to Pay</div>
-                                    <div style={{ position: "relative", width: 90, height: 90 }}>
-                                        <img
-                                            src={businessProfile.paymentQrUrl}
-                                            alt="Payment QR"
-                                            style={{ width: 90, height: 90, display: "block" }}
-                                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                        />
-                                        {logoUrl && businessProfile?.showLogo !== false && (
-                                            <div style={{
-                                                position: "absolute", top: "50%", left: "50%",
-                                                transform: "translate(-50%, -50%)",
-                                                width: 18, height: 18,
-                                                background: "white", padding: 2, borderRadius: 3,
-                                            }}>
-                                                <img
-                                                    src={logoUrl}
-                                                    alt=""
-                                                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <QRCodeSVG
+                                        value={businessProfile.paymentUpiString}
+                                        size={90}
+                                        level="H"
+                                        imageSettings={
+                                            logoUrl && businessProfile?.showLogo !== false
+                                                ? { src: logoUrl, width: 18, height: 18, excavate: true }
+                                                : undefined
+                                        }
+                                    />
                                 </div>
                             )}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", minHeight: "100px", justifyContent: "space-between" }}>
