@@ -195,8 +195,8 @@ export default function SettingsPage() {
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
-            const res = await fetch(`${API_BASE}/business-profile`, {
-                method: "PUT",
+            const res = await fetch(`${API_BASE}/business-profile/save-upi`, {
+                method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ paymentUpiString: qrUpiString }),
                 signal: controller.signal,
@@ -220,8 +220,8 @@ export default function SettingsPage() {
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
-            const res = await fetch(`${API_BASE}/business-profile`, {
-                method: "PUT",
+            const res = await fetch(`${API_BASE}/business-profile/save-upi`, {
+                method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ paymentUpiString: null }),
                 signal: controller.signal,

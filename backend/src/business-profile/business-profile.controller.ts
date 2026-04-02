@@ -8,6 +8,7 @@ import {
     Request,
     UseInterceptors,
     UploadedFile,
+    BadRequestException,
 } from '@nestjs/common';
 import { BusinessProfileService } from './business-profile.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -47,6 +48,18 @@ export class BusinessProfileController {
         const base64Image = file.buffer.toString('base64');
         const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
         return this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
+    }
+
+    @Post('save-upi')
+    async saveUpiString(@Request() req: any, @Body('paymentUpiString') paymentUpiString: string | null) {
+        if (paymentUpiString !== null && typeof paymentUpiString !== 'string') {
+            throw new BadRequestException('Invalid paymentUpiString');
+        }
+        return this.businessProfileService.updatePaymentUpiString(
+            req.user.userId,
+            req.user.tenantId,
+            paymentUpiString ?? null,
+        );
     }
 
     @Post('upload-qr')

@@ -33,6 +33,14 @@ export class BusinessProfileService {
         });
     }
 
+    async updatePaymentUpiString(userId: string, tenantId: string | undefined, paymentUpiString: string | null) {
+        return this.prisma.businessProfile.upsert({
+            where: { userId },
+            update: { paymentUpiString, tenantId },
+            create: { userId, tenantId, paymentUpiString, companyName: 'My Company' },
+        });
+    }
+
     async updateLogo(userId: string, tenantId: string | undefined, logoUrl: string) {
         // Save to BusinessProfile (used on invoices/settings preview)
         const result = await this.prisma.businessProfile.upsert({
