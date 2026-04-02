@@ -6,6 +6,31 @@ import { NotificationsService } from '../notifications/notifications.service';
 type AnalyticsRange = 'day' | 'week' | 'month' | 'year' | 'custom';
 type AnalyticsBucket = 'hour' | 'day' | 'month';
 
+function getFYForDate(date: Date): string {
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const startYear = month >= 4 ? year : year - 1;
+    return `${String(startYear).slice(-2)}${String(startYear + 1).slice(-2)}`;
+}
+
+function getCurrentFinancialYear(): string {
+    const now = new Date();
+    const month = now.getMonth() + 1; // 1–12
+    const year = now.getFullYear();
+    const startYear = month >= 4 ? year : year - 1;
+    return `${String(startYear).slice(-2)}${String(startYear + 1).slice(-2)}`;
+}
+
+async function generateInvoiceNumber(tx: any, tenantId: string): Promise<string> {
+    const fy = getCurrentFinancialYear();
+    const seq = await tx.invoiceSequence.upsert({
+        where: { tenantId_financialYear: { tenantId, financialYear: fy } },
+        update: { lastNumber: { increment: 1 } },
+        create: { tenantId, financialYear: fy, lastNumber: 1 },
+    });
+    return `INV/${fy}/${String(seq.lastNumber).padStart(5, '0')}`;
+}
+
 @Injectable()
 export class SalesService {
     constructor(
@@ -106,7 +131,7 @@ export class SalesService {
             }
 
             // 6. Create Invoice
-            const invoiceNumber = `INV-${Date.now()}`; // Simple generator for now
+            const invoiceNumber = await generateInvoiceNumber(tx, tenantId);
 
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -482,4 +507,5 @@ export class SalesService {
             return tx.sale.delete({ where: { id: sale.id } });
         });
     }
+
 }

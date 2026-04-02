@@ -619,6 +619,17 @@ model WebAuthnCredential {
   @@index([tenantId])
 }
 
+model InvoiceSequence {
+  id            String   @id @default(cuid())
+  tenantId      String
+  financialYear String
+  lastNumber    Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, financialYear])
+  @@index([tenantId])
+}
+
 model PushSubscription {
   id        String          @id @default(cuid())
   endpoint  String          @unique
