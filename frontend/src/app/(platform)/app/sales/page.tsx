@@ -151,6 +151,7 @@ export default function SalesHistoryPage() {
                     bankAccountNo: profile?.bankAccountNo || "",
                     bankIfsc: profile?.bankIfsc || "",
                     showLogo: profile?.showLogo ?? true,
+                    paymentQrUrl: profile?.paymentQrUrl || null,
                 });
             }
         } catch (error) {

@@ -181,6 +181,7 @@ function BillingContent() {
                 bankAccountNo: profile?.bankAccountNo || "",
                 bankIfsc: profile?.bankIfsc || "",
                 showLogo: profile?.showLogo ?? true,
+                paymentQrUrl: profile?.paymentQrUrl || null,
             });
         } catch (error) {
             console.error("Failed to fetch business profile:", error);
