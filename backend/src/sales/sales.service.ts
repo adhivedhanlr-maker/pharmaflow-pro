@@ -44,7 +44,9 @@ export class SalesService {
         const finalPaymentMethod = data.paymentMethod || (data.isCash === false ? 'CREDIT' : 'CASH');
         const isCash = finalPaymentMethod !== 'CREDIT';
 
-        const finalUserId = userId || (await this.prisma.user.findFirst({ where: tenantId ? { tenantId } : undefined }))?.id;
+        if (!tenantId) throw new BadRequestException('Tenant context required to create an invoice');
+
+        const finalUserId = userId || (await this.prisma.user.findFirst({ where: { tenantId } }))?.id;
         if (!finalUserId) throw new BadRequestException('No default user found for invoice creation');
 
         const user = await this.prisma.user.findFirst({ where: { id: finalUserId, ...(tenantId ? { tenantId } : {}) } });
