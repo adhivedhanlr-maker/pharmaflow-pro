@@ -202,10 +202,13 @@ export default function SettingsPage() {
                 signal: controller.signal,
             });
             clearTimeout(timeout);
-            if (!res.ok) throw new Error("Save failed");
+            if (!res.ok) {
+                const body = await res.text().catch(() => "");
+                throw new Error(`${res.status}: ${body || "Save failed"}`);
+            }
             alert("Payment QR code saved successfully!");
-        } catch {
-            alert("Failed to save QR code. Please try again.");
+        } catch (err: any) {
+            alert(`Failed to save QR code: ${err?.message || "Please try again."}`);
         } finally {
             setQrSaving(false);
         }
