@@ -60,7 +60,7 @@ export class WebAuthnService {
                 userVerification: 'required',
                 residentKey: 'preferred',
             },
-            excludeCredentials: existingCreds.map(c => ({
+            excludeCredentials: existingCreds.map((c: { credentialId: string }) => ({
                 id: Buffer.from(c.credentialId, 'base64url'),
                 type: 'public-key' as const,
             })),
