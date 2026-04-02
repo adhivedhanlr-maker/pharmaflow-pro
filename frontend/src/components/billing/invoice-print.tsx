@@ -51,6 +51,7 @@ interface InvoicePrintProps {
         bankIfsc?: string;
         paymentQrUrl?: string;
         paymentUpiString?: string;
+        showPaymentQr?: boolean;
     };
     customer: {
         name: string;
@@ -358,7 +359,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
 
                         <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                            {businessProfile?.paymentUpiString && (
+                            {businessProfile?.paymentUpiString && businessProfile?.showPaymentQr !== false && (
                                 <div style={{ textAlign: "center", flexShrink: 0 }}>
                                     <div style={{ fontSize: 9, marginBottom: 4, color: "#555" }}>Scan to Pay</div>
                                     <QRCodeSVG

@@ -183,6 +183,7 @@ function BillingContent() {
                 showLogo: profile?.showLogo ?? true,
                 paymentQrUrl: profile?.paymentQrUrl || null,
                 paymentUpiString: profile?.paymentUpiString || null,
+                showPaymentQr: profile?.showPaymentQr ?? true,
             });
         } catch (error) {
             console.error("Failed to fetch business profile:", error);

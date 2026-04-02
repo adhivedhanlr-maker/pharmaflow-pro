@@ -153,6 +153,7 @@ export default function SalesHistoryPage() {
                     showLogo: profile?.showLogo ?? true,
                     paymentQrUrl: profile?.paymentQrUrl || null,
                     paymentUpiString: profile?.paymentUpiString || null,
+                    showPaymentQr: profile?.showPaymentQr ?? true,
                 });
             }
         } catch (error) {

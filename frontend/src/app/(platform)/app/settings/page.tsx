@@ -63,6 +63,7 @@ export default function SettingsPage() {
         bankAccountNo: "",
         bankIfsc: "",
         showLogo: true,
+        showPaymentQr: true,
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
@@ -114,6 +115,7 @@ export default function SettingsPage() {
                 bankAccountNo: profileData?.bankAccountNo || "",
                 bankIfsc: profileData?.bankIfsc || "",
                 showLogo: profileData?.showLogo ?? true,
+                showPaymentQr: profileData?.showPaymentQr ?? true,
             });
 
             if (logoUrl) {
@@ -256,6 +258,7 @@ export default function SettingsPage() {
                     bankAccountNo: formData.bankAccountNo,
                     bankIfsc: formData.bankIfsc,
                     showLogo: formData.showLogo,
+                    showPaymentQr: formData.showPaymentQr,
                 })
             });
 
@@ -558,6 +561,15 @@ export default function SettingsPage() {
                                         <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{qrDecodeError}</p>
                                     )}
 
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.showPaymentQr}
+                                            onChange={(e) => setFormData({ ...formData, showPaymentQr: e.target.checked })}
+                                            className="h-4 w-4 rounded border-slate-300"
+                                        />
+                                        <span className="text-xs text-slate-600 font-medium">Show QR code on invoices</span>
+                                    </label>
                                     <div className="flex gap-2 flex-wrap">
                                         <Button size="sm" variant="outline" onClick={() => document.getElementById('qr-upload')?.click()}>
                                             <Upload className="mr-2 h-4 w-4" />
