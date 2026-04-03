@@ -510,4 +510,43 @@ export class SalesService {
         });
     }
 
+    async renumberLegacyInvoices(tenantId: string) {
+        const legacy = await this.prisma.sale.findMany({
+            where: { tenantId, NOT: { invoiceNumber: { startsWith: 'INV/' } } },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        if (legacy.length === 0) return { renumbered: 0, breakdown: {} };
+
+        const byFY: Record<string, typeof legacy> = {};
+        for (const sale of legacy) {
+            const fy = getFYForDate(sale.createdAt);
+            if (!byFY[fy]) byFY[fy] = [];
+            byFY[fy].push(sale);
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            let totalRenumbered = 0;
+            for (const [fy, sales] of Object.entries(byFY)) {
+                for (let i = 0; i < sales.length; i++) {
+                    const newNumber = `INV/${fy}/${String(i + 1).padStart(5, '0')}`;
+                    await tx.sale.update({
+                        where: { id: sales[i].id },
+                        data: { invoiceNumber: newNumber },
+                    });
+                    totalRenumbered++;
+                }
+                await tx.invoiceSequence.upsert({
+                    where: { tenantId_financialYear: { tenantId, financialYear: fy } },
+                    update: { lastNumber: sales.length },
+                    create: { tenantId, financialYear: fy, lastNumber: sales.length },
+                });
+            }
+            return {
+                renumbered: totalRenumbered,
+                breakdown: Object.fromEntries(Object.entries(byFY).map(([fy, s]) => [fy, s.length])),
+            };
+        });
+    }
+
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, UseGuards, Request, Param, Query, Res } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, UseGuards, Request, Param, Query, Res, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import { SalesService } from './sales.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -10,6 +10,13 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SalesController {
     constructor(private readonly salesService: SalesService) { }
+
+    @Post('admin/renumber-invoices')
+    @Roles(Role.ADMIN)
+    async renumberInvoices(@Request() req: any) {
+        if (!req.user.tenantId) throw new BadRequestException('Tenant context required');
+        return this.salesService.renumberLegacyInvoices(req.user.tenantId);
+    }
 
     @Post('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
