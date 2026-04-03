@@ -36,6 +36,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Take Order", href: "/app/rep/orders/create", roles: ["SALES_REP"], hint: "O" },
   { icon: ShoppingCart, label: "Purchases", href: "/app/purchases", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"], hint: "P" },
   { icon: Package, label: "Stock", href: "/app/stock", roles: ["ADMIN", "WAREHOUSE_MANAGER"], hint: "S" },
+  { icon: FileSpreadsheet, label: "Stock Ledger", href: "/app/stock-ledger", roles: ["ADMIN", "WAREHOUSE_MANAGER", "ACCOUNTANT"] },
   { icon: Users, label: "Parties", href: "/app/parties", roles: ["ADMIN", "BILLING_OPERATOR", "ACCOUNTANT", "SALES_REP"], hint: "C" },
   { icon: BarChart3, label: "Reports", href: "/app/reports", roles: ["ADMIN", "ACCOUNTANT"], hint: "E" },
   { icon: ShoppingCart, label: "Orders", href: "/app/orders", roles: ["ADMIN", "BILLING_OPERATOR"], hint: "O" },

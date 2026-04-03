@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -38,6 +38,16 @@ export class StockController {
             ptr: data.ptr,
             pts: data.pts,
         });
+    }
+
+    @Get('ledger')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
+    getStockLedger(
+        @Request() req: any,
+        @Query('productId') productId?: string,
+        @Query('batchId') batchId?: string,
+    ) {
+        return this.stockService.getStockLedger(req.user.tenantId, productId, batchId);
     }
 
     @Get('alerts')
