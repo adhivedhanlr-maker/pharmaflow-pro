@@ -351,7 +351,9 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
 
                     <div className="invoice-footer-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "1px solid #444" }}>
                         <div className="invoice-bank-panel" style={{ padding: "6px 8px", borderRight: "1px solid #444", minHeight: "100px" }}>
-                            <div style={{ fontWeight: 700, marginBottom: "4px" }}>Bank Details</div>
+                            {(businessProfile?.bankName || businessProfile?.bankBranch || businessProfile?.bankAccountNo || businessProfile?.bankIfsc) && (
+                                <div style={{ fontWeight: 700, marginBottom: "4px" }}>Bank Details</div>
+                            )}
                             {businessProfile?.bankName && <div><b>BANK:</b> {businessProfile.bankName}</div>}
                             {businessProfile?.bankBranch && <div><b>Branch:</b> {businessProfile.bankBranch}</div>}
                             {businessProfile?.bankAccountNo && <div><b>A/c No.:</b> {businessProfile.bankAccountNo}</div>}
