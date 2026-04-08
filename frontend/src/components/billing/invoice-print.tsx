@@ -349,9 +349,15 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         <b>Amount In Words :</b> {numberToWords(totals.net)}
                     </div>
 
-                    <div className="invoice-footer-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "1px solid #444" }}>
+                    {(() => {
+                        const hasBankDetails = !!(businessProfile?.bankName || businessProfile?.bankBranch || businessProfile?.bankAccountNo || businessProfile?.bankIfsc);
+                        const hasQr = !!(businessProfile?.paymentUpiString && businessProfile?.showPaymentQr !== false);
+                        const hasLeftPanel = hasBankDetails || hasQr;
+                        return (
+                    <div className="invoice-footer-grid" style={{ display: "grid", gridTemplateColumns: hasLeftPanel ? "1fr 1fr" : "1fr", borderTop: "1px solid #444" }}>
+                        {hasLeftPanel && (
                         <div className="invoice-bank-panel" style={{ padding: "6px 8px", borderRight: "1px solid #444", minHeight: "100px" }}>
-                            {(businessProfile?.bankName || businessProfile?.bankBranch || businessProfile?.bankAccountNo || businessProfile?.bankIfsc) && (
+                            {hasBankDetails && (
                                 <div style={{ fontWeight: 700, marginBottom: "4px" }}>Bank Details</div>
                             )}
                             {businessProfile?.bankName && <div><b>BANK:</b> {businessProfile.bankName}</div>}
@@ -359,6 +365,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             {businessProfile?.bankAccountNo && <div><b>A/c No.:</b> {businessProfile.bankAccountNo}</div>}
                             {businessProfile?.bankIfsc && <div><b>IFSC:</b> {businessProfile.bankIfsc}</div>}
                         </div>
+                        )}
 
                         <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
                             {businessProfile?.paymentUpiString && businessProfile?.showPaymentQr !== false && (
@@ -388,6 +395,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                             </div>
                         </div>
                     </div>
+                        );
+                    })()}
                 </div>
 
                 <div style={{ border: "2px solid #222", borderTop: "none", padding: "6px 8px", fontSize: "9px", lineHeight: 1.35 }}>
