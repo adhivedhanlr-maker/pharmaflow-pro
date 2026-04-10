@@ -54,7 +54,7 @@ export class OrdersController {
             action: AuditAction.UPDATE_ORDER_STATUS,
             entity: 'Order',
             entityId: id,
-            details: { status, customerName: result.customer?.name },
+            details: { status, customerId: result.customerId },
             ipAddress: req.ip,
             userAgent: req.headers['user-agent'],
         });
