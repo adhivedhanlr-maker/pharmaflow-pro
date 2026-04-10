@@ -45,10 +45,6 @@ export default function SettingsPage() {
     const [qrDecodeError, setQrDecodeError] = useState<string | null>(null);
     const [qrSaving, setQrSaving] = useState(false);
     const qrCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [renumbering, setRenumbering] = useState(false);
-    const [renumberResult, setRenumberResult] = useState<{ renumbered: number; breakdown: Record<string, number> } | null>(null);
-    const [syncing, setSyncing] = useState(false);
-    const [syncResult, setSyncResult] = useState<{ synced: number; sequences: Record<string, number> } | null>(null);
     const [defaultGstRate, setDefaultGstRate] = useState<number>(5);
     const [gstSaved, setGstSaved] = useState(false);
 
@@ -689,102 +685,6 @@ export default function SettingsPage() {
                         ))}
                     </div>
 
-                    {/* Invoice Numbering */}
-                    <Card className="border-amber-200">
-                        <CardHeader>
-                            <CardTitle className="text-base">Invoice Numbering</CardTitle>
-                            <CardDescription>
-                                Renumber old invoices (with timestamp-style numbers like INV-1774...) to the new GST-compliant format: INV/2526/00001, INV/2627/00001, etc.
-                                Only do this if those invoices have not been printed or given to customers.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {renumberResult ? (
-                                <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-4 py-3">
-                                    {renumberResult.renumbered === 0
-                                        ? "No legacy invoices found — all invoices are already in the new format."
-                                        : `${renumberResult.renumbered} invoice${renumberResult.renumbered > 1 ? "s" : ""} renumbered: ${Object.entries(renumberResult.breakdown).map(([fy, count]) => `FY ${fy}: ${count}`).join(", ")}`
-                                    }
-                                </div>
-                            ) : (
-                                <Button
-                                    variant="outline"
-                                    className="border-amber-300 text-amber-800 hover:bg-amber-50"
-                                    disabled={renumbering}
-                                    onClick={async () => {
-                                        if (!confirm("This will permanently change the invoice numbers for all old-format invoices. Continue?")) return;
-                                        setRenumbering(true);
-                                        try {
-                                            const controller = new AbortController();
-                                            const timeout = setTimeout(() => controller.abort(), 15000);
-                                            const res = await fetch(`${API_BASE}/sales/admin/renumber-invoices`, {
-                                                method: "POST",
-                                                headers: { Authorization: `Bearer ${token}` },
-                                                signal: controller.signal,
-                                            });
-                                            clearTimeout(timeout);
-                                            if (!res.ok) throw new Error(await res.text());
-                                            setRenumberResult(await res.json());
-                                        } catch (err: any) {
-                                            alert(`Failed: ${err?.message || "Please try again."}`);
-                                        } finally {
-                                            setRenumbering(false);
-                                        }
-                                    }}
-                                >
-                                    {renumbering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Renumber Now
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Fix Invoice Sequence */}
-                    <Card className="border-blue-200">
-                        <CardHeader>
-                            <CardTitle className="text-base">Fix Invoice Sequence</CardTitle>
-                            <CardDescription>
-                                If an invoice number was manually corrected or a gap exists in the sequence,
-                                use this to sync the counter to the highest existing invoice number.
-                                The next invoice will continue from the correct number.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {syncResult ? (
-                                <div className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded px-4 py-3">
-                                    Sequence fixed: {Object.entries(syncResult.sequences).map(([fy, n]) => `FY ${fy} → counter set to ${n}`).join(", ")}
-                                </div>
-                            ) : (
-                                <Button
-                                    variant="outline"
-                                    className="border-blue-300 text-blue-800 hover:bg-blue-50"
-                                    disabled={syncing}
-                                    onClick={async () => {
-                                        setSyncing(true);
-                                        try {
-                                            const controller = new AbortController();
-                                            const timeout = setTimeout(() => controller.abort(), 10000);
-                                            const res = await fetch(`${API_BASE}/sales/admin/sync-sequence`, {
-                                                method: "POST",
-                                                headers: { Authorization: `Bearer ${token}` },
-                                                signal: controller.signal,
-                                            });
-                                            clearTimeout(timeout);
-                                            if (!res.ok) throw new Error(await res.text());
-                                            setSyncResult(await res.json());
-                                        } catch (err: any) {
-                                            alert(`Failed: ${err?.message || "Please try again."}`);
-                                        } finally {
-                                            setSyncing(false);
-                                        }
-                                    }}
-                                >
-                                    {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Fix Sequence Now
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </RoleGate>
