@@ -773,6 +773,20 @@ function BillingContent() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-4">
+                                    {/* Invoice meta */}
+                                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium">Invoice No.</span>
+                                            <span className="font-mono font-semibold text-slate-800">{nextInvoiceNumber || "—"}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium">Invoice Date</span>
+                                            <span className="font-semibold text-slate-800">
+                                                {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                                            </span>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-slate-500">Subtotal</span>
