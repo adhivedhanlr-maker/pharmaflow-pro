@@ -17,7 +17,7 @@ export class UsersController {
     @Post('duty')
     @Roles(Role.SALES_REP)
     toggleDuty(@Body() body: { isOnDuty: boolean }, @Request() req: any) {
-        return this.usersService.update(req.user.userId, { isOnDuty: body.isOnDuty });
+        return this.usersService.update(req.user.userId, { isOnDuty: body.isOnDuty }, req.user.tenantId);
     }
 
     @Patch('me/password')

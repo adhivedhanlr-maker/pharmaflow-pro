@@ -80,8 +80,8 @@ export class ReturnsService {
                 const purchaseItem = purchase.items.find((pi) => pi.id === item.purchaseItemId);
                 if (!purchaseItem) throw new BadRequestException(`Item ${item.purchaseItemId} not part of this purchase`);
 
-                // 2. Reduce stock from batch
-                const batch = await tx.batch.findUnique({ where: { id: purchaseItem.batchId } });
+                // 2. Reduce stock from batch (tenant-scoped)
+                const batch = await tx.batch.findFirst({ where: { id: purchaseItem.batchId, tenantId } });
                 if (!batch || batch.currentStock < item.quantity) {
                     throw new BadRequestException(`Insufficient stock in batch for return of item ${item.purchaseItemId}`);
                 }

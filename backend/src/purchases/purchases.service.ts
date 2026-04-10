@@ -75,11 +75,11 @@ export class PurchasesService {
                 });
 
                 if (batch) {
-                    // Update existing batch stock and prices
+                    // Update existing batch stock and prices (quantity + free goods both go into physical stock)
                     batch = await tx.batch.update({
                         where: { id: batch.id },
                         data: {
-                            currentStock: { increment: item.quantity },
+                            currentStock: { increment: item.quantity + (item.freeQty || 0) },
                             purchasePrice: item.purchasePrice,
                             mrp: item.salePrice,
                             salePrice: item.salePrice,
@@ -99,7 +99,7 @@ export class PurchasesService {
                             batchNumber: item.batchNumber,
                             supplierId: supplierId,
                             expiryDate: new Date(item.expiryDate),
-                            currentStock: item.quantity,
+                            currentStock: item.quantity + (item.freeQty || 0),
                             purchasePrice: item.purchasePrice,
                             mrp: item.salePrice,
                             salePrice: item.salePrice,
@@ -185,12 +185,12 @@ export class PurchasesService {
         const { supplierId, billNumber, items, invoiceDate, dueDate, roundOff } = data;
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Reverse old stock
+            // 1. Reverse old stock (quantity + freeQty — both were added to physical stock on create)
             for (const item of old.items) {
                 if (item.batchId) {
                     await tx.batch.update({
                         where: { id: item.batchId },
-                        data: { currentStock: { decrement: item.quantity } },
+                        data: { currentStock: { decrement: item.quantity + (item.freeQty || 0) } },
                     });
                 }
             }
@@ -234,9 +234,9 @@ export class PurchasesService {
 
                 let batch = await tx.batch.findFirst({ where: { productId: product.id, batchNumber: item.batchNumber, ...(tenantId ? { tenantId } : {}) } });
                 if (batch) {
-                    batch = await tx.batch.update({ where: { id: batch.id }, data: { currentStock: { increment: item.quantity }, purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr, expiryDate: new Date(item.expiryDate) } });
+                    batch = await tx.batch.update({ where: { id: batch.id }, data: { currentStock: { increment: item.quantity + (item.freeQty || 0) }, purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr, expiryDate: new Date(item.expiryDate) } });
                 } else {
-                    batch = await tx.batch.create({ data: { tenantId, productId: product.id, batchNumber: item.batchNumber, expiryDate: new Date(item.expiryDate), currentStock: item.quantity, purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr } });
+                    batch = await tx.batch.create({ data: { tenantId, productId: product.id, batchNumber: item.batchNumber, expiryDate: new Date(item.expiryDate), currentStock: item.quantity + (item.freeQty || 0), purchasePrice: item.purchasePrice, mrp: item.salePrice, salePrice: item.salePrice, ptr: item.ptr, pts: item.pts, nr: item.nr } });
                 }
 
                 const freeQty = item.freeQty || 0;
@@ -278,12 +278,12 @@ export class PurchasesService {
         if (!purchase) throw new NotFoundException('Purchase not found');
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Reverse stock for each item
+            // 1. Reverse stock for each item (quantity + freeQty — both were added on create)
             for (const item of purchase.items) {
                 if (item.batchId) {
                     await tx.batch.update({
                         where: { id: item.batchId },
-                        data: { currentStock: { decrement: item.quantity } },
+                        data: { currentStock: { decrement: item.quantity + (item.freeQty || 0) } },
                     });
                 }
             }

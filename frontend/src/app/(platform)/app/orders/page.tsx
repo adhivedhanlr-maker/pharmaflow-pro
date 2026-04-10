@@ -19,13 +19,14 @@ import {
     RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+import { useSocket } from "@/context/socket-context";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { io } from "socket.io-client";
 import { OrderDetailsDialog } from "@/components/orders/order-details-dialog";
 
 export default function OrdersPage() {
     const { token } = useAuth();
+    const { socket } = useSocket();
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -36,14 +37,14 @@ export default function OrdersPage() {
         if (token) {
             fetchOrders();
         }
-
-        const socket = io(API_BASE);
-        socket.on('new-requirement', () => fetchOrders());
-
-        return () => {
-            socket.disconnect();
-        };
     }, [token]);
+
+    useEffect(() => {
+        if (!socket) return;
+        const handler = () => fetchOrders();
+        socket.on('new-requirement', handler);
+        return () => { socket.off('new-requirement', handler); };
+    }, [socket]);
 
     const fetchOrders = async () => {
         setLoading(true);

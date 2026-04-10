@@ -94,8 +94,11 @@ export class UsersService {
     }
 
     async changePassword(userId: string, tenantId: string | undefined, currentPassword: string, newPassword: string) {
-        if (!newPassword || newPassword.length < 6) {
-            throw new BadRequestException('New password must be at least 6 characters');
+        if (!newPassword || newPassword.length < 8) {
+            throw new BadRequestException('New password must be at least 8 characters');
+        }
+        if (!/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+            throw new BadRequestException('New password must contain at least one uppercase letter and one number');
         }
         const user = await this.prisma.user.findFirst({
             where: { id: userId, ...(tenantId ? { tenantId } : {}) },
