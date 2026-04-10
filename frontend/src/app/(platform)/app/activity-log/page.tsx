@@ -185,146 +185,159 @@ export default function ActivityLogPage() {
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
     return (
-        <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
+        <div className="space-y-3">
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Activity Log</h1>
-                    <p className="text-sm text-muted-foreground">Track who does what across the platform</p>
+                    <h1 className="text-xl font-bold">Activity Log</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">Track who does what across the platform</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => { setPage(0); fetchLogs(); }}>
-                    <RefreshCw className="h-4 w-4 mr-1" />
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
                     Refresh
                 </Button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-end">
-                <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">From</label>
-                    <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => { setStartDate(e.target.value); setPage(0); }}
-                        className="w-36 h-9"
-                    />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">To</label>
-                    <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => { setEndDate(e.target.value); setPage(0); }}
-                        className="w-36 h-9"
-                    />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">Action</label>
-                    <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
-                        <SelectTrigger className="w-44 h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ACTION_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+            {/* Filters — single compact row */}
+            <div className="flex flex-wrap gap-2 items-center">
+                <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => { setStartDate(e.target.value); setPage(0); }}
+                    className="w-34 h-8 text-xs"
+                />
+                <span className="text-xs text-muted-foreground">to</span>
+                <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => { setEndDate(e.target.value); setPage(0); }}
+                    className="w-34 h-8 text-xs"
+                />
+                <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
+                    <SelectTrigger className="w-44 h-8 text-xs">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {ACTION_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 {(startDate || endDate || actionFilter !== "ALL") && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 self-end"
-                        onClick={() => { setStartDate(""); setEndDate(""); setActionFilter("ALL"); setPage(0); }}
-                    >
-                        Clear filters
+                    <Button variant="ghost" size="sm" className="h-8 text-xs px-2"
+                        onClick={() => { setStartDate(""); setEndDate(""); setActionFilter("ALL"); setPage(0); }}>
+                        Clear
                     </Button>
                 )}
             </div>
 
-            {/* Table */}
-            <div className="border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Time</th>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">User</th>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Action</th>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {loading ? (
-                                Array.from({ length: 8 }).map((_, i) => (
-                                    <tr key={i}>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-5 w-28 rounded-full" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-48" /></td>
-                                    </tr>
-                                ))
-                            ) : logs.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                                        No activity found for the selected filters.
-                                    </td>
+            {/* Desktop Table */}
+            <div className="border rounded-lg overflow-hidden hidden md:block">
+                <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                        <tr>
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground whitespace-nowrap text-xs">Time</th>
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground whitespace-nowrap text-xs">User</th>
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground whitespace-nowrap text-xs">Action</th>
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground text-xs">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                        {loading ? (
+                            Array.from({ length: 10 }).map((_, i) => (
+                                <tr key={i}>
+                                    <td className="px-3 py-2"><Skeleton className="h-3.5 w-28" /></td>
+                                    <td className="px-3 py-2"><Skeleton className="h-3.5 w-20" /></td>
+                                    <td className="px-3 py-2"><Skeleton className="h-5 w-24 rounded-full" /></td>
+                                    <td className="px-3 py-2"><Skeleton className="h-3.5 w-40" /></td>
                                 </tr>
-                            ) : (
-                                logs.map((log) => {
-                                    const meta = ACTION_META[log.action] ?? { label: log.action, color: "bg-slate-100 text-slate-700" };
-                                    const details = formatDetails(log.action, log.details);
-                                    return (
-                                        <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3 whitespace-nowrap text-muted-foreground text-xs">
-                                                {formatTime(log.createdAt)}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap font-medium">
-                                                {log.user?.name ?? "—"}
-                                                {log.user?.role && (
-                                                    <div className="text-xs text-muted-foreground font-normal">{log.user.role.replace(/_/g, " ")}</div>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${meta.color}`}>
-                                                    {meta.label}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground text-xs max-w-xs truncate">
-                                                {details}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            ))
+                        ) : logs.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                                    No activity found for the selected filters.
+                                </td>
+                            </tr>
+                        ) : (
+                            logs.map((log) => {
+                                const meta = ACTION_META[log.action] ?? { label: log.action, color: "bg-slate-100 text-slate-700" };
+                                const details = formatDetails(log.action, log.details);
+                                return (
+                                    <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                                        <td className="px-3 py-2 whitespace-nowrap text-muted-foreground text-xs">
+                                            {formatTime(log.createdAt)}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap">
+                                            <span className="text-sm font-medium">{log.user?.name ?? "—"}</span>
+                                            {log.user?.role && (
+                                                <div className="text-xs text-muted-foreground">{log.user.role.replace(/_/g, " ")}</div>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${meta.color}`}>
+                                                {meta.label}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-2 text-muted-foreground text-xs max-w-xs truncate">
+                                            {details}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Mobile Card List */}
+            <div className="md:hidden space-y-2">
+                {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="border rounded-lg p-3 space-y-2">
+                            <Skeleton className="h-4 w-24 rounded-full" />
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3 w-48" />
+                        </div>
+                    ))
+                ) : logs.length === 0 ? (
+                    <div className="text-center py-10 text-sm text-muted-foreground">
+                        No activity found for the selected filters.
+                    </div>
+                ) : (
+                    logs.map((log) => {
+                        const meta = ACTION_META[log.action] ?? { label: log.action, color: "bg-slate-100 text-slate-700" };
+                        const details = formatDetails(log.action, log.details);
+                        return (
+                            <div key={log.id} className="border rounded-lg p-3 space-y-1.5 bg-white">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${meta.color}`}>
+                                        {meta.label}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground shrink-0">{formatTime(log.createdAt)}</span>
+                                </div>
+                                <div className="text-sm font-medium">{log.user?.name ?? "—"}
+                                    {log.user?.role && <span className="text-xs font-normal text-muted-foreground ml-1.5">{log.user.role.replace(/_/g, " ")}</span>}
+                                </div>
+                                {details && <div className="text-xs text-muted-foreground truncate">{details}</div>}
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
             {/* Pagination */}
             {!loading && total > 0 && (
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{total} total entries</span>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage((p) => Math.max(0, p - 1))}
-                            disabled={page === 0}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Prev
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                    <span>{total} entries</span>
+                    <div className="flex items-center gap-1.5">
+                        <Button variant="outline" size="sm" className="h-7 px-2"
+                            onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                            <ChevronLeft className="h-3.5 w-3.5" />
                         </Button>
-                        <span className="px-2">Page {page + 1} of {totalPages}</span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                            disabled={page >= totalPages - 1}
-                        >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
+                        <span className="px-1">Page {page + 1} of {totalPages}</span>
+                        <Button variant="outline" size="sm" className="h-7 px-2"
+                            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+                            <ChevronRight className="h-3.5 w-3.5" />
                         </Button>
                     </div>
                 </div>
