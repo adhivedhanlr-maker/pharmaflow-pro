@@ -92,10 +92,10 @@ interface InvoicePrintProps {
 
 const cellBase: React.CSSProperties = {
     border: "1px solid #444",
-    padding: "4px 5px",
-    fontSize: "9px",
+    padding: "3px 4px",
+    fontSize: "7.5pt",
     verticalAlign: "top",
-    lineHeight: 1.2,
+    lineHeight: 1.25,
 };
 
 const headBase: React.CSSProperties = {
@@ -103,12 +103,14 @@ const headBase: React.CSSProperties = {
     fontWeight: 700,
     textAlign: "center",
     backgroundColor: "#f3f3f3",
+    fontSize: "7pt",
 };
 
 const labelStyle: React.CSSProperties = {
     fontWeight: 700,
     whiteSpace: "nowrap",
-    paddingRight: "8px",
+    paddingRight: "6px",
+    fontSize: "8pt",
 };
 
 export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
@@ -145,8 +147,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                 style={{
                     width: "210mm",
                     maxWidth: "210mm",
-                    fontFamily: "Arial, sans-serif",
-                    fontSize: "10px",
+                    fontFamily: "Arial, Helvetica, sans-serif",
+                    fontSize: "8pt",
                     color: "#111",
                 }}
             >
@@ -162,15 +164,15 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 />
                             )}
                             <div>
-                                <div style={{ fontSize: "18px", fontWeight: 800, textTransform: "uppercase", lineHeight: 1.05, letterSpacing: "0.3px" }}>
+                                <div style={{ fontSize: "14pt", fontWeight: 800, textTransform: "uppercase", lineHeight: 1.1, letterSpacing: "0.5px" }}>
                                     {companyName}
                                 </div>
                                 {companyAddress && (
-                                    <div style={{ fontSize: "10px", marginTop: "3px", color: "#444" }}>
+                                    <div style={{ fontSize: "8pt", marginTop: "2px", color: "#444" }}>
                                         {companyAddress}
                                     </div>
                                 )}
-                                <div style={{ fontSize: "10px", color: "#444" }}>
+                                <div style={{ fontSize: "8pt", color: "#444" }}>
                                     {businessProfile?.phone ? `Ph: ${businessProfile.phone}` : ""}
                                     {businessProfile?.phone && businessProfile?.email ? "   " : ""}
                                     {businessProfile?.email ? `Email: ${businessProfile.email}` : ""}
@@ -179,7 +181,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
                     </div>
 
-                    <div className="invoice-compliance" style={{ borderBottom: "1px solid #444", padding: "4px 8px", fontSize: "10px", display: "flex", gap: "14px", flexWrap: "wrap" }}>
+                    <div className="invoice-compliance" style={{ borderBottom: "1px solid #444", padding: "3px 8px", fontSize: "8pt", display: "flex", gap: "14px", flexWrap: "wrap" }}>
                         {businessProfile?.gstin && <span><b>GSTIN:</b> {businessProfile.gstin}</span>}
                         {businessProfile?.panNo && <span><b>PAN:</b> {businessProfile.panNo}</span>}
                         {businessProfile?.dlNo && <span><b>DL No:</b> {businessProfile.dlNo}</span>}
@@ -188,8 +190,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
 
                     <div className="invoice-meta-grid" style={{ display: "grid", gridTemplateColumns: "1fr 250px", borderBottom: "1px solid #444" }}>
                         <div className="invoice-billto" style={{ padding: "6px 8px", borderRight: "1px solid #444" }}>
-                            <div style={{ fontWeight: 700, fontSize: "11px", marginBottom: "5px" }}>BILL TO</div>
-                            <div style={{ fontWeight: 800, fontSize: "14px", lineHeight: 1.15 }}>{customer.name}</div>
+                            <div style={{ fontWeight: 700, fontSize: "7.5pt", marginBottom: "4px", letterSpacing: "0.5px" }}>BILL TO</div>
+                            <div style={{ fontWeight: 800, fontSize: "11pt", lineHeight: 1.15 }}>{customer.name}</div>
                             {customer.address && <div style={{ marginTop: "4px", whiteSpace: "pre-line" }}>{customer.address}</div>}
                             {customer.phone && <div><b>Ph:</b> {customer.phone}</div>}
                             {customer.gstin && <div><b>GSTIN:</b> {customer.gstin}</div>}
@@ -198,10 +200,10 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
 
                         <div className="invoice-meta" style={{ padding: "6px 8px" }}>
-                            <div style={{ textAlign: "center", fontWeight: 800, fontSize: "22px", letterSpacing: "0.5px", marginBottom: "4px" }}>
+                            <div style={{ textAlign: "center", fontWeight: 800, fontSize: "15pt", letterSpacing: "1px", marginBottom: "4px" }}>
                                 TAX INVOICE
                             </div>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "8pt" }}>
                                 <tbody>
                                     <tr>
                                         <td style={labelStyle}>Invoice No:</td>
@@ -300,13 +302,13 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                     ))}
                                 </tbody>
                             </table>
-                            <div style={{ padding: "5px 6px", fontSize: "10px" }}>
+                            <div style={{ padding: "4px 6px", fontSize: "8pt" }}>
                                 <b>Total Items:</b> {items.length} &nbsp; <b>Total Qty:</b> {totalQty} &nbsp; <b>Total Free:</b> {totalFree}
                             </div>
                         </div>
 
                         <div className="invoice-totals-panel" style={{ padding: "4px 6px" }}>
-                            <table className="invoice-totals-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
+                            <table className="invoice-totals-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "8pt" }}>
                                 <tbody>
                                     <tr>
                                         <td>Sub Total :</td>
@@ -335,8 +337,8 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                         <td style={{ textAlign: "right", fontFamily: "monospace" }}>{totals.gst.toFixed(2)}</td>
                                     </tr>
                                     <tr style={{ borderTop: "2px solid #222" }}>
-                                        <td style={{ fontWeight: 800, fontSize: "11px", paddingTop: "4px" }}>Net Payable :</td>
-                                        <td style={{ textAlign: "right", fontWeight: 800, fontSize: "11px", paddingTop: "4px", fontFamily: "monospace" }}>
+                                        <td style={{ fontWeight: 800, fontSize: "10pt", paddingTop: "4px" }}>Net Payable :</td>
+                                        <td style={{ textAlign: "right", fontWeight: 800, fontSize: "10pt", paddingTop: "4px", fontFamily: "monospace" }}>
                                             {totals.net.toFixed(2)}
                                         </td>
                                     </tr>
@@ -345,7 +347,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         </div>
                     </div>
 
-                    <div style={{ padding: "5px 8px", borderTop: "1px solid #444", fontSize: "10px" }}>
+                    <div style={{ padding: "4px 8px", borderTop: "1px solid #444", fontSize: "8pt" }}>
                         <b>Amount In Words :</b> {numberToWords(totals.net)}
                     </div>
 
@@ -370,7 +372,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                         <div className="invoice-sign-panel" style={{ padding: "6px 8px", minHeight: "100px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
                             {businessProfile?.paymentUpiString && businessProfile?.showPaymentQr !== false && (
                                 <div style={{ textAlign: "center", flexShrink: 0 }}>
-                                    <div style={{ fontSize: 9, marginBottom: 4, color: "#555" }}>Scan to Pay</div>
+                                    <div style={{ fontSize: "7pt", marginBottom: 4, color: "#555" }}>Scan to Pay</div>
                                     <QRCodeSVG
                                         value={businessProfile.paymentUpiString}
                                         size={90}
@@ -390,7 +392,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 </div>
                                 <div style={{ textAlign: "right" }}>
                                     <div style={{ borderTop: "1px solid #444", paddingTop: "3px" }}>Authorised Signatory</div>
-                                    <div style={{ fontSize: "9px", color: "#666" }}>E.&amp;O.E.</div>
+                                    <div style={{ fontSize: "7pt", color: "#666" }}>E.&amp;O.E.</div>
                                 </div>
                             </div>
                         </div>
@@ -399,7 +401,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                     })()}
                 </div>
 
-                <div style={{ border: "2px solid #222", borderTop: "none", padding: "6px 8px", fontSize: "9px", lineHeight: 1.35 }}>
+                <div style={{ border: "2px solid #222", borderTop: "none", padding: "5px 8px", fontSize: "7pt", lineHeight: 1.4 }}>
                     <div>
                         <b>Declaration :</b> I/We hereby declare that this invoice shows the actual price of the goods described and that all particulars are true and correct to the best of our knowledge and belief. Subject to local jurisdiction.
                     </div>
