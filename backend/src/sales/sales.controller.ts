@@ -94,6 +94,17 @@ export class SalesController {
         return result;
     }
 
+    @Patch('invoices/:id/number')
+    @Roles(Role.ADMIN)
+    async updateInvoiceNumber(
+        @Param('id') id: string,
+        @Body('newNumber') newNumber: string,
+        @Request() req: any,
+    ) {
+        if (!newNumber || typeof newNumber !== 'string') throw new BadRequestException('newNumber is required');
+        return this.salesService.updateInvoiceNumber(id, newNumber.trim(), req.user.tenantId);
+    }
+
     @Patch(':id/assign-rep')
     @Roles(Role.ADMIN)
     assignRep(@Param('id') id: string, @Body('repId') repId: string, @Request() req: any) {

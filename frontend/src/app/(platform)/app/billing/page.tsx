@@ -348,12 +348,12 @@ function BillingContent() {
             }
             if (e.key === "F12") {
                 e.preventDefault();
-                void handleSave();
+                if (!isSaving) void handleSave();
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    });
+    }, [isSaving, handleSave, handlePrint]);
 
     const getBatchPrice = (batch: Batch) => {
         if (customerType === "PHARMACY") return batch.ptr || batch.salePrice;

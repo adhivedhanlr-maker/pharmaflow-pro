@@ -17,7 +17,10 @@ import {
     Eye,
     Filter,
     X,
+    Pencil,
+    Check,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -86,13 +89,16 @@ interface Sale {
 }
 
 export default function SalesHistoryPage() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [sales, setSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedInvoice, setSelectedInvoice] = useState<Sale | null>(null);
     const [businessProfile, setBusinessProfile] = useState<any>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState("");
+    const [renameSaving, setRenameSaving] = useState(false);
 
     const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
     const [dateFilter, setDateFilter] = useState<DateFilter>("ALL");
@@ -179,6 +185,31 @@ export default function SalesHistoryPage() {
             alert("Network error. Failed to delete invoice.");
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleRenameInvoice = async (id: string) => {
+        if (!renameValue.trim()) return;
+        setRenameSaving(true);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+            const res = await fetch(`${API_BASE}/sales/invoices/${id}/number`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ newNumber: renameValue.trim() }),
+                signal: controller.signal,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Failed to rename invoice");
+            setSales(prev => prev.map(s => s.id === id ? { ...s, invoiceNumber: data.invoiceNumber } : s));
+            toast.success(`Renamed to ${data.invoiceNumber}`);
+            setRenamingId(null);
+        } catch (err: any) {
+            toast.error(err.name === "AbortError" ? "Request timed out" : (err.message || "Failed to rename invoice"));
+        } finally {
+            clearTimeout(timeout);
+            setRenameSaving(false);
         }
     };
 
@@ -454,7 +485,37 @@ export default function SalesHistoryPage() {
                                                     {format(new Date(sale.createdAt), "dd MMM yyyy, HH:mm")}
                                                 </TableCell>
                                                 <TableCell className="font-mono font-medium">
-                                                    {sale.invoiceNumber}
+                                                    {renamingId === sale.id ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <Input
+                                                                className="h-7 w-40 font-mono text-xs px-2"
+                                                                value={renameValue}
+                                                                onChange={e => setRenameValue(e.target.value)}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === "Enter") handleRenameInvoice(sale.id);
+                                                                    if (e.key === "Escape") setRenamingId(null);
+                                                                }}
+                                                                autoFocus
+                                                                disabled={renameSaving}
+                                                            />
+                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-green-600" onClick={() => handleRenameInvoice(sale.id)} disabled={renameSaving}>
+                                                                {renameSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                                                            </Button>
+                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setRenamingId(null)} disabled={renameSaving}>
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1 group">
+                                                            <span>{sale.invoiceNumber}</span>
+                                                            {user?.role === "ADMIN" && (
+                                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Rename invoice number"
+                                                                    onClick={() => { setRenamingId(sale.id); setRenameValue(sale.invoiceNumber); }}>
+                                                                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     {sale.customer.name}

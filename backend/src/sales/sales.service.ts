@@ -510,6 +510,33 @@ export class SalesService {
         });
     }
 
+    async updateInvoiceNumber(id: string, newNumber: string, tenantId: string) {
+        const sale = await this.prisma.sale.findFirst({ where: { id, tenantId } });
+        if (!sale) throw new NotFoundException('Invoice not found');
+
+        const conflict = await this.prisma.sale.findFirst({ where: { invoiceNumber: newNumber, tenantId } });
+        if (conflict && conflict.id !== id) throw new BadRequestException(`Invoice number ${newNumber} is already in use`);
+
+        // Parse the new number to update the sequence if it's in INV/FY/NNNNN format
+        const match = newNumber.match(/^INV\/(\d{4})\/(\d+)$/);
+        if (match) {
+            const fy = match[1];
+            const num = parseInt(match[2], 10);
+            const seq = await this.prisma.invoiceSequence.findFirst({ where: { tenantId, financialYear: fy } });
+            if (seq && seq.lastNumber < num) {
+                await this.prisma.invoiceSequence.update({
+                    where: { tenantId_financialYear: { tenantId, financialYear: fy } },
+                    data: { lastNumber: num },
+                });
+            }
+        }
+
+        return this.prisma.sale.update({
+            where: { id },
+            data: { invoiceNumber: newNumber },
+        });
+    }
+
     async renumberLegacyInvoices(tenantId: string) {
         const legacy = await this.prisma.sale.findMany({
             where: { tenantId, NOT: { invoiceNumber: { startsWith: 'INV/' } } },
