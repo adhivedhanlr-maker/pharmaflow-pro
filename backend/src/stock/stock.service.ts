@@ -23,7 +23,8 @@ export class StockService {
         const batch = await this.prisma.batch.findFirst({ where: { id: batchId, tenantId } });
         if (!batch) throw new NotFoundException('Batch not found');
 
-        return this.prisma.batch.update({
+        const previousStock = batch.currentStock;
+        const updated = await this.prisma.batch.update({
             where: { id: batchId },
             data: {
                 currentStock: quantity,
@@ -35,6 +36,7 @@ export class StockService {
             },
             include: { product: true },
         });
+        return { ...updated, previousStock };
     }
 
     async getStockLedger(tenantId: string, productId?: string, batchId?: string) {

@@ -22,7 +22,8 @@ import {
   Clock,
   FileSpreadsheet,
   Calendar,
-  Building2
+  Building2,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
@@ -51,6 +52,7 @@ const menuItems = [
   { icon: FileSpreadsheet, label: "Attendance", href: "/app/attendance", roles: ["ADMIN"], hint: "A" },
   { icon: RefreshCw, label: "Returns", href: "/app/returns", roles: ["ADMIN", "BILLING_OPERATOR", "WAREHOUSE_MANAGER"], hint: "R" },
   { icon: UserCog, label: "User Management", href: "/app/users", roles: ["ADMIN"], hint: "U" },
+  { icon: ClipboardList, label: "Activity Log", href: "/app/activity-log", roles: ["ADMIN", "ACCOUNTANT"] },
   { icon: Building2, label: "Client Tenants", href: "/app/admin/tenants", roles: ["ADMIN"] },
 ];
 

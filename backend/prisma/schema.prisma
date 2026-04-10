@@ -53,6 +53,7 @@ model User {
   businessProfile      BusinessProfile?
   pushSubscriptions    PushSubscription[]
   webAuthnCredentials  WebAuthnCredential[]
+  auditLogs            AuditLog[]
 
   @@unique([tenantId, username])
   @@index([tenantId])
@@ -417,6 +418,7 @@ model BusinessProfile {
 model AuditLog {
   id        String          @id @default(cuid())
   userId    String
+  user      User            @relation(fields: [userId], references: [id])
   tenantId  String?
   tenant    TenantBranding? @relation(fields: [tenantId], references: [id])
   action    String

@@ -17,11 +17,15 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 @Controller('business-profile')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BusinessProfileController {
-    constructor(private readonly businessProfileService: BusinessProfileService) { }
+    constructor(
+        private readonly businessProfileService: BusinessProfileService,
+        private readonly auditLogService: AuditLogService,
+    ) { }
 
     // All authenticated roles can read the profile (needed for invoice printing)
     @Get()
@@ -34,7 +38,18 @@ export class BusinessProfileController {
     @Put()
     @Roles(Role.ADMIN)
     async updateProfile(@Request() req: any, @Body() data: any) {
-        return this.businessProfileService.updateProfile(req.user.userId, req.user.tenantId, data);
+        const result = await this.businessProfileService.updateProfile(req.user.userId, req.user.tenantId, data);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_BUSINESS_PROFILE,
+            entity: 'BusinessProfile',
+            entityId: req.user.tenantId,
+            details: { fields: Object.keys(data) },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Post('upload-logo')
@@ -55,7 +70,18 @@ export class BusinessProfileController {
         if (!file) throw new BadRequestException('No file uploaded');
         const base64Image = file.buffer.toString('base64');
         const logoUrl = `data:${file.mimetype};base64,${base64Image}`;
-        return this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
+        const result = await this.businessProfileService.updateLogo(req.user.userId, req.user.tenantId, logoUrl);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_BUSINESS_PROFILE,
+            entity: 'BusinessProfile',
+            entityId: req.user.tenantId,
+            details: { fields: ['logo'] },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Post('save-upi')
@@ -64,11 +90,22 @@ export class BusinessProfileController {
         if (paymentUpiString !== null && typeof paymentUpiString !== 'string') {
             throw new BadRequestException('Invalid paymentUpiString');
         }
-        return this.businessProfileService.updatePaymentUpiString(
+        const result = await this.businessProfileService.updatePaymentUpiString(
             req.user.userId,
             req.user.tenantId,
             paymentUpiString ?? null,
         );
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_BUSINESS_PROFILE,
+            entity: 'BusinessProfile',
+            entityId: req.user.tenantId,
+            details: { fields: ['paymentUpiString'], action: paymentUpiString ? 'set' : 'cleared' },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Post('upload-qr')

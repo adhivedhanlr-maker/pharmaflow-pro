@@ -99,9 +99,12 @@ export class AuditLogService {
             if (params.endDate) where.createdAt.lte = params.endDate;
         }
 
+        const include = { user: { select: { name: true, role: true } } };
+
         const [logs, total] = await Promise.all([
             this.prisma.auditLog.findMany({
                 where,
+                include,
                 orderBy: { createdAt: 'desc' },
                 take: params.limit || 100,
                 skip: params.offset || 0,
@@ -115,6 +118,7 @@ export class AuditLogService {
     async getRecentActivity(userId: string, tenantId?: string, limit: number = 10) {
         return this.prisma.auditLog.findMany({
             where: { userId, ...(tenantId ? { tenantId } : {}) },
+            include: { user: { select: { name: true, role: true } } },
             orderBy: { createdAt: 'desc' },
             take: limit,
         });

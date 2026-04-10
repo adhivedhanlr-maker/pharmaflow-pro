@@ -4,11 +4,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 @Controller('stock')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class StockController {
-    constructor(private readonly stockService: StockService) { }
+    constructor(
+        private readonly stockService: StockService,
+        private readonly auditLogService: AuditLogService,
+    ) { }
 
     @Get('batches')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.BILLING_OPERATOR)
@@ -18,7 +22,7 @@ export class StockController {
 
     @Patch('batches/:id')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    updateStockManual(
+    async updateStockManual(
         @Param('id') id: string,
         @Body() data: {
             quantity: number;
@@ -31,13 +35,31 @@ export class StockController {
         },
         @Request() req: any,
     ) {
-        return this.stockService.updateStockManual(id, data.quantity, data.reason, req.user.tenantId, {
+        const result = await this.stockService.updateStockManual(id, data.quantity, data.reason, req.user.tenantId, {
             salePrice: data.salePrice,
             purchasePrice: data.purchasePrice,
             mrp: data.mrp,
             ptr: data.ptr,
             pts: data.pts,
         });
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_INVENTORY,
+            entity: 'Batch',
+            entityId: id,
+            details: {
+                batchId: id,
+                batchNumber: result.batchNumber,
+                productName: result.product?.name,
+                oldQty: result.previousStock,
+                newQty: data.quantity,
+                reason: data.reason,
+            },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Get('ledger')

@@ -4,11 +4,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly auditLogService: AuditLogService,
+    ) { }
 
     @Post('duty')
     @Roles(Role.SALES_REP)
@@ -65,19 +69,52 @@ export class UsersController {
 
     @Post()
     @Roles(Role.ADMIN)
-    create(@Body() data: any, @Request() req: any) {
-        return this.usersService.create(data, req.user.tenantId);
+    async create(@Body() data: any, @Request() req: any) {
+        const result = await this.usersService.create(data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.CREATE_USER,
+            entity: 'User',
+            entityId: result.id,
+            details: { name: result.name, role: result.role, username: result.username },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Patch(':id')
     @Roles(Role.ADMIN)
-    update(@Param('id') id: string, @Body() data: any, @Request() req: any) {
-        return this.usersService.update(id, data, req.user.tenantId);
+    async update(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        const result = await this.usersService.update(id, data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_USER,
+            entity: 'User',
+            entityId: id,
+            details: { userId: id, changes: Object.keys(data) },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Delete(':id')
     @Roles(Role.ADMIN)
-    remove(@Param('id') id: string, @Request() req: any) {
-        return this.usersService.remove(id, req.user.tenantId);
+    async remove(@Param('id') id: string, @Request() req: any) {
+        const result = await this.usersService.remove(id, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.DELETE_USER,
+            entity: 'User',
+            entityId: id,
+            details: { name: result.name, role: result.role },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 }
