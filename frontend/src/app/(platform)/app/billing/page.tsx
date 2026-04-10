@@ -115,7 +115,6 @@ function BillingContent() {
     const printRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<HTMLDivElement>(null);
     const [nextInvoiceNumber, setNextInvoiceNumber] = useState<string>("");
-    const [invoiceDate, setInvoiceDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
     const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState("");
     const [savedInvoiceDialog, setSavedInvoiceDialog] = useState<{
         invoiceNumber: string;
@@ -328,7 +327,7 @@ function BillingContent() {
                     })),
                     paymentMethod,
                     discountAmount: totals.discount,
-                    invoiceDate: invoiceDate || new Date().toISOString().split("T")[0],
+                    invoiceDate: new Date().toISOString().split("T")[0],
                 }),
             });
 
@@ -349,7 +348,7 @@ function BillingContent() {
                 setSelectedCustomerId("");
                 setPaymentMethod("CASH");
                 setExtraDiscount(0);
-                setInvoiceDate(new Date().toISOString().split("T")[0]);
+
                 localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
                 void fetchNextInvoiceNumber();
             } else {
@@ -486,7 +485,7 @@ function BillingContent() {
                     })),
                     paymentMethod,
                     discountAmount: totals.discount,
-                    invoiceDate: invoiceDate || new Date().toISOString().split("T")[0],
+                    invoiceDate: new Date().toISOString().split("T")[0],
                 }),
             });
 
@@ -506,7 +505,7 @@ function BillingContent() {
                 setSelectedCustomerId("");
                 setPaymentMethod("CASH");
                 setExtraDiscount(0);
-                setInvoiceDate(new Date().toISOString().split("T")[0]);
+
                 setCurrentInvoiceNumber("");
                 localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
                 void fetchNextInvoiceNumber();
@@ -846,12 +845,9 @@ function BillingContent() {
                                         </div>
                                         <div className="flex justify-between items-center text-xs">
                                             <span className="text-slate-500 font-medium">Invoice Date</span>
-                                            <input
-                                                type="date"
-                                                value={invoiceDate}
-                                                onChange={(e) => setInvoiceDate(e.target.value)}
-                                                className="text-xs font-semibold text-slate-800 border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                            />
+                                            <span className="font-semibold text-slate-800">
+                                                {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                                            </span>
                                         </div>
                                     </div>
 
