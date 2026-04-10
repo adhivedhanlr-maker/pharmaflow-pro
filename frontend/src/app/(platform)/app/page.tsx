@@ -146,13 +146,15 @@ export default function Dashboard() {
       const customers = Array.isArray(customersData?.data) ? customersData.data : [];
       const expiring = Array.isArray(expiringData) ? expiringData : [];
       const lowStock = Array.isArray(lowStockData) ? lowStockData : [];
-      const sales = Array.isArray(salesData) ? salesData : [];
+      const sales = Array.isArray(salesData) ? salesData as { createdAt?: string }[] : [];
+      const todayLocal = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
+      const salesToday = sales.filter(s => s.createdAt && new Date(s.createdAt).toLocaleDateString("en-CA") === todayLocal).length;
       const totalBatches = products.reduce((acc, p) => acc + (p.batches?.length || 0), 0);
       const unhealthyCount = expiring.length + lowStock.length;
       const healthyCount = Math.max(totalBatches - unhealthyCount, 0);
       const inventoryHealth = totalBatches > 0 ? Math.round((healthyCount / totalBatches) * 100) : 0;
 
-      setStats({ salesToday: sales.length, stockItems: totalBatches, customersCount: customers.length, expiringSoon: expiring.length, inventoryHealth });
+      setStats({ salesToday, stockItems: totalBatches, customersCount: customers.length, expiringSoon: expiring.length, inventoryHealth });
       if (failedEnabled.length > 0) {
         setDashboardWarning("Some dashboard data could not be loaded. You can keep using the app and refresh once the connection stabilizes.");
         console.error("Dashboard partial failures:", failedEnabled);
