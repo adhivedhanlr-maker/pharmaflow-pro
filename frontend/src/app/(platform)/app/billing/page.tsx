@@ -280,10 +280,13 @@ function BillingContent() {
         return { subtotal, gst, discount, net: Math.max(0, subtotal + gst - discount) };
     }, [items, extraDiscount]);
 
+    const isSavingRef = useRef(false);
+
     const handleSave = async () => {
         if (!selectedCustomerId) return alert("Please select a customer");
         if (items.length === 0) return alert("Please add items to the invoice");
 
+        isSavingRef.current = true;
         setIsSaving(true);
         try {
             const response = await fetch(`${API_BASE}/sales/invoices`, {
@@ -332,6 +335,7 @@ function BillingContent() {
         } catch {
             alert("Failed to save invoice");
         } finally {
+            isSavingRef.current = false;
             setIsSaving(false);
         }
     };
@@ -348,12 +352,13 @@ function BillingContent() {
             }
             if (e.key === "F12") {
                 e.preventDefault();
-                if (!isSaving) void handleSave();
+                if (!isSavingRef.current) void handleSave();
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isSaving, handleSave, handlePrint]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const getBatchPrice = (batch: Batch) => {
         if (customerType === "PHARMACY") return batch.ptr || batch.salePrice;
