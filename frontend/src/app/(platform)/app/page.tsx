@@ -218,7 +218,7 @@ export default function Dashboard() {
     {
       title: "Expiring Soon",
       value: stats.expiringSoon.toString(),
-      description: "Next 30 days",
+      description: "Next 90 days",
       icon: AlertCircle,
       color: "text-red-600",
       roles: ["ADMIN", "WAREHOUSE_MANAGER"],

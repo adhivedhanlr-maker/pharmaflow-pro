@@ -353,7 +353,7 @@ export default function ReportsPage() {
                     <TabsContent value="expiry">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-sm font-bold text-red-600">Critical Expiry Alerts (Next 30 Days)</CardTitle>
+                                <CardTitle className="text-sm font-bold text-red-600">Critical Expiry Alerts (Next 90 Days)</CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 <Table className="min-w-[550px]">

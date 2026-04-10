@@ -109,7 +109,7 @@ export class InventoryService {
         });
     }
 
-    async getExpiringSoon(tenantId?: string, days: number = 30) {
+    async getExpiringSoon(tenantId?: string, days: number = 90) {
         const date = new Date();
         date.setDate(date.getDate() + days);
         return this.prisma.batch.findMany({

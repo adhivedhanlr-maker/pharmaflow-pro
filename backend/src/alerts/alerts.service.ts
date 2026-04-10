@@ -56,9 +56,9 @@ export class AlertsService {
             }
         }
 
-        // 2. Check Expiry (next 30 days)
+        // 2. Check Expiry (next 90 days)
         const threshold = new Date();
-        threshold.setDate(threshold.getDate() + 30);
+        threshold.setDate(threshold.getDate() + 90);
 
         const expiringBatches = await this.prisma.batch.findMany({
             where: {

@@ -81,7 +81,7 @@ export function WarehouseDashboard() {
     const statCards = [
         { title: "Total Products", value: stats.totalProducts.toString(), description: "In product catalogue", icon: Package, color: "text-blue-600" },
         { title: "Active Batches", value: stats.totalBatches.toString(), description: "Across all products", icon: PackagePlus, color: "text-green-600" },
-        { title: "Expiring Soon", value: stats.expiringSoon.toString(), description: "Within 30 days", icon: AlertTriangle, color: "text-orange-500" },
+        { title: "Expiring Soon", value: stats.expiringSoon.toString(), description: "Within 90 days", icon: AlertTriangle, color: "text-orange-500" },
         { title: "Low Stock", value: stats.lowStock.toString(), description: "Batches below threshold", icon: TrendingDown, color: "text-red-600" },
     ];
 
