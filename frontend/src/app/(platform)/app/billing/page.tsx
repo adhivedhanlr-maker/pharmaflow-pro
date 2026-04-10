@@ -563,7 +563,14 @@ function BillingContent() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
                             <h1 className="text-xl md:text-2xl font-bold tracking-tight">Generate Invoice</h1>
-                            <p className="text-muted-foreground text-sm hidden sm:block">Create a new sales invoice for a customer.</p>
+                            <div className="flex items-center gap-3 mt-0.5">
+                                {nextInvoiceNumber && (
+                                    <span className="text-sm font-mono font-semibold text-slate-700">{nextInvoiceNumber}</span>
+                                )}
+                                <span className="text-sm text-muted-foreground">
+                                    {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                                </span>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1 sm:flex-none">
@@ -773,20 +780,6 @@ function BillingContent() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-4">
-                                    {/* Invoice meta */}
-                                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-500 font-medium">Invoice No.</span>
-                                            <span className="font-mono font-semibold text-slate-800">{nextInvoiceNumber || "—"}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-500 font-medium">Invoice Date</span>
-                                            <span className="font-semibold text-slate-800">
-                                                {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                                            </span>
-                                        </div>
-                                    </div>
-
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-slate-500">Subtotal</span>
@@ -849,22 +842,6 @@ function BillingContent() {
                                 </CardHeader>
 
                                 <CardContent className="p-6 space-y-6">
-                                    {/* Invoice meta — number preview + date */}
-                                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-500 font-medium">Invoice No.</span>
-                                            <span className="font-mono font-semibold text-slate-800 text-sm">
-                                                {nextInvoiceNumber || "—"}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-500 font-medium">Invoice Date</span>
-                                            <span className="font-semibold text-slate-800">
-                                                {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                                            </span>
-                                        </div>
-                                    </div>
-
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-slate-500 font-medium">Subtotal</span>
