@@ -114,6 +114,8 @@ function BillingContent() {
     const [extraDiscount, setExtraDiscount] = useState(0);
     const printRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<HTMLDivElement>(null);
+    const [nextInvoiceNumber, setNextInvoiceNumber] = useState<string>("");
+    const [invoiceDate, setInvoiceDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
     const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState("");
     const [savedInvoiceDialog, setSavedInvoiceDialog] = useState<{
         invoiceNumber: string;
@@ -150,8 +152,27 @@ function BillingContent() {
         if (token) {
             void fetchCustomers();
             void fetchBusinessProfile();
+            void fetchNextInvoiceNumber();
         }
     }, [token]);
+
+    const fetchNextInvoiceNumber = async () => {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(`${API_BASE}/sales/next-invoice-number`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (res.ok) {
+                const data = await res.json();
+                setNextInvoiceNumber(data.nextNumber ?? "");
+            }
+        } catch {
+            // non-critical — silently ignore
+        }
+    };
 
     const fetchBusinessProfile = async () => {
         try {
@@ -307,6 +328,7 @@ function BillingContent() {
                     })),
                     paymentMethod,
                     discountAmount: totals.discount,
+                    invoiceDate: invoiceDate || new Date().toISOString().split("T")[0],
                 }),
             });
 
@@ -327,7 +349,9 @@ function BillingContent() {
                 setSelectedCustomerId("");
                 setPaymentMethod("CASH");
                 setExtraDiscount(0);
+                setInvoiceDate(new Date().toISOString().split("T")[0]);
                 localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
+                void fetchNextInvoiceNumber();
             } else {
                 const error = await response.json();
                 alert(`Error: ${error.message}`);
@@ -462,6 +486,7 @@ function BillingContent() {
                     })),
                     paymentMethod,
                     discountAmount: totals.discount,
+                    invoiceDate: invoiceDate || new Date().toISOString().split("T")[0],
                 }),
             });
 
@@ -481,8 +506,10 @@ function BillingContent() {
                 setSelectedCustomerId("");
                 setPaymentMethod("CASH");
                 setExtraDiscount(0);
+                setInvoiceDate(new Date().toISOString().split("T")[0]);
                 setCurrentInvoiceNumber("");
                 localStorage.removeItem(BILLING_DRAFT_STORAGE_KEY);
+                void fetchNextInvoiceNumber();
             } else {
                 const error = await response.json();
                 alert(`Error: ${error.message}`);
@@ -809,6 +836,25 @@ function BillingContent() {
                                 </CardHeader>
 
                                 <CardContent className="p-6 space-y-6">
+                                    {/* Invoice meta — number preview + date */}
+                                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium">Invoice No.</span>
+                                            <span className="font-mono font-semibold text-slate-800 text-sm">
+                                                {nextInvoiceNumber || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium">Invoice Date</span>
+                                            <input
+                                                type="date"
+                                                value={invoiceDate}
+                                                onChange={(e) => setInvoiceDate(e.target.value)}
+                                                className="text-xs font-semibold text-slate-800 border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-slate-500 font-medium">Subtotal</span>

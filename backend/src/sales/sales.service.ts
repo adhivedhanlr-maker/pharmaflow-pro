@@ -40,7 +40,7 @@ export class SalesService {
     ) { }
 
     async createInvoice(data: any, userId?: string, tenantId?: string) {
-        const { customerId, items, discountAmount = 0, customerType } = data;
+        const { customerId, items, discountAmount = 0, customerType, invoiceDate } = data;
         const finalPaymentMethod = data.paymentMethod || (data.isCash === false ? 'CREDIT' : 'CASH');
         const isCash = finalPaymentMethod !== 'CREDIT';
 
@@ -152,6 +152,7 @@ export class SalesService {
                     paymentMethod: finalPaymentMethod,
                     customerType: customerType || 'PHARMACY',
                     deliveryOtp: otp,
+                    ...(invoiceDate ? { invoiceDate: new Date(invoiceDate) } : {}),
                     items: {
                         create: invoiceItems,
                     },
@@ -563,6 +564,18 @@ export class SalesService {
                 breakdown: Object.fromEntries(Object.entries(byFY).map(([fy, s]) => [fy, s.length])),
             };
         });
+    }
+
+    async previewNextInvoiceNumber(tenantId: string) {
+        const fy = getCurrentFinancialYear();
+        const seq = await this.prisma.invoiceSequence.findFirst({
+            where: { tenantId, financialYear: fy },
+        });
+        const next = (seq?.lastNumber ?? 0) + 1;
+        return {
+            nextNumber: `INV/${fy}/${String(next).padStart(5, '0')}`,
+            financialYear: fy,
+        };
     }
 
     async syncInvoiceSequences(tenantId: string) {

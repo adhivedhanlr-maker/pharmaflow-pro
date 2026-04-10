@@ -46,6 +46,12 @@ export class SalesController {
         return result;
     }
 
+    @Get('next-invoice-number')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
+    getNextInvoiceNumber(@Request() req: any) {
+        return this.salesService.previewNextInvoiceNumber(req.user?.tenantId);
+    }
+
     @Get('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
     findAll(@Request() req: any) {
