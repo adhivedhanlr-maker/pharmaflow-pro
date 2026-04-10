@@ -506,34 +506,23 @@ export class SalesService {
 
             // 5. Delete sale items then sale
             await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
-            return tx.sale.delete({ where: { id: sale.id } });
-        });
-    }
+            const deleted = await tx.sale.delete({ where: { id: sale.id } });
 
-    async updateInvoiceNumber(id: string, newNumber: string, tenantId: string) {
-        const sale = await this.prisma.sale.findFirst({ where: { id, tenantId } });
-        if (!sale) throw new NotFoundException('Invoice not found');
-
-        const conflict = await this.prisma.sale.findFirst({ where: { invoiceNumber: newNumber, tenantId } });
-        if (conflict && conflict.id !== id) throw new BadRequestException(`Invoice number ${newNumber} is already in use`);
-
-        // Parse the new number to update the sequence if it's in INV/FY/NNNNN format
-        const match = newNumber.match(/^INV\/(\d{4})\/(\d+)$/);
-        if (match) {
-            const fy = match[1];
-            const num = parseInt(match[2], 10);
-            const seq = await this.prisma.invoiceSequence.findFirst({ where: { tenantId, financialYear: fy } });
-            if (seq && seq.lastNumber < num) {
-                await this.prisma.invoiceSequence.update({
-                    where: { tenantId_financialYear: { tenantId, financialYear: fy } },
-                    data: { lastNumber: num },
-                });
+            // 6. Roll back sequence counter if this was the last invoice in its FY
+            const seqMatch = sale.invoiceNumber.match(/^INV\/(\d{4})\/(\d+)$/);
+            if (seqMatch && tenantId) {
+                const fy = seqMatch[1];
+                const num = parseInt(seqMatch[2], 10);
+                const seq = await tx.invoiceSequence.findFirst({ where: { tenantId, financialYear: fy } });
+                if (seq && seq.lastNumber === num) {
+                    await tx.invoiceSequence.update({
+                        where: { tenantId_financialYear: { tenantId, financialYear: fy } },
+                        data: { lastNumber: { decrement: 1 } },
+                    });
+                }
             }
-        }
 
-        return this.prisma.sale.update({
-            where: { id },
-            data: { invoiceNumber: newNumber },
+            return deleted;
         });
     }
 
@@ -574,6 +563,36 @@ export class SalesService {
                 breakdown: Object.fromEntries(Object.entries(byFY).map(([fy, s]) => [fy, s.length])),
             };
         });
+    }
+
+    async syncInvoiceSequences(tenantId: string) {
+        // Find all invoices in INV/FY/NNNNN format and compute the max per FY
+        const invoices = await this.prisma.sale.findMany({
+            where: { tenantId, invoiceNumber: { startsWith: 'INV/' } },
+            select: { invoiceNumber: true },
+        });
+
+        const maxByFY: Record<string, number> = {};
+        for (const { invoiceNumber } of invoices) {
+            const match = invoiceNumber.match(/^INV\/(\d{4})\/(\d+)$/);
+            if (match) {
+                const fy = match[1];
+                const num = parseInt(match[2], 10);
+                if (!maxByFY[fy] || num > maxByFY[fy]) maxByFY[fy] = num;
+            }
+        }
+
+        const results: Record<string, number> = {};
+        for (const [fy, maxNum] of Object.entries(maxByFY)) {
+            await this.prisma.invoiceSequence.upsert({
+                where: { tenantId_financialYear: { tenantId, financialYear: fy } },
+                update: { lastNumber: maxNum },
+                create: { tenantId, financialYear: fy, lastNumber: maxNum },
+            });
+            results[fy] = maxNum;
+        }
+
+        return { synced: Object.keys(results).length, sequences: results };
     }
 
 }

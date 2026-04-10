@@ -22,6 +22,13 @@ export class SalesController {
         return this.salesService.renumberLegacyInvoices(req.user.tenantId);
     }
 
+    @Post('admin/sync-sequence')
+    @Roles(Role.ADMIN)
+    async syncSequence(@Request() req: any) {
+        if (!req.user.tenantId) throw new BadRequestException('Tenant context required');
+        return this.salesService.syncInvoiceSequences(req.user.tenantId);
+    }
+
     @Post('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.SALES_REP)
     async createInvoice(@Body() data: any, @Request() req: any) {
@@ -92,17 +99,6 @@ export class SalesController {
             userAgent: req.headers['user-agent'],
         });
         return result;
-    }
-
-    @Patch('invoices/:id/number')
-    @Roles(Role.ADMIN)
-    async updateInvoiceNumber(
-        @Param('id') id: string,
-        @Body('newNumber') newNumber: string,
-        @Request() req: any,
-    ) {
-        if (!newNumber || typeof newNumber !== 'string') throw new BadRequestException('newNumber is required');
-        return this.salesService.updateInvoiceNumber(id, newNumber.trim(), req.user.tenantId);
     }
 
     @Patch(':id/assign-rep')
