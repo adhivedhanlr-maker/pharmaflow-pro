@@ -99,12 +99,9 @@ export class AuditLogService {
             if (params.endDate) where.createdAt.lte = params.endDate;
         }
 
-        const include = { user: { select: { name: true, role: true } } };
-
         const [logs, total] = await Promise.all([
             this.prisma.auditLog.findMany({
                 where,
-                include,
                 orderBy: { createdAt: 'desc' },
                 take: params.limit || 100,
                 skip: params.offset || 0,
@@ -112,15 +109,36 @@ export class AuditLogService {
             this.prisma.auditLog.count({ where }),
         ]);
 
-        return { logs, total };
+        // Attach user name/role without a FK — safe even if user was deleted
+        const userIds = [...new Set(logs.map(l => l.userId).filter(Boolean))];
+        const users = userIds.length > 0
+            ? await this.prisma.user.findMany({
+                where: { id: { in: userIds } },
+                select: { id: true, name: true, role: true },
+            })
+            : [];
+        const userMap = Object.fromEntries(users.map(u => [u.id, { name: u.name, role: u.role }]));
+
+        return {
+            logs: logs.map(l => ({ ...l, user: userMap[l.userId] ?? null })),
+            total,
+        };
     }
 
     async getRecentActivity(userId: string, tenantId?: string, limit: number = 10) {
-        return this.prisma.auditLog.findMany({
+        const logs = await this.prisma.auditLog.findMany({
             where: { userId, ...(tenantId ? { tenantId } : {}) },
-            include: { user: { select: { name: true, role: true } } },
             orderBy: { createdAt: 'desc' },
             take: limit,
         });
+
+        const user = logs.length > 0
+            ? await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, role: true },
+            })
+            : null;
+
+        return logs.map(l => ({ ...l, user }));
     }
 }
