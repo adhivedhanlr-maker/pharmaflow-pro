@@ -4,11 +4,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 @Controller('parties')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PartiesController {
-    constructor(private readonly partiesService: PartiesService) { }
+    constructor(
+        private readonly partiesService: PartiesService,
+        private readonly auditLogService: AuditLogService,
+    ) { }
 
     @Get('customers')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
@@ -33,8 +37,53 @@ export class PartiesController {
 
     @Post('customers')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
-    createCustomer(@Body() data: any, @Request() req: any) {
-        return this.partiesService.createCustomer(data, req.user.tenantId);
+    async createCustomer(@Body() data: any, @Request() req: any) {
+        const result = await this.partiesService.createCustomer(data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.CREATE_CUSTOMER,
+            entity: 'Customer',
+            entityId: result.id,
+            details: { name: result.name, phone: result.phone },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
+    }
+
+    @Put('customers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    async updateCustomer(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        const result = await this.partiesService.updateCustomer(id, data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_CUSTOMER,
+            entity: 'Customer',
+            entityId: id,
+            details: { name: result.name },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
+    }
+
+    @Delete('customers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT)
+    async deleteCustomer(@Param('id') id: string, @Request() req: any) {
+        const result = await this.partiesService.deleteCustomer(id, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.DELETE_CUSTOMER,
+            entity: 'Customer',
+            entityId: id,
+            details: { name: result.name },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Get('suppliers')
@@ -54,26 +103,53 @@ export class PartiesController {
 
     @Post('suppliers')
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
-    createSupplier(@Body() data: any, @Request() req: any) {
-        return this.partiesService.createSupplier(data, req.user.tenantId);
-    }
-
-    @Put('customers/:id')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    updateCustomer(@Param('id') id: string, @Body() data: any, @Request() req: any) {
-        return this.partiesService.updateCustomer(id, data, req.user.tenantId);
-    }
-
-    @Delete('customers/:id')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    deleteCustomer(@Param('id') id: string, @Request() req: any) {
-        return this.partiesService.deleteCustomer(id, req.user.tenantId);
+    async createSupplier(@Body() data: any, @Request() req: any) {
+        const result = await this.partiesService.createSupplier(data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.CREATE_SUPPLIER,
+            entity: 'Supplier',
+            entityId: result.id,
+            details: { name: result.name, phone: result.phone },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Put('suppliers/:id')
     @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
-    updateSupplier(@Param('id') id: string, @Body() data: any, @Request() req: any) {
-        return this.partiesService.updateSupplier(id, data, req.user.tenantId);
+    async updateSupplier(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        const result = await this.partiesService.updateSupplier(id, data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_SUPPLIER,
+            entity: 'Supplier',
+            entityId: id,
+            details: { name: result.name },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
+    }
+
+    @Delete('suppliers/:id')
+    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
+    async deleteSupplier(@Param('id') id: string, @Request() req: any) {
+        const result = await this.partiesService.deleteSupplier(id, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.DELETE_SUPPLIER,
+            entity: 'Supplier',
+            entityId: id,
+            details: { name: result.name },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Patch('suppliers/:id/reset-balance')
@@ -86,11 +162,5 @@ export class PartiesController {
     @Roles(Role.ADMIN)
     resetCustomerBalance(@Param('id') id: string, @Request() req: any) {
         return this.partiesService.resetCustomerBalance(id, req.user.tenantId);
-    }
-
-    @Delete('suppliers/:id')
-    @Roles(Role.ADMIN, Role.ACCOUNTANT, Role.WAREHOUSE_MANAGER)
-    deleteSupplier(@Param('id') id: string, @Request() req: any) {
-        return this.partiesService.deleteSupplier(id, req.user.tenantId);
     }
 }

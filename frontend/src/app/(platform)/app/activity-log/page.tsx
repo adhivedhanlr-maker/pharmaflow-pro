@@ -14,15 +14,31 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 const PAGE_SIZE = 50;
 
 const ACTION_META: Record<string, { label: string; color: string }> = {
+    // Sales
     CREATE_SALE: { label: "Created Invoice", color: "bg-green-100 text-green-800" },
     DELETE_SALE: { label: "Deleted Invoice", color: "bg-red-100 text-red-800" },
+    // Purchases
     CREATE_PURCHASE: { label: "Recorded Purchase", color: "bg-blue-100 text-blue-800" },
     UPDATE_PURCHASE: { label: "Updated Purchase", color: "bg-amber-100 text-amber-800" },
     DELETE_PURCHASE: { label: "Deleted Purchase", color: "bg-red-100 text-red-800" },
+    // Stock
     UPDATE_INVENTORY: { label: "Adjusted Stock", color: "bg-violet-100 text-violet-800" },
+    // Orders
+    CREATE_ORDER: { label: "Created Order", color: "bg-cyan-100 text-cyan-800" },
+    UPDATE_ORDER_STATUS: { label: "Updated Order Status", color: "bg-amber-100 text-amber-800" },
+    CONVERT_ORDER: { label: "Converted Order → Invoice", color: "bg-green-100 text-green-800" },
+    // Customers & Suppliers
+    CREATE_CUSTOMER: { label: "Added Customer", color: "bg-green-100 text-green-800" },
+    UPDATE_CUSTOMER: { label: "Updated Customer", color: "bg-amber-100 text-amber-800" },
+    DELETE_CUSTOMER: { label: "Deleted Customer", color: "bg-red-100 text-red-800" },
+    CREATE_SUPPLIER: { label: "Added Supplier", color: "bg-green-100 text-green-800" },
+    UPDATE_SUPPLIER: { label: "Updated Supplier", color: "bg-amber-100 text-amber-800" },
+    DELETE_SUPPLIER: { label: "Deleted Supplier", color: "bg-red-100 text-red-800" },
+    // Staff
     CREATE_USER: { label: "Added Staff", color: "bg-green-100 text-green-800" },
     UPDATE_USER: { label: "Updated Staff", color: "bg-amber-100 text-amber-800" },
     DELETE_USER: { label: "Removed Staff", color: "bg-red-100 text-red-800" },
+    // Settings & Auth
     UPDATE_BUSINESS_PROFILE: { label: "Changed Settings", color: "bg-slate-100 text-slate-800" },
     LOGIN: { label: "Logged In", color: "bg-slate-100 text-slate-700" },
     LOGOUT: { label: "Logged Out", color: "bg-slate-100 text-slate-700" },
@@ -41,6 +57,15 @@ const ACTION_OPTIONS = [
     { value: "UPDATE_PURCHASE", label: "Updated Purchase" },
     { value: "DELETE_PURCHASE", label: "Deleted Purchase" },
     { value: "UPDATE_INVENTORY", label: "Adjusted Stock" },
+    { value: "CREATE_ORDER", label: "Created Order" },
+    { value: "UPDATE_ORDER_STATUS", label: "Updated Order Status" },
+    { value: "CONVERT_ORDER", label: "Converted Order → Invoice" },
+    { value: "CREATE_CUSTOMER", label: "Added Customer" },
+    { value: "UPDATE_CUSTOMER", label: "Updated Customer" },
+    { value: "DELETE_CUSTOMER", label: "Deleted Customer" },
+    { value: "CREATE_SUPPLIER", label: "Added Supplier" },
+    { value: "UPDATE_SUPPLIER", label: "Updated Supplier" },
+    { value: "DELETE_SUPPLIER", label: "Deleted Supplier" },
     { value: "CREATE_USER", label: "Added Staff" },
     { value: "UPDATE_USER", label: "Updated Staff" },
     { value: "DELETE_USER", label: "Removed Staff" },
@@ -48,33 +73,57 @@ const ACTION_OPTIONS = [
     { value: "LOGIN", label: "Logged In" },
 ];
 
+function parseBrowser(userAgent?: string): string {
+    if (!userAgent) return "";
+    if (userAgent.includes("Chrome")) return "Chrome";
+    if (userAgent.includes("Firefox")) return "Firefox";
+    if (userAgent.includes("Safari")) return "Safari";
+    if (userAgent.includes("Edge")) return "Edge";
+    return "Browser";
+}
+
 function formatDetails(action: string, details: any): string {
     if (!details) return "";
     switch (action) {
         case "CREATE_SALE":
-            return `${details.invoiceNumber ?? ""} · ₹${details.netAmount ?? ""}`;
+            return `${details.invoiceNumber ?? ""} · ₹${Number(details.netAmount ?? 0).toLocaleString("en-IN")}`;
         case "DELETE_SALE":
             return `${details.invoiceNumber ?? ""}`;
         case "CREATE_PURCHASE":
-            return `Bill: ${details.billNumber ?? ""} · ₹${details.netAmount ?? ""}`;
+            return `Bill: ${details.billNumber ?? ""} · ₹${Number(details.netAmount ?? 0).toLocaleString("en-IN")}`;
         case "UPDATE_PURCHASE":
             return `Bill: ${details.billNumber ?? ""}`;
         case "DELETE_PURCHASE":
             return `Bill: ${details.billNumber ?? ""}`;
         case "UPDATE_INVENTORY":
-            return `${details.productName ?? ""} · ${details.batchNumber ?? ""} · ${details.oldQty} → ${details.newQty}${details.reason ? ` (${details.reason})` : ""}`;
+            return `${details.productName ?? ""} · Batch ${details.batchNumber ?? ""} · ${details.oldQty} → ${details.newQty}${details.reason ? ` (${details.reason})` : ""}`;
+        case "CREATE_ORDER":
+            return `${details.customerName ?? ""} · ${details.itemCount ?? 0} item${details.itemCount !== 1 ? "s" : ""}`;
+        case "UPDATE_ORDER_STATUS":
+            return `${details.customerName ?? ""} → ${details.status ?? ""}`;
+        case "CONVERT_ORDER":
+            return `${details.invoiceNumber ?? ""} · ${details.customerName ?? ""}`;
+        case "CREATE_CUSTOMER":
+        case "UPDATE_CUSTOMER":
+        case "DELETE_CUSTOMER":
+            return `${details.name ?? ""}${details.phone ? ` · ${details.phone}` : ""}`;
+        case "CREATE_SUPPLIER":
+        case "UPDATE_SUPPLIER":
+        case "DELETE_SUPPLIER":
+            return `${details.name ?? ""}${details.phone ? ` · ${details.phone}` : ""}`;
         case "CREATE_USER":
-            return `${details.name ?? ""} · ${details.role ?? ""}`;
-        case "UPDATE_USER":
-            return `Changed: ${Array.isArray(details.changes) ? details.changes.join(", ") : ""}`;
         case "DELETE_USER":
             return `${details.name ?? ""} · ${details.role ?? ""}`;
+        case "UPDATE_USER":
+            return `${details.name ?? ""}${Array.isArray(details.changes) && details.changes.length ? ` · ${details.changes.join(", ")}` : ""}`;
         case "UPDATE_BUSINESS_PROFILE":
-            return `Fields: ${Array.isArray(details.fields) ? details.fields.join(", ") : ""}`;
+            return Array.isArray(details.fields) && details.fields.length ? details.fields.join(", ") : "Settings updated";
         case "LOGIN":
-            return details.userAgent ? details.userAgent.substring(0, 40) : "";
+            return parseBrowser(details.userAgent);
+        case "REGISTER":
+            return `${details.name ?? ""} · ${details.role ?? ""}`;
         default:
-            return JSON.stringify(details).substring(0, 80);
+            return "";
     }
 }
 
