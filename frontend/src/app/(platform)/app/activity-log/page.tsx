@@ -27,6 +27,10 @@ const ACTION_META: Record<string, { label: string; color: string }> = {
     CREATE_ORDER: { label: "Created Order", color: "bg-cyan-100 text-cyan-800" },
     UPDATE_ORDER_STATUS: { label: "Updated Order Status", color: "bg-amber-100 text-amber-800" },
     CONVERT_ORDER: { label: "Converted Order → Invoice", color: "bg-green-100 text-green-800" },
+    // Products
+    CREATE_PRODUCT: { label: "Added Product", color: "bg-green-100 text-green-800" },
+    UPDATE_PRODUCT: { label: "Updated Product", color: "bg-amber-100 text-amber-800" },
+    DELETE_PRODUCT: { label: "Deleted Product", color: "bg-red-100 text-red-800" },
     // Customers & Suppliers
     CREATE_CUSTOMER: { label: "Added Customer", color: "bg-green-100 text-green-800" },
     UPDATE_CUSTOMER: { label: "Updated Customer", color: "bg-amber-100 text-amber-800" },
@@ -57,6 +61,9 @@ const ACTION_OPTIONS = [
     { value: "UPDATE_PURCHASE", label: "Updated Purchase" },
     { value: "DELETE_PURCHASE", label: "Deleted Purchase" },
     { value: "UPDATE_INVENTORY", label: "Adjusted Stock" },
+    { value: "CREATE_PRODUCT", label: "Added Product" },
+    { value: "UPDATE_PRODUCT", label: "Updated Product" },
+    { value: "DELETE_PRODUCT", label: "Deleted Product" },
     { value: "CREATE_ORDER", label: "Created Order" },
     { value: "UPDATE_ORDER_STATUS", label: "Updated Order Status" },
     { value: "CONVERT_ORDER", label: "Converted Order → Invoice" },
@@ -97,6 +104,10 @@ function formatDetails(action: string, details: any): string {
             return `Bill: ${details.billNumber ?? ""}`;
         case "UPDATE_INVENTORY":
             return `${details.productName ?? ""} · Batch ${details.batchNumber ?? ""} · ${details.oldQty} → ${details.newQty}${details.reason ? ` (${details.reason})` : ""}`;
+        case "CREATE_PRODUCT":
+        case "UPDATE_PRODUCT":
+        case "DELETE_PRODUCT":
+            return `${details.name ?? ""}${details.company ? ` · ${details.company}` : ""}`;
         case "CREATE_ORDER":
             return `${details.customerName ?? ""} · ${details.itemCount ?? 0} item${details.itemCount !== 1 ? "s" : ""}`;
         case "UPDATE_ORDER_STATUS":

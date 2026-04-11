@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuditLogService, AuditAction } from '../audit/audit-log.service';
 
 const SUPPORTED_INVOICE_MIME_TYPES = new Set([
     'application/pdf',
@@ -21,7 +22,8 @@ const MAX_INVOICE_UPLOAD_SIZE = 10 * 1024 * 1024;
 export class InventoryController {
     constructor(
         private readonly inventoryService: InventoryService,
-        private readonly ocrService: OCRService
+        private readonly ocrService: OCRService,
+        private readonly auditLogService: AuditLogService,
     ) { }
 
     @Post('extract-invoice')
@@ -50,8 +52,19 @@ export class InventoryController {
 
     @Delete('products/:id')
     @Roles(Role.ADMIN)
-    deleteProduct(@Param('id') id: string, @Request() req: any) {
-        return this.inventoryService.deleteProduct(id, req.user.tenantId);
+    async deleteProduct(@Param('id') id: string, @Request() req: any) {
+        const result = await this.inventoryService.deleteProduct(id, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.DELETE_PRODUCT,
+            entity: 'Product',
+            entityId: id,
+            details: { name: result.name, company: result.company },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Delete('batches/:id')
@@ -87,14 +100,36 @@ export class InventoryController {
 
     @Post('products')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    createProduct(@Body() data: any, @Request() req: any) {
-        return this.inventoryService.createProduct(data, req.user.tenantId);
+    async createProduct(@Body() data: any, @Request() req: any) {
+        const result = await this.inventoryService.createProduct(data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.CREATE_PRODUCT,
+            entity: 'Product',
+            entityId: result.id,
+            details: { name: result.name, company: result.company },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Put('products/:id')
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    updateProduct(@Param('id') id: string, @Body() data: any, @Request() req: any) {
-        return this.inventoryService.updateProduct(id, data, req.user.tenantId);
+    async updateProduct(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        const result = await this.inventoryService.updateProduct(id, data, req.user.tenantId);
+        await this.auditLogService.log({
+            userId: req.user.userId,
+            tenantId: req.user.tenantId,
+            action: AuditAction.UPDATE_PRODUCT,
+            entity: 'Product',
+            entityId: id,
+            details: { name: result.name, changes: Object.keys(data) },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+        });
+        return result;
     }
 
     @Post('batches')
