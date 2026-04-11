@@ -73,6 +73,7 @@ interface Product {
     hsnCode?: string;
     packing?: string;
     gstRate: number;
+    mrp?: number;
 }
 
 interface Supplier {
@@ -383,6 +384,7 @@ export default function PurchasesPage() {
                         updated.composition = product.composition || "";
                         updated.hsnCode = product.hsnCode || "";
                         updated.packing = product.packing || "";
+                        if (product.mrp) updated.salePrice = product.mrp;
                     }
                 }
                 // Auto-calculate NR and purchasePrice when PTS or discount changes
