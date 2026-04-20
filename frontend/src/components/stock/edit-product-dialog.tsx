@@ -101,7 +101,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
                 : null;
 
             if (bestBatch && (ptr || pts || nr)) {
-                await fetch(`${API_BASE}/stock/batches/${bestBatch.id}`, {
+                const batchRes = await fetch(`${API_BASE}/stock/batches/${bestBatch.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                     body: JSON.stringify({
@@ -112,6 +112,12 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
                         nr,
                     }),
                 });
+                if (!batchRes.ok) {
+                    const errData = await batchRes.json().catch(() => ({}));
+                    throw new Error(errData.message || "Failed to update batch rates");
+                }
+            } else if (!bestBatch && (ptr || pts || nr)) {
+                toast.warning("Rates not saved — this product has no batches yet. Record a purchase first.");
             }
 
             toast.success("Product updated successfully");

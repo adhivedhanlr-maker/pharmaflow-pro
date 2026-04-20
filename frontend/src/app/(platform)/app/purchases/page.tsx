@@ -392,6 +392,7 @@ export default function PurchasesPage() {
                         : null;
                     if (bestBatch?.ptr) updated.ptr = bestBatch.ptr;
                     if (bestBatch?.pts) updated.pts = bestBatch.pts;
+                    if (bestBatch?.nr) updated.nr = bestBatch.nr;
                 }
             }
             // Purchase price = NR × (1 - Disc%)
