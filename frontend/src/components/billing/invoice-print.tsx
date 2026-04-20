@@ -238,7 +238,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 <th style={{ ...headBase, width: "34px" }}>Qty</th>
                                 <th style={{ ...headBase, width: "34px" }}>Free</th>
                                 <th style={{ ...headBase, width: "52px" }}>MRP</th>
-                                <th style={{ ...headBase, width: "60px" }}>PTR</th>
+                                <th style={{ ...headBase, width: "60px" }}>{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}</th>
                                 <th style={{ ...headBase, width: "42px" }}>GST%</th>
                                 <th style={{ ...headBase, width: "72px" }}>Taxable</th>
                             </tr>
@@ -266,7 +266,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                         <td className="item-col-qty" style={{ ...cellBase, textAlign: "center", fontWeight: 700 }}>{item.quantity}</td>
                                         <td className="item-col-free" style={{ ...cellBase, textAlign: "center" }}>{item.freeQuantity || 0}</td>
                                         <td className="item-col-mrp" style={{ ...cellBase, textAlign: "right" }}>{(item.mrp || 0).toFixed(2)}</td>
-                                        <td className="item-col-rate" style={{ ...cellBase, textAlign: "right", fontWeight: 700 }}>{(item.ptr ?? item.unitPrice).toFixed(2)}</td>
+                                        <td className="item-col-rate" style={{ ...cellBase, textAlign: "right", fontWeight: 700 }}>{item.unitPrice.toFixed(2)}</td>
                                         <td className="item-col-gst" style={{ ...cellBase, textAlign: "center" }}>{item.gstRate}</td>
                                         <td className="item-col-taxable" style={{ ...cellBase, textAlign: "right" }}>{taxable.toFixed(2)}</td>
                                     </tr>
