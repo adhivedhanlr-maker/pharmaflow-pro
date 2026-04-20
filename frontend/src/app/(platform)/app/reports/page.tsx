@@ -573,16 +573,16 @@ export default function ReportsPage() {
 
                 {/* ── Transactions & Expiry Tabs ── */}
                 <Tabs defaultValue="sales" className="space-y-4">
-                    <TabsList className="bg-muted/50 p-1">
-                        <TabsTrigger value="sales">
+                    <TabsList className="bg-muted/50 p-1 w-full overflow-x-auto flex">
+                        <TabsTrigger value="sales" className="whitespace-nowrap shrink-0">
                             Sales Transactions
                             {sales.length > 0 && <span className="ml-1.5 text-[10px] bg-emerald-100 text-emerald-700 rounded-full px-1.5 py-0.5 font-bold">{sales.length}</span>}
                         </TabsTrigger>
-                        <TabsTrigger value="purchases">
+                        <TabsTrigger value="purchases" className="whitespace-nowrap shrink-0">
                             Purchase Transactions
                             {purchases.length > 0 && <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">{purchases.length}</span>}
                         </TabsTrigger>
-                        <TabsTrigger value="expiry">
+                        <TabsTrigger value="expiry" className="whitespace-nowrap shrink-0">
                             Expiry Risk
                             {expiring.length > 0 && <span className="ml-1.5 text-[10px] bg-red-100 text-red-600 rounded-full px-1.5 py-0.5 font-bold">{expiring.length}</span>}
                         </TabsTrigger>
