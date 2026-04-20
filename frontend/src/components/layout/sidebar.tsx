@@ -91,7 +91,7 @@ export function Sidebar({ className, onNavigate, branding }: SidebarProps) {
 
   return (
     <div className={cn(
-      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300 z-[1001] relative",
+      "flex flex-col h-screen border-r bg-card shadow-sm transition-all duration-300 z-30 relative",
       isCollapsed ? "w-20" : "w-64",
       className
     )}>
