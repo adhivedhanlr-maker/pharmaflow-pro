@@ -226,24 +226,24 @@ export default function ReportsPage() {
                     <p className="text-muted-foreground text-sm">Financial analytics and GST filing reports.</p>
                 </div>
                 {/* Date filter */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-fit">
                     <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                        className="flex-1 h-9 rounded-md border border-slate-200 px-3 text-sm bg-white min-w-0" />
+                        className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
                     <span className="text-slate-400 text-sm shrink-0">to</span>
                     <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                        className="flex-1 h-9 rounded-md border border-slate-200 px-3 text-sm bg-white min-w-0" />
+                        className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
                 </div>
 
                 {/* ── GST Report Download Cards ── */}
                 <Card className="border-slate-200">
                     <CardHeader className="pb-4 text-center">
                         <CardTitle className="text-base font-bold text-slate-700 mb-3">GST Reports</CardTitle>
-                        {/* Summary / Detailed toggle — full width, centered */}
-                        <div className="flex rounded-lg border border-slate-200 overflow-hidden w-full">
+                        {/* Summary / Detailed toggle */}
+                        <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit mx-auto">
                             {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
                                 <button key={m}
                                     onClick={() => setReportMode(m)}
-                                    className={`flex-1 py-2 text-xs font-bold transition-colors ${
+                                    className={`px-5 py-2 text-xs font-bold transition-colors whitespace-nowrap ${
                                         reportMode === m
                                             ? "bg-slate-800 text-white"
                                             : "bg-white text-slate-500 hover:bg-slate-50"
