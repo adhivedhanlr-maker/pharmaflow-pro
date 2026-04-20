@@ -167,9 +167,16 @@ export class PurchasesService {
         });
     }
 
-    async findAll(tenantId?: string) {
+    async findAll(tenantId?: string, startDate?: string, endDate?: string) {
+        const where: any = tenantId ? { tenantId } : {};
+        if (startDate && endDate) {
+            where.date = {
+                gte: new Date(startDate),
+                lte: new Date(endDate + 'T23:59:59'),
+            };
+        }
         return this.prisma.purchase.findMany({
-            where: tenantId ? { tenantId } : undefined,
+            where,
             include: { supplier: true, items: { include: { product: true, batch: true } } },
             orderBy: { createdAt: 'desc' },
         });

@@ -60,9 +60,12 @@ export class ReportsService {
         };
     }
 
-    async getProfitabilitySummary(tenantId: string) {
+    async getProfitabilitySummary(tenantId: string, startDate?: string, endDate?: string) {
+        const dateFilter = startDate && endDate ? {
+            date: { gte: new Date(startDate), lte: new Date(endDate + 'T23:59:59') }
+        } : {};
         const saleItems = await this.prisma.saleItem.findMany({
-            where: { sale: { tenantId } },
+            where: { sale: { tenantId, ...dateFilter } },
             include: { batch: true },
         });
 

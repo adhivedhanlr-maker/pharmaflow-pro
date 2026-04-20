@@ -202,13 +202,19 @@ export class SalesService {
         });
     }
 
-    async findAll(user?: any) {
+    async findAll(user?: any, startDate?: string, endDate?: string) {
         if (!user?.tenantId) {
             return [];
         }
         const where: any = { tenantId: user.tenantId };
         if (user?.role === 'SALES_REP' && user?.userId) {
             where.repId = user.userId;
+        }
+        if (startDate && endDate) {
+            where.date = {
+                gte: new Date(startDate),
+                lte: new Date(endDate + 'T23:59:59'),
+            };
         }
 
         return this.prisma.sale.findMany({

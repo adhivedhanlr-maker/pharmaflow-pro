@@ -28,7 +28,11 @@ export class ReportsController {
 
     @Get('profitability')
     @Roles(Role.ADMIN, Role.ACCOUNTANT)
-    getProfitability(@Request() req: any) {
-        return this.reportsService.getProfitabilitySummary(req.user.tenantId);
+    getProfitability(
+        @Request() req: any,
+        @Query('start') start?: string,
+        @Query('end') end?: string,
+    ) {
+        return this.reportsService.getProfitabilitySummary(req.user.tenantId, start, end);
     }
 }

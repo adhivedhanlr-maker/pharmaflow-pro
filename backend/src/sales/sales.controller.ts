@@ -54,8 +54,12 @@ export class SalesController {
 
     @Get('invoices')
     @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT, Role.SALES_REP)
-    findAll(@Request() req: any) {
-        return this.salesService.findAll(req.user);
+    findAll(
+        @Request() req: any,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        return this.salesService.findAll(req.user, startDate, endDate);
     }
 
     @Get('receivables')

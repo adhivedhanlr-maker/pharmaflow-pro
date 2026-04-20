@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -33,8 +33,12 @@ export class PurchasesController {
 
     @Get()
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
-    findAll(@Request() req: any) {
-        return this.purchasesService.findAll(req.user.tenantId);
+    findAll(
+        @Request() req: any,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        return this.purchasesService.findAll(req.user.tenantId, startDate, endDate);
     }
 
     @Put(':id')
