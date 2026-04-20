@@ -239,6 +239,53 @@ export class PartiesService {
         return this.prisma.supplier.delete({ where: { id: supplier.id } });
     }
 
+    // Supplier Rate Card Methods
+    async getRateCard(supplierId: string, tenantId: string) {
+        await this.findSupplierById(supplierId, tenantId);
+        return this.prisma.supplierRateCard.findMany({
+            where: { supplierId, tenantId },
+            include: {
+                product: {
+                    select: { id: true, name: true, composition: true, packing: true, hsnCode: true },
+                },
+            },
+            orderBy: { product: { name: 'asc' } },
+        });
+    }
+
+    async getRateCardEntry(supplierId: string, productId: string, tenantId: string) {
+        return this.prisma.supplierRateCard.findFirst({
+            where: { supplierId, productId, tenantId },
+        });
+    }
+
+    async upsertRateCard(
+        supplierId: string,
+        data: { productId: string; mrp: number; ptr: number; pts: number; nr: number; discountPct: number },
+        tenantId: string,
+    ) {
+        await this.findSupplierById(supplierId, tenantId);
+        const { productId, mrp, ptr, pts, nr, discountPct } = data;
+        return this.prisma.supplierRateCard.upsert({
+            where: { tenantId_supplierId_productId: { tenantId, supplierId, productId } },
+            update: { mrp, ptr, pts, nr, discountPct },
+            create: { tenantId, supplierId, productId, mrp, ptr, pts, nr, discountPct },
+            include: {
+                product: {
+                    select: { id: true, name: true, composition: true, packing: true },
+                },
+            },
+        });
+    }
+
+    async deleteRateCardEntry(supplierId: string, productId: string, tenantId: string) {
+        const entry = await this.prisma.supplierRateCard.findFirst({
+            where: { supplierId, productId, tenantId },
+        });
+        if (!entry) throw new NotFoundException('Rate card entry not found');
+        return this.prisma.supplierRateCard.delete({ where: { id: entry.id } });
+    }
+
     // Search/Autocomplete for Billing
     async searchCustomers(query: string, tenantId?: string) {
         return this.prisma.customer.findMany({

@@ -152,6 +152,38 @@ export class PartiesController {
         return result;
     }
 
+    @Get('suppliers/:id/rate-card')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
+    getRateCard(@Param('id') id: string, @Request() req: any) {
+        return this.partiesService.getRateCard(id, req.user.tenantId);
+    }
+
+    @Get('suppliers/:id/rate-card/:productId')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.WAREHOUSE_MANAGER)
+    getRateCardEntry(@Param('id') id: string, @Param('productId') productId: string, @Request() req: any) {
+        return this.partiesService.getRateCardEntry(id, productId, req.user.tenantId);
+    }
+
+    @Post('suppliers/:id/rate-card')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    upsertRateCard(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+        const { productId, mrp, ptr, pts, nr, discountPct } = data;
+        return this.partiesService.upsertRateCard(id, {
+            productId,
+            mrp: Number(mrp) || 0,
+            ptr: Number(ptr) || 0,
+            pts: Number(pts) || 0,
+            nr: Number(nr) || 0,
+            discountPct: Number(discountPct) || 0,
+        }, req.user.tenantId);
+    }
+
+    @Delete('suppliers/:id/rate-card/:productId')
+    @Roles(Role.ADMIN)
+    deleteRateCardEntry(@Param('id') id: string, @Param('productId') productId: string, @Request() req: any) {
+        return this.partiesService.deleteRateCardEntry(id, productId, req.user.tenantId);
+    }
+
     @Patch('suppliers/:id/reset-balance')
     @Roles(Role.ADMIN)
     resetSupplierBalance(@Param('id') id: string, @Request() req: any) {
