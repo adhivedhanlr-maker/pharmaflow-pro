@@ -95,7 +95,7 @@ export class PurchasesService {
                     batch = await tx.batch.create({
                         data: {
                             tenantId,
-                            productId: item.productId,
+                            productId: product.id,
                             batchNumber: item.batchNumber,
                             supplierId: supplierId,
                             expiryDate: new Date(item.expiryDate),

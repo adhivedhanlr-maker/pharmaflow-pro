@@ -94,11 +94,11 @@ export class AlertsService {
             });
 
             this.logger.warn(`Alert Generated: ${message}`);
-            await this.notificationsService.pushToTenantAdmins(tenantId, {
+            this.notificationsService.pushToTenantAdmins(tenantId, {
                 title: 'PharmaFlow Pro Alert',
                 body: message,
                 url: '/',
-            });
+            }).catch(err => console.error('Push notification failed:', err));
 
             // Attempt to send email in production environment
             if (process.env.NODE_ENV === 'production') {
