@@ -476,20 +476,6 @@ export default function StockPage() {
                                                         >
                                                             <Edit2 className="h-4 w-4" />
                                                         </Button>
-                                                        {bestBatch && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                                            onClick={() => {
-                                                                setEditingBatch({ ...bestBatch, productName: p.name });
-                                                                setEditDialogOpen(true);
-                                                            }}
-                                                            title="Edit Rates (PTR / PTS / NR)"
-                                                        >
-                                                            <RefreshCw className="h-4 w-4" />
-                                                        </Button>
-                                                        )}
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"

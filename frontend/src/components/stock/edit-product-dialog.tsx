@@ -36,10 +36,16 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
         composition: "",
         packing: "",
         reorderLevel: 10,
+        ptr: 0,
+        pts: 0,
+        nr: 0,
     });
 
     useEffect(() => {
         if (product) {
+            const bestBatch = product.batches?.length
+                ? product.batches.reduce((a: any, b: any) => b.currentStock > a.currentStock ? b : a)
+                : null;
             setFormData({
                 name: product.name || "",
                 company: product.company || "",
@@ -49,13 +55,16 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
                 composition: product.composition || "",
                 packing: product.packing || "",
                 reorderLevel: product.reorderLevel ?? 10,
+                ptr: bestBatch?.ptr || 0,
+                pts: bestBatch?.pts || 0,
+                nr: bestBatch?.nr || 0,
             });
         }
     }, [product]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        const numericFields = ["mrp", "gstRate", "reorderLevel"];
+        const numericFields = ["mrp", "gstRate", "reorderLevel", "ptr", "pts", "nr"];
         setFormData(prev => ({
             ...prev,
             [name]: numericFields.includes(name) ? Math.max(0, parseFloat(value) || 0) : value
@@ -73,18 +82,36 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
         }
 
         try {
+            // 1. Update product master fields
+            const { ptr, pts, nr, ...productFields } = formData;
             const response = await fetch(`${API_BASE}/inventory/products/${product.id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(formData),
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify(productFields),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to update product");
+            }
+
+            // 2. Update PTR / PTS / NR on the best batch if one exists
+            const bestBatch = product.batches?.length
+                ? product.batches.reduce((a: any, b: any) => b.currentStock > a.currentStock ? b : a)
+                : null;
+
+            if (bestBatch && (ptr || pts || nr)) {
+                await fetch(`${API_BASE}/stock/batches/${bestBatch.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({
+                        quantity: bestBatch.currentStock,
+                        reason: "Rate update from Product Master",
+                        ptr,
+                        pts,
+                        nr,
+                    }),
+                });
             }
 
             toast.success("Product updated successfully");
@@ -203,6 +230,51 @@ export function EditProductDialog({ product, open, onOpenChange, onSuccess }: Ed
                                     onChange={handleChange}
                                     placeholder="10"
                                 />
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Rates (from active batch)</p>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="ptr">PTR (₹)</Label>
+                                    <Input
+                                        id="ptr"
+                                        name="ptr"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={formData.ptr || ""}
+                                        onChange={handleChange}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pts">PTS (₹)</Label>
+                                    <Input
+                                        id="pts"
+                                        name="pts"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={formData.pts || ""}
+                                        onChange={handleChange}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="nr">NR (₹)</Label>
+                                    <Input
+                                        id="nr"
+                                        name="nr"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={formData.nr || ""}
+                                        onChange={handleChange}
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
