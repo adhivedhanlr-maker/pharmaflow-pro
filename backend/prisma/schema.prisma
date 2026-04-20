@@ -105,7 +105,6 @@ model Product {
   saleItems          SaleItem[]
   purchaseItems      PurchaseItem[]
   orderItems         OrderItem[]
-  supplierRateCards  SupplierRateCard[]
 
   @@index([tenantId])
   @@index([name])
@@ -188,30 +187,10 @@ model Supplier {
   updatedAt      DateTime        @updatedAt
   purchases      Purchase[]
   batches        Batch[]
-  rateCards      SupplierRateCard[]
 
   @@index([tenantId])
   @@index([name])
   @@index([phone])
-}
-
-model SupplierRateCard {
-  id          String   @id @default(cuid())
-  tenantId    String
-  supplierId  String
-  productId   String
-  mrp         Float    @default(0)
-  ptr         Float    @default(0)
-  pts         Float    @default(0)
-  nr          Float    @default(0)
-  discountPct Float    @default(0)
-  updatedAt   DateTime @updatedAt
-
-  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, supplierId, productId])
-  @@index([tenantId])
 }
 
 model Sale {

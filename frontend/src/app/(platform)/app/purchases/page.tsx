@@ -375,72 +375,27 @@ export default function PurchasesPage() {
 
     const updateItem = (id: string, field: keyof PurchaseItem, value: any) => {
         setItems(prev => prev.map(item => {
-            if (item.id === id) {
-                const updated = { ...item, [field]: value };
-                // Auto-calculate NR and purchasePrice when PTS or discount changes
-                if (field === 'pts' || field === 'discountPct') {
-                    const pts = field === 'pts' ? value : updated.pts;
-                    const disc = field === 'discountPct' ? value : updated.discountPct;
-                    const nr = parseFloat((pts * (1 - disc / 100)).toFixed(2));
-                    updated.nr = nr;
-                    updated.purchasePrice = nr;
+            if (item.id !== id) return item;
+            const updated = { ...item, [field]: value };
+            if (field === 'productId') {
+                const product = products.find(p => p.id === value);
+                if (product) {
+                    updated.name = product.name;
+                    updated.composition = product.composition || "";
+                    updated.hsnCode = product.hsnCode || "";
+                    updated.packing = product.packing || "";
+                    if (product.mrp) updated.salePrice = product.mrp;
                 }
-                return updated;
             }
-            return item;
-        }));
-    };
-
-    const handleProductSelect = async (itemId: string, productId: string) => {
-        // First apply product master fields synchronously
-        const product = products.find(p => p.id === productId);
-        setItems(prev => prev.map(item => {
-            if (item.id !== itemId) return item;
-            const updated = { ...item, productId };
-            if (product) {
-                updated.name = product.name;
-                updated.composition = product.composition || "";
-                updated.hsnCode = product.hsnCode || "";
-                updated.packing = product.packing || "";
-                if (product.mrp) updated.salePrice = product.mrp;
+            // Purchase price = NR × (1 - Disc%)
+            // NR = what you pay the supplier per unit (before discount)
+            if (field === 'nr' || field === 'discountPct') {
+                const nr = field === 'nr' ? value : updated.nr;
+                const disc = field === 'discountPct' ? value : updated.discountPct;
+                updated.purchasePrice = parseFloat((nr * (1 - disc / 100)).toFixed(2));
             }
             return updated;
         }));
-
-        // Then try to fetch rate card for this supplier+product
-        if (!productId || !selectedSupplierId) return;
-        try {
-            const token = localStorage.getItem('auth_token');
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(`${API_BASE}/parties/suppliers/${selectedSupplierId}/rate-card/${productId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-                signal: controller.signal,
-            });
-            clearTimeout(timeout);
-            if (res.ok) {
-                const rc = await res.json();
-                if (rc) {
-                    setItems(prev => prev.map(item => {
-                        if (item.id !== itemId) return item;
-                        const pts = rc.pts ?? item.pts;
-                        const disc = rc.discountPct ?? item.discountPct;
-                        const nr = parseFloat((pts * (1 - disc / 100)).toFixed(2));
-                        return {
-                            ...item,
-                            salePrice: rc.mrp || item.salePrice,
-                            ptr: rc.ptr ?? item.ptr,
-                            pts,
-                            nr,
-                            purchasePrice: nr,
-                            discountPct: disc,
-                        };
-                    }));
-                }
-            }
-        } catch {
-            // Rate card not found or network error — silently fall back to product master values
-        }
     };
 
     const totals = useMemo(() => {
@@ -1011,7 +966,7 @@ export default function PurchasesPage() {
                                                 <select
                                                     className={`h-8 flex-1 text-[11px] bg-white border ${item.productId ? 'border-slate-200' : 'border-orange-200 bg-orange-50/30'} rounded px-1.5 focus:ring-1 focus:ring-primary outline-none transition-colors`}
                                                     value={item.productId}
-                                                    onChange={(e) => handleProductSelect(item.id, e.target.value)}
+                                                    onChange={(e) => updateItem(item.id, 'productId', e.target.value)}
                                                 >
                                                     <option value="">{item.productId ? "Select Item" : "Product Not Found"}</option>
                                                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}

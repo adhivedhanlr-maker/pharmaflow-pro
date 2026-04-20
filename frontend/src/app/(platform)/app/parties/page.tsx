@@ -29,8 +29,7 @@ import {
     RefreshCw,
     Trash2,
     Edit,
-    ShieldAlert,
-    ClipboardList
+    ShieldAlert
 } from "lucide-react";
 import {
     Tabs,
@@ -50,7 +49,6 @@ import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import { CustomerDialog } from "@/components/billing/customer-dialog";
 import { EditPartyDialog } from "@/components/billing/edit-party-dialog";
-import { SupplierRateCardDialog } from "@/components/parties/supplier-rate-card-dialog";
 
 interface Party {
     id: string;
@@ -72,8 +70,6 @@ export default function PartiesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [editingParty, setEditingParty] = useState<Party | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [rateCardSupplier, setRateCardSupplier] = useState<Party | null>(null);
-    const [rateCardOpen, setRateCardOpen] = useState(false);
 
     useEffect(() => {
         if (token) {
@@ -318,7 +314,6 @@ export default function PartiesPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => { setRateCardSupplier(p); setRateCardOpen(true); }}><ClipboardList className="mr-2 h-4 w-4" />Rate Card</DropdownMenuItem>
                                                     {p.currentBalance !== 0 && <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "suppliers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>}
                                                     <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -356,7 +351,6 @@ export default function PartiesPage() {
                                                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuItem onClick={() => handleEdit(p)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => { setRateCardSupplier(p); setRateCardOpen(true); }}><ClipboardList className="mr-2 h-4 w-4" />Rate Card</DropdownMenuItem>
                                                                 {p.currentBalance !== 0 && <DropdownMenuItem onClick={() => handleResetBalance(p.id, p.name, "suppliers")} className="text-amber-600">Reset Balance to ₹0</DropdownMenuItem>}
                                                                 <DropdownMenuItem onClick={() => handleDelete(p.id, p.name)} className="text-red-600"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                             </DropdownMenuContent>
@@ -380,14 +374,6 @@ export default function PartiesPage() {
                     onSuccess={fetchParties}
                 />
 
-                {rateCardSupplier && (
-                    <SupplierRateCardDialog
-                        open={rateCardOpen}
-                        onOpenChange={setRateCardOpen}
-                        supplierId={rateCardSupplier.id}
-                        supplierName={rateCardSupplier.name}
-                    />
-                )}
             </div>
         </RoleGate>
     );
