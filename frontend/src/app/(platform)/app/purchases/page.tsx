@@ -74,6 +74,7 @@ interface Product {
     packing?: string;
     gstRate: number;
     mrp?: number;
+    batches?: { currentStock: number; ptr: number; pts: number }[];
 }
 
 interface Supplier {
@@ -385,6 +386,12 @@ export default function PurchasesPage() {
                     updated.hsnCode = product.hsnCode || "";
                     updated.packing = product.packing || "";
                     if (product.mrp) updated.salePrice = product.mrp;
+                    // Auto-fill PTR and PTS from the batch with the highest stock
+                    const bestBatch = product.batches?.length
+                        ? product.batches.reduce((a, b) => b.currentStock > a.currentStock ? b : a)
+                        : null;
+                    if (bestBatch?.ptr) updated.ptr = bestBatch.ptr;
+                    if (bestBatch?.pts) updated.pts = bestBatch.pts;
                 }
             }
             // Purchase price = NR × (1 - Disc%)
