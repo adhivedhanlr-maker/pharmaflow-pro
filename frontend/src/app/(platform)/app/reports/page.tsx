@@ -225,34 +225,35 @@ export default function ReportsPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Business Reports</h1>
                     <p className="text-muted-foreground text-sm">Financial analytics and GST filing reports.</p>
                 </div>
-                {/* Date filter */}
-                <div className="flex items-center gap-2 w-fit">
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                        className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
-                    <span className="text-slate-400 text-sm shrink-0">to</span>
-                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                        className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
+                {/* Date filter + toggle row */}
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
+                        <span className="text-slate-400 text-sm shrink-0">to</span>
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                            className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" />
+                    </div>
+                    <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+                        {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
+                            <button key={m}
+                                onClick={() => setReportMode(m)}
+                                className={`px-5 py-2 text-xs font-bold transition-colors whitespace-nowrap ${
+                                    reportMode === m
+                                        ? "bg-slate-800 text-white"
+                                        : "bg-white text-slate-500 hover:bg-slate-50"
+                                }`}>
+                                {m === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed"}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* ── GST Report Download Cards ── */}
                 <Card className="border-slate-200">
                     <CardHeader className="pb-4 text-center">
                         <CardTitle className="text-base font-bold text-slate-700 mb-3">GST Reports</CardTitle>
-                        {/* Summary / Detailed toggle */}
-                        <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit mx-auto">
-                            {(["SUMMARY", "DETAILED"] as ReportMode[]).map(m => (
-                                <button key={m}
-                                    onClick={() => setReportMode(m)}
-                                    className={`px-5 py-2 text-xs font-bold transition-colors whitespace-nowrap ${
-                                        reportMode === m
-                                            ? "bg-slate-800 text-white"
-                                            : "bg-white text-slate-500 hover:bg-slate-50"
-                                    }`}>
-                                    {m === "SUMMARY" ? "Day-wise Summary" : "Invoice-wise Detailed"}
-                                </button>
-                            ))}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-2">
+                        <p className="text-xs text-slate-400">
                             {reportMode === "SUMMARY"
                                 ? "Totals grouped by date — ideal for quick GST filing overview"
                                 : "One row per invoice/bill — full detail for auditing"}
