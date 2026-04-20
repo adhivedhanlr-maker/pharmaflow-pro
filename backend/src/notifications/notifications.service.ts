@@ -108,9 +108,13 @@ export class NotificationsService {
         } catch (error: any) {
             this.logger.error(`Failed to send web push: ${error?.message || error}`);
             if (error?.statusCode === 404 || error?.statusCode === 410) {
-                await (this.prisma as any).pushSubscription.deleteMany({
-                    where: { endpoint: subscription.endpoint, userId: subscription.userId },
-                });
+                try {
+                    await (this.prisma as any).pushSubscription.deleteMany({
+                        where: { endpoint: subscription.endpoint, userId: subscription.userId },
+                    });
+                } catch (deleteErr: any) {
+                    this.logger.error(`Failed to delete stale push subscription: ${deleteErr?.message || deleteErr}`);
+                }
             }
         }
     }
