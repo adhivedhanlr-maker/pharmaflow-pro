@@ -969,7 +969,7 @@ function BillingContent() {
 
             {/* Invoice Saved Dialog */}
             <Dialog open={!!savedInvoiceDialog} onOpenChange={(open) => { if (!open) { setSavedInvoiceDialog(null); setCurrentInvoiceNumber(""); } }}>
-                <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+                <DialogContent className="max-w-4xl sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
                     <DialogHeader className="px-4 pt-4 pb-3 flex-shrink-0 border-b">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -993,9 +993,9 @@ function BillingContent() {
                             </Button>
                         </div>
                     </DialogHeader>
-                    <div className="overflow-y-auto flex-1 p-4 bg-slate-50">
+                    <div className="overflow-auto flex-1 p-4 bg-slate-50">
                         {savedInvoiceDialog && (
-                            <div className="bg-white shadow rounded-lg overflow-hidden">
+                            <div className="bg-white shadow rounded-lg">
                                 <InvoicePrint
                                     ref={viewRef}
                                     preview={true}
