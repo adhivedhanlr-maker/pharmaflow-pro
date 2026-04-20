@@ -995,7 +995,7 @@ function BillingContent() {
                     </DialogHeader>
                     <div className="overflow-auto flex-1 p-4 bg-slate-50">
                         {savedInvoiceDialog && (
-                            <div className="bg-white shadow rounded-lg">
+                            <div className="bg-white shadow rounded-lg mx-auto" style={{ width: "fit-content" }}>
                                 <InvoicePrint
                                     ref={viewRef}
                                     preview={true}
