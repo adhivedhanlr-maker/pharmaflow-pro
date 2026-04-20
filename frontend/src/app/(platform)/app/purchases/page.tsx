@@ -1124,9 +1124,18 @@ export default function PurchasesPage() {
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <span className="text-[11px] font-mono font-semibold text-orange-600 pr-2">
-                                                {item.nr > 0 ? item.nr.toFixed(2) : "—"}
-                                            </span>
+                                            <Input
+                                                type="number"
+                                                className="h-8 w-full text-right text-[11px] font-mono text-orange-600"
+                                                value={item.nr === 0 ? "" : item.nr}
+                                                placeholder="0.00"
+                                                min="0"
+                                                step="0.01"
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                    updateItem(item.id, 'nr', isNaN(val) ? 0 : val);
+                                                }}
+                                            />
                                         </TableCell>
                                         <TableCell>
                                             <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="h-8 w-8 text-destructive hover:bg-red-50">

@@ -32,6 +32,7 @@ export class StockController {
             mrp?: number;
             ptr?: number;
             pts?: number;
+            nr?: number;
         },
         @Request() req: any,
     ) {
@@ -41,6 +42,7 @@ export class StockController {
             mrp: data.mrp,
             ptr: data.ptr,
             pts: data.pts,
+            nr: data.nr,
         });
         await this.auditLogService.log({
             userId: req.user.userId,

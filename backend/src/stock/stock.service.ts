@@ -19,6 +19,7 @@ export class StockService {
         mrp?: number;
         ptr?: number;
         pts?: number;
+        nr?: number;
     }) {
         if (quantity < 0) throw new NotFoundException('Stock quantity cannot be negative');
         const batch = await this.prisma.batch.findFirst({ where: { id: batchId, tenantId } });
@@ -34,6 +35,7 @@ export class StockService {
                 ...(pricing?.mrp !== undefined && { mrp: pricing.mrp }),
                 ...(pricing?.ptr !== undefined && { ptr: pricing.ptr }),
                 ...(pricing?.pts !== undefined && { pts: pricing.pts }),
+                ...(pricing?.nr !== undefined && { nr: pricing.nr }),
             },
             include: { product: true },
         });

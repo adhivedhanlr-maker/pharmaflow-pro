@@ -49,6 +49,9 @@ interface Product {
         salePrice: number;
         ptr: number;
         pts: number;
+        nr: number;
+        purchasePrice: number;
+        mrp: number;
         supplier?: { id: string; name: string } | null;
     }[];
 }
@@ -409,6 +412,7 @@ export default function StockPage() {
                                             </TableHead>
                                             <TableHead className="text-right">PTR</TableHead>
                                             <TableHead className="text-right">PTS</TableHead>
+                                            <TableHead className="text-right">NR</TableHead>
                                             <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('batchesCount')}>
                                                 <div className="flex items-center justify-end">Batches {renderSortIcon('batchesCount', productSortConfig.field, productSortConfig.order)}</div>
                                             </TableHead>
@@ -426,13 +430,14 @@ export default function StockPage() {
                                                     <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
                                                     <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
                                                     <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
                                                     <TableCell><Skeleton className="h-5 w-16 ml-auto rounded-full" /></TableCell>
                                                     <TableCell><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
                                                 </TableRow>
                                             ))
                                         ) : sortedProducts.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>
+                                                <TableCell colSpan={10} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>
                                             </TableRow>
                                         ) : sortedProducts
                                             .map((p, idx) => {
@@ -452,6 +457,9 @@ export default function StockPage() {
                                                     <TableCell className="text-right font-mono text-slate-700">
                                                         {bestBatch?.pts ? `₹${bestBatch.pts.toFixed(2)}` : <span className="text-slate-300">—</span>}
                                                     </TableCell>
+                                                    <TableCell className="text-right font-mono text-slate-700">
+                                                        {bestBatch?.nr ? `₹${bestBatch.nr.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <Badge variant="outline" className="font-normal">{p.batches?.length || 0} batches</Badge>
                                                     </TableCell>
@@ -468,6 +476,20 @@ export default function StockPage() {
                                                         >
                                                             <Edit2 className="h-4 w-4" />
                                                         </Button>
+                                                        {bestBatch && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                            onClick={() => {
+                                                                setEditingBatch({ ...bestBatch, productName: p.name });
+                                                                setEditDialogOpen(true);
+                                                            }}
+                                                            title="Edit Rates (PTR / PTS / NR)"
+                                                        >
+                                                            <RefreshCw className="h-4 w-4" />
+                                                        </Button>
+                                                        )}
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"

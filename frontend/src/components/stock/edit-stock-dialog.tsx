@@ -33,6 +33,7 @@ export function EditStockDialog({ batch, open, onOpenChange, onSuccess }: EditSt
         mrp: 0,
         ptr: 0,
         pts: 0,
+        nr: 0,
     });
 
     useEffect(() => {
@@ -45,6 +46,7 @@ export function EditStockDialog({ batch, open, onOpenChange, onSuccess }: EditSt
                 mrp: batch.mrp || 0,
                 ptr: batch.ptr || 0,
                 pts: batch.pts || 0,
+                nr: batch.nr || 0,
             });
         }
     }, [batch]);
@@ -162,7 +164,7 @@ export function EditStockDialog({ batch, open, onOpenChange, onSuccess }: EditSt
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-1">
                                 <label className="text-sm font-medium">PTR (₹)</label>
                                 <Input
@@ -181,6 +183,16 @@ export function EditStockDialog({ batch, open, onOpenChange, onSuccess }: EditSt
                                     min={0}
                                     value={formData.pts}
                                     onChange={e => handleNumeric("pts", e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium">NR (₹)</label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    min={0}
+                                    value={formData.nr}
+                                    onChange={e => handleNumeric("nr", e.target.value)}
                                 />
                             </div>
                         </div>
