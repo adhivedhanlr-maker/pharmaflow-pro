@@ -152,7 +152,7 @@ export class SalesService {
                     paymentMethod: finalPaymentMethod,
                     customerType: customerType || 'PHARMACY',
                     deliveryOtp: otp,
-                    ...(invoiceDate ? { invoiceDate: new Date(invoiceDate) } : {}),
+                    ...(invoiceDate ? { date: new Date(invoiceDate) } : {}),
                     items: {
                         create: invoiceItems,
                     },
