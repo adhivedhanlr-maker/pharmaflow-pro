@@ -524,6 +524,13 @@ export class SalesService {
             }
 
             return deleted;
+        }).then(deleted => {
+            this.notificationsService.pushToTenantAdmins(tenantId, {
+                title: 'Invoice Deleted',
+                body: `Invoice ${sale.invoiceNumber} has been deleted.`,
+                url: '/app/sales',
+            }).catch(err => console.error('Push notification failed:', err));
+            return deleted;
         });
     }
 
