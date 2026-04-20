@@ -74,7 +74,7 @@ interface Product {
     packing?: string;
     gstRate: number;
     mrp?: number;
-    batches?: { currentStock: number; ptr: number; pts: number }[];
+    batches?: { currentStock: number; ptr: number; pts: number; nr: number }[];
 }
 
 interface Supplier {
