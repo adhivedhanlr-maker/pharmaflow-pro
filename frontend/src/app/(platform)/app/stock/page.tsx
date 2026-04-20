@@ -47,6 +47,8 @@ interface Product {
         expiryDate: string;
         currentStock: number;
         salePrice: number;
+        ptr: number;
+        pts: number;
         supplier?: { id: string; name: string } | null;
     }[];
 }
@@ -405,6 +407,8 @@ export default function StockPage() {
                                             <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('mrp')}>
                                                 <div className="flex items-center justify-end">MRP {renderSortIcon('mrp', productSortConfig.field, productSortConfig.order)}</div>
                                             </TableHead>
+                                            <TableHead className="text-right">PTR</TableHead>
+                                            <TableHead className="text-right">PTS</TableHead>
                                             <TableHead className="text-right cursor-pointer hover:bg-slate-100" onClick={() => handleProductSort('batchesCount')}>
                                                 <div className="flex items-center justify-end">Batches {renderSortIcon('batchesCount', productSortConfig.field, productSortConfig.order)}</div>
                                             </TableHead>
@@ -420,22 +424,34 @@ export default function StockPage() {
                                                     <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                                                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                                                     <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
                                                     <TableCell><Skeleton className="h-5 w-16 ml-auto rounded-full" /></TableCell>
                                                     <TableCell><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
                                                 </TableRow>
                                             ))
                                         ) : sortedProducts.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>
+                                                <TableCell colSpan={9} className="text-center py-20 text-muted-foreground">No products found in master list.</TableCell>
                                             </TableRow>
                                         ) : sortedProducts
-                                            .map((p, idx) => (
+                                            .map((p, idx) => {
+                                                const bestBatch = p.batches?.length
+                                                    ? p.batches.reduce((a, b) => b.currentStock > a.currentStock ? b : a)
+                                                    : null;
+                                                return (
                                                 <TableRow key={p.id} className="hover:bg-slate-50/50">
                                                     <TableCell className="text-slate-500">{idx + 1}</TableCell>
                                                     <TableCell className="font-semibold text-blue-900">{p.name}</TableCell>
                                                     <TableCell className="text-slate-500">{p.company || 'N/A'}</TableCell>
                                                     <TableCell className="font-mono text-xs">{p.hsnCode || 'N/A'}</TableCell>
                                                     <TableCell className="text-right font-mono">₹{p.mrp.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right font-mono text-slate-700">
+                                                        {bestBatch?.ptr ? `₹${bestBatch.ptr.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-mono text-slate-700">
+                                                        {bestBatch?.pts ? `₹${bestBatch.pts.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <Badge variant="outline" className="font-normal">{p.batches?.length || 0} batches</Badge>
                                                     </TableCell>
@@ -463,7 +479,8 @@ export default function StockPage() {
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))}
+                                                );
+                                            })}
                                     </TableBody>
                                 </Table>
                             </CardContent>
