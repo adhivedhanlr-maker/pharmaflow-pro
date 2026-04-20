@@ -238,7 +238,7 @@ export const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
                                 <th style={{ ...headBase, width: "34px" }}>Qty</th>
                                 <th style={{ ...headBase, width: "34px" }}>Free</th>
                                 <th style={{ ...headBase, width: "52px" }}>MRP</th>
-                                <th style={{ ...headBase, width: "60px" }}>{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}</th>
+                                <th style={{ ...headBase, width: "60px" }}>PTR</th>
                                 <th style={{ ...headBase, width: "42px" }}>GST%</th>
                                 <th style={{ ...headBase, width: "72px" }}>Taxable</th>
                             </tr>

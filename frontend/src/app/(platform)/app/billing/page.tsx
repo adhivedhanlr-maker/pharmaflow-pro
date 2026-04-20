@@ -759,7 +759,7 @@ function BillingContent() {
                                                             </div>
                                                         </div>
                                                         <p className="text-xs text-slate-400">
-                                                            <span className="text-emerald-600 font-medium">{customerType === "DISTRIBUTOR" ? "PTS" : "PTR"}: ₹{item.unitPrice.toFixed(2)}</span>
+                                                            <span className="text-emerald-600 font-medium">PTR: ₹{item.unitPrice.toFixed(2)}</span>
                                                             <span className="ml-2">MRP: ₹{(item.mrp || 0).toFixed(2)}</span>
                                                             <span className="ml-2">GST: {item.gstRate}%</span>
                                                         </p>
@@ -955,7 +955,7 @@ function BillingContent() {
                     quantity: item.quantity,
                     freeQuantity: item.freeQuantity || 0,
                     mrp: item.mrp || 0,
-                    ptr: customerType === "DISTRIBUTOR" ? (item.pts || item.unitPrice) : (item.ptr || item.unitPrice),
+                    ptr: item.ptr || item.unitPrice,
                     unitPrice: item.unitPrice,
                     discountPct: item.discountPct || 0,
                     gstRate: item.gstRate,
@@ -1016,7 +1016,7 @@ function BillingContent() {
                                         quantity: item.quantity,
                                         freeQuantity: item.freeQuantity || 0,
                                         mrp: item.mrp || 0,
-                                        ptr: savedInvoiceDialog.snapshotCustomerType === "DISTRIBUTOR" ? (item.pts || item.unitPrice) : (item.ptr || item.unitPrice),
+                                        ptr: item.ptr || item.unitPrice,
                                         unitPrice: item.unitPrice,
                                         discountPct: item.discountPct || 0,
                                         gstRate: item.gstRate,
