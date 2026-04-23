@@ -64,6 +64,7 @@ export default function SettingsPage() {
         bankIfsc: "",
         showLogo: true,
         showPaymentQr: true,
+        showPtrInPtsInvoice: false,
     });
     const [brandingName, setBrandingName] = useState("");
     const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
@@ -116,6 +117,7 @@ export default function SettingsPage() {
                 bankIfsc: profileData?.bankIfsc || "",
                 showLogo: profileData?.showLogo ?? true,
                 showPaymentQr: profileData?.showPaymentQr ?? true,
+                showPtrInPtsInvoice: profileData?.showPtrInPtsInvoice ?? false,
             });
 
             if (logoUrl) {
@@ -262,6 +264,7 @@ export default function SettingsPage() {
                     bankIfsc: formData.bankIfsc,
                     showLogo: formData.showLogo,
                     showPaymentQr: formData.showPaymentQr,
+                    showPtrInPtsInvoice: formData.showPtrInPtsInvoice,
                 })
             });
 
@@ -372,6 +375,15 @@ export default function SettingsPage() {
                                             className="h-4 w-4 rounded border-slate-300"
                                         />
                                         <span className="text-xs text-slate-600 font-medium">Show on invoice</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 mt-2 cursor-pointer w-52">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.showPtrInPtsInvoice}
+                                            onChange={(e) => setFormData({ ...formData, showPtrInPtsInvoice: e.target.checked })}
+                                            className="h-4 w-4 rounded border-slate-300"
+                                        />
+                                        <span className="text-xs text-slate-600 font-medium">Show PTR in distributor invoices</span>
                                     </label>
                                 </div>
 

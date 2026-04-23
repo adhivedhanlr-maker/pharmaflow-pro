@@ -406,8 +406,9 @@ model BusinessProfile {
   bankIfsc      String?
   paymentQrUrl     String?
   paymentUpiString String?
-  showLogo         Boolean         @default(true)
-  showPaymentQr    Boolean         @default(true)
+  showLogo              Boolean  @default(true)
+  showPaymentQr         Boolean  @default(true)
+  showPtrInPtsInvoice   Boolean  @default(false)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

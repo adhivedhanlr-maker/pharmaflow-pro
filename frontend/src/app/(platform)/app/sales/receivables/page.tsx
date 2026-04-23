@@ -138,6 +138,7 @@ export default function ReceivablesPage() {
                     paymentQrUrl: profile?.paymentQrUrl || null,
                     paymentUpiString: profile?.paymentUpiString || null,
                     showPaymentQr: profile?.showPaymentQr ?? true,
+                    showPtrInPtsInvoice: profile?.showPtrInPtsInvoice ?? false,
                 });
             }
         } catch (error) {
