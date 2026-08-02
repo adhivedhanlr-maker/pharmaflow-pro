@@ -158,6 +158,15 @@ export default function PurchasesPage() {
     const [invoiceDate, setInvoiceDate] = useState(today);
     const [dueDate, setDueDate] = useState(today);
 
+    const derivePurchasePrice = (item: PurchaseItem) => {
+        const nr = typeof item.nr === "number" && !Number.isNaN(item.nr) ? item.nr : 0;
+        const discountPct = typeof item.discountPct === "number" && !Number.isNaN(item.discountPct) ? item.discountPct : 0;
+        if (nr > 0) {
+            return parseFloat((nr * (1 - discountPct / 100)).toFixed(2));
+        }
+        return item.purchasePrice > 0 ? item.purchasePrice : 0;
+    };
+
     // History state
     const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
@@ -393,6 +402,7 @@ export default function PurchasesPage() {
                     if (bestBatch?.ptr) updated.ptr = bestBatch.ptr;
                     if (bestBatch?.pts) updated.pts = bestBatch.pts;
                     if (bestBatch?.nr) updated.nr = bestBatch.nr;
+                    updated.purchasePrice = derivePurchasePrice(updated);
                 }
             }
             // Purchase price = NR × (1 - Disc%)
@@ -401,6 +411,9 @@ export default function PurchasesPage() {
                 const nr = field === 'nr' ? value : updated.nr;
                 const disc = field === 'discountPct' ? value : updated.discountPct;
                 updated.purchasePrice = parseFloat((nr * (1 - disc / 100)).toFixed(2));
+            }
+            if (field !== 'nr' && field !== 'discountPct' && field !== 'productId') {
+                updated.purchasePrice = derivePurchasePrice(updated);
             }
             return updated;
         }));
@@ -575,7 +588,7 @@ export default function PurchasesPage() {
                 );
 
                 // Purchase price = PTS (what stockist pays). Fallback to PTR if PTS not present.
-                const purchasePrice = item.pts || item.ptr || 0;
+                const purchasePrice = item.pts || item.ptr || (item.nr ? parseFloat((item.nr * (1 - (item.discount || 0) / 100)).toFixed(2)) : 0);
                 return {
                     id: Math.random().toString(36).substr(2, 9),
                     productId: product?.id || "",

@@ -19,6 +19,12 @@ export class PurchasesService {
             const purchaseItems = [];
 
             for (const item of items) {
+                if (!item.quantity || item.quantity <= 0) {
+                    throw new BadRequestException('Each purchase item must have a quantity greater than 0.');
+                }
+                if (!item.purchasePrice || item.purchasePrice <= 0) {
+                    throw new BadRequestException('Each purchase item must have a purchase price greater than 0.');
+                }
                 // 2. Find or Create Product
                 let product;
                 if (item.productId) {
@@ -218,6 +224,12 @@ export class PurchasesService {
             const purchaseItems: any[] = [];
 
             for (const item of items) {
+                if (!item.quantity || item.quantity <= 0) {
+                    throw new BadRequestException('Each purchase item must have a quantity greater than 0.');
+                }
+                if (!item.purchasePrice || item.purchasePrice <= 0) {
+                    throw new BadRequestException('Each purchase item must have a purchase price greater than 0.');
+                }
                 let product: any;
                 if (item.productId) {
                     product = await tx.product.findFirst({ where: { id: item.productId, ...(tenantId ? { tenantId } : {}) } });
