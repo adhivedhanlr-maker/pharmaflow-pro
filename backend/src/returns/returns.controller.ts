@@ -33,4 +33,28 @@ export class ReturnsController {
     getPurchaseForReturn(@Param('billNumber') billNumber: string, @Request() req: any) {
         return this.returnsService.getPurchaseForReturn(billNumber, req.user.tenantId);
     }
+
+    @Get('credit-notes')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    findAllCreditNotes(@Request() req: any) {
+        return this.returnsService.findAllCreditNotes(req.user.tenantId);
+    }
+
+    @Get('credit-notes/:id')
+    @Roles(Role.ADMIN, Role.BILLING_OPERATOR, Role.ACCOUNTANT)
+    findCreditNoteById(@Param('id') id: string, @Request() req: any) {
+        return this.returnsService.findCreditNoteById(id, req.user.tenantId);
+    }
+
+    @Get('debit-notes')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
+    findAllDebitNotes(@Request() req: any) {
+        return this.returnsService.findAllDebitNotes(req.user.tenantId);
+    }
+
+    @Get('debit-notes/:id')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER, Role.ACCOUNTANT)
+    findDebitNoteById(@Param('id') id: string, @Request() req: any) {
+        return this.returnsService.findDebitNoteById(id, req.user.tenantId);
+    }
 }

@@ -230,6 +230,23 @@ export function printInvoiceNewWindow(
     win.addEventListener("beforeunload", () => URL.revokeObjectURL(previewUrl), { once: true });
 }
 
+export async function generatePdfFromElement(element: HTMLElement, filename: string) {
+    if (!element || typeof window === "undefined") {
+        throw new Error("PDF export is available only in the browser.");
+    }
+
+    const { default: html2pdf } = await import("html2pdf.js");
+    const options = {
+        margin: 10,
+        filename,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+    };
+
+    await html2pdf().set(options).from(element).save();
+}
+
 /**
  * Prints the invoice on the current page — no new tab.
  * Uses afterprint event for cleanup so mobile async print works correctly.

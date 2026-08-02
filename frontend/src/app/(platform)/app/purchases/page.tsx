@@ -159,6 +159,12 @@ export default function PurchasesPage() {
     const [dueDate, setDueDate] = useState(today);
 
     const derivePurchasePrice = (item: PurchaseItem) => {
+        if (typeof item.pts === "number" && item.pts > 0) {
+            return item.pts;
+        }
+        if (typeof item.ptr === "number" && item.ptr > 0) {
+            return item.ptr;
+        }
         const nr = typeof item.nr === "number" && !Number.isNaN(item.nr) ? item.nr : 0;
         const discountPct = typeof item.discountPct === "number" && !Number.isNaN(item.discountPct) ? item.discountPct : 0;
         if (nr > 0) {
@@ -384,6 +390,7 @@ export default function PurchasesPage() {
     };
 
     const updateItem = (id: string, field: keyof PurchaseItem, value: any) => {
+        if (error) setError(null);
         setItems(prev => prev.map(item => {
             if (item.id !== id) return item;
             const updated = { ...item, [field]: value };
@@ -478,7 +485,7 @@ export default function PurchasesPage() {
                         quantity: item.quantity,
                         freeQty: item.freeQty,
                         discountPct: item.discountPct,
-                        purchasePrice: item.purchasePrice,
+                        purchasePrice: derivePurchasePrice(item),
                         salePrice: item.salePrice,
                         ptr: item.ptr,
                         pts: item.pts,

@@ -6,7 +6,8 @@ export class ReturnsService {
     constructor(private prisma: PrismaService) { }
 
     async createSalesReturn(data: any, tenantId: string) {
-        const { saleId, items } = data;
+        const { saleId, items, returnType } = data;
+        const isDamagedOrExpired = returnType === 'DAMAGED' || returnType === 'EXPIRED';
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Verify Sale belongs to this tenant
@@ -26,11 +27,14 @@ export class ReturnsService {
                     throw new BadRequestException(`Cannot return more than sold for item ${item.saleItemId}`);
                 }
 
-                // 2. Add stock back to batch
-                await tx.batch.update({
-                    where: { id: saleItem.batchId },
-                    data: { currentStock: { increment: item.quantity } },
-                });
+                // 2. For normal returns, put the item back in stock.
+                // Damaged/expired returns are not restocked.
+                if (!isDamagedOrExpired) {
+                    await tx.batch.update({
+                        where: { id: saleItem.batchId },
+                        data: { currentStock: { increment: item.quantity } },
+                    });
+                }
 
                 const itemRefund = item.quantity * saleItem.unitPrice;
                 const itemGstRefund = (itemRefund * saleItem.gstRate) / 100;
@@ -49,16 +53,21 @@ export class ReturnsService {
             return tx.saleReturn.create({
                 data: {
                     saleId,
+                    tenantId,
                     totalAmount: refundAmount,
                     items: {
                         create: items.map((item: any) => ({
                             saleItemId: item.saleItemId,
+                            tenantId,
                             quantity: item.quantity,
-                            reason: item.reason,
+                            reason: item.reason || (isDamagedOrExpired ? (returnType === 'DAMAGED' ? 'Damaged Return' : 'Expired Return') : undefined),
                         })),
                     },
                 },
-                include: { items: true },
+                include: {
+                    items: { include: { saleItem: { include: { product: true, batch: true } } } },
+                    sale: { include: { customer: true } },
+                },
             });
         });
     }
@@ -104,16 +113,21 @@ export class ReturnsService {
             return tx.purchaseReturn.create({
                 data: {
                     purchaseId,
+                    tenantId,
                     totalAmount: debitAmount,
                     items: {
                         create: items.map((item: any) => ({
                             purchaseItemId: item.purchaseItemId,
+                            tenantId,
                             quantity: item.quantity,
                             reason: item.reason,
                         })),
                     },
                 },
-                include: { items: true },
+                include: {
+                    items: { include: { purchaseItem: { include: { product: true, batch: true } } } },
+                    purchase: { include: { supplier: true } },
+                },
             });
         });
     }
@@ -164,5 +178,63 @@ export class ReturnsService {
         }
 
         return purchase;
+    }
+
+    async findAllCreditNotes(tenantId?: string) {
+        if (!tenantId) return [];
+
+        return this.prisma.saleReturn.findMany({
+            where: { tenantId },
+            include: {
+                sale: { include: { customer: true } },
+                items: { include: { saleItem: { include: { product: true, batch: true } } } },
+            },
+            orderBy: { date: 'desc' },
+        });
+    }
+
+    async findCreditNoteById(id: string, tenantId: string) {
+        const creditNote = await this.prisma.saleReturn.findFirst({
+            where: { id, tenantId },
+            include: {
+                sale: { include: { customer: true } },
+                items: { include: { saleItem: { include: { product: true, batch: true } } } },
+            },
+        });
+
+        if (!creditNote) {
+            throw new NotFoundException('Credit note not found');
+        }
+
+        return creditNote;
+    }
+
+    async findAllDebitNotes(tenantId?: string) {
+        if (!tenantId) return [];
+
+        return this.prisma.purchaseReturn.findMany({
+            where: { tenantId },
+            include: {
+                purchase: { include: { supplier: true } },
+                items: { include: { purchaseItem: { include: { product: true, batch: true } } } },
+            },
+            orderBy: { date: 'desc' },
+        });
+    }
+
+    async findDebitNoteById(id: string, tenantId: string) {
+        const debitNote = await this.prisma.purchaseReturn.findFirst({
+            where: { id, tenantId },
+            include: {
+                purchase: { include: { supplier: true } },
+                items: { include: { purchaseItem: { include: { product: true, batch: true } } } },
+            },
+        });
+
+        if (!debitNote) {
+            throw new NotFoundException('Debit note not found');
+        }
+
+        return debitNote;
     }
 }
