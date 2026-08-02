@@ -344,7 +344,8 @@ export default function ReturnsPage() {
 
     const updateReturnQuantity = (index: number, quantity: number) => {
         const updated = [...returnItems];
-        updated[index].returnQuantity = Math.min(quantity, updated[index].quantity);
+        const max = updated[index].availableQuantity ?? updated[index].quantity;
+        updated[index].returnQuantity = Math.max(0, Math.min(quantity, max));
         setReturnItems(updated);
     };
 
@@ -525,20 +526,31 @@ export default function ReturnsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {returnItems.map((item, index) => (
+                {returnItems.map((item, index) => {
+                    const availableQuantity = item.availableQuantity ?? item.quantity;
+                    return (
                     <TableRow key={item.id}>
                         <TableCell>{item.batch?.product?.name}</TableCell>
                         <TableCell className="font-mono text-xs">{item.batch?.batchNumber}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">
+                            {item.quantity}
+                            {item.returnedQuantity > 0 && (
+                                <div className="text-[10px] text-amber-600">{item.returnedQuantity} already returned</div>
+                            )}
+                        </TableCell>
                         <TableCell className="text-right">
                             <Input
                                 type="number"
                                 className="h-8 w-20 ml-auto text-right"
                                 value={item.returnQuantity}
-                                max={item.quantity}
+                                max={availableQuantity}
                                 min={0}
+                                disabled={availableQuantity <= 0}
                                 onChange={(e) => updateReturnQuantity(index, parseInt(e.target.value, 10) || 0)}
                             />
+                            {availableQuantity <= 0 && (
+                                <div className="text-[10px] text-muted-foreground">Fully returned</div>
+                            )}
                         </TableCell>
                         <TableCell className="text-right font-mono">
                             {formatCurrency(activeTab === "sales" ? item.unitPrice ?? 0 : item.purchasePrice ?? 0)}
@@ -552,7 +564,8 @@ export default function ReturnsPage() {
                             />
                         </TableCell>
                     </TableRow>
-                ))}
+                    );
+                })}
             </TableBody>
         </Table>
     );

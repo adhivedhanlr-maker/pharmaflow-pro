@@ -23,8 +23,17 @@ export class ReturnsService {
                 const saleItem = sale.items.find((si) => si.id === item.saleItemId);
                 if (!saleItem) throw new BadRequestException(`Item ${item.saleItemId} not part of this sale`);
 
-                if (item.quantity > saleItem.quantity) {
-                    throw new BadRequestException(`Cannot return more than sold for item ${item.saleItemId}`);
+                const alreadyReturned = await tx.saleReturnItem.aggregate({
+                    where: { saleItemId: saleItem.id, tenantId },
+                    _sum: { quantity: true },
+                });
+                const returnedSoFar = alreadyReturned._sum.quantity || 0;
+                const availableQty = saleItem.quantity - returnedSoFar;
+
+                if (item.quantity > availableQty) {
+                    throw new BadRequestException(
+                        `Cannot return ${item.quantity} unit(s) for item ${item.saleItemId} — only ${availableQty} remaining (already returned ${returnedSoFar} of ${saleItem.quantity}).`
+                    );
                 }
 
                 // 2. For normal returns, put the item back in stock.
@@ -89,6 +98,19 @@ export class ReturnsService {
                 const purchaseItem = purchase.items.find((pi) => pi.id === item.purchaseItemId);
                 if (!purchaseItem) throw new BadRequestException(`Item ${item.purchaseItemId} not part of this purchase`);
 
+                const alreadyReturned = await tx.purchaseReturnItem.aggregate({
+                    where: { purchaseItemId: purchaseItem.id, tenantId },
+                    _sum: { quantity: true },
+                });
+                const returnedSoFar = alreadyReturned._sum.quantity || 0;
+                const availableQty = purchaseItem.quantity - returnedSoFar;
+
+                if (item.quantity > availableQty) {
+                    throw new BadRequestException(
+                        `Cannot return ${item.quantity} unit(s) for item ${item.purchaseItemId} — only ${availableQty} remaining (already returned ${returnedSoFar} of ${purchaseItem.quantity}).`
+                    );
+                }
+
                 // 2. Reduce stock from batch (tenant-scoped)
                 const batch = await tx.batch.findFirst({ where: { id: purchaseItem.batchId, tenantId } });
                 if (!batch || batch.currentStock < item.quantity) {
@@ -143,7 +165,8 @@ export class ReturnsService {
                             include: {
                                 product: true
                             }
-                        }
+                        },
+                        returns: true,
                     }
                 }
             }
@@ -153,7 +176,18 @@ export class ReturnsService {
             throw new NotFoundException('Invoice not found');
         }
 
-        return sale;
+        return {
+            ...sale,
+            items: sale.items.map((item) => {
+                const returnedQuantity = item.returns.reduce((sum, r) => sum + r.quantity, 0);
+                const { returns, ...rest } = item;
+                return {
+                    ...rest,
+                    returnedQuantity,
+                    availableQuantity: Math.max(item.quantity - returnedQuantity, 0),
+                };
+            }),
+        };
     }
 
     async getPurchaseForReturn(billNumber: string, tenantId: string) {
@@ -167,7 +201,8 @@ export class ReturnsService {
                             include: {
                                 product: true
                             }
-                        }
+                        },
+                        returns: true,
                     }
                 }
             }
@@ -177,7 +212,18 @@ export class ReturnsService {
             throw new NotFoundException('Purchase bill not found');
         }
 
-        return purchase;
+        return {
+            ...purchase,
+            items: purchase.items.map((item) => {
+                const returnedQuantity = item.returns.reduce((sum, r) => sum + r.quantity, 0);
+                const { returns, ...rest } = item;
+                return {
+                    ...rest,
+                    returnedQuantity,
+                    availableQuantity: Math.max(item.quantity - returnedQuantity, 0),
+                };
+            }),
+        };
     }
 
     async findAllCreditNotes(tenantId?: string) {
