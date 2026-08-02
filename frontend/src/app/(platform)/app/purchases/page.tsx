@@ -158,13 +158,9 @@ export default function PurchasesPage() {
     const [invoiceDate, setInvoiceDate] = useState(today);
     const [dueDate, setDueDate] = useState(today);
 
+    // Purchase price = NR × (1 - Disc%). NR is what you pay the supplier per unit —
+    // PTR/PTS are downstream sale prices and must never be used as the purchase cost.
     const derivePurchasePrice = (item: PurchaseItem) => {
-        if (typeof item.pts === "number" && item.pts > 0) {
-            return item.pts;
-        }
-        if (typeof item.ptr === "number" && item.ptr > 0) {
-            return item.ptr;
-        }
         const nr = typeof item.nr === "number" && !Number.isNaN(item.nr) ? item.nr : 0;
         const discountPct = typeof item.discountPct === "number" && !Number.isNaN(item.discountPct) ? item.discountPct : 0;
         if (nr > 0) {
@@ -326,30 +322,25 @@ export default function PurchasesPage() {
         setRoundOff(p.roundOff || 0);
         if (p.invoiceDate) setInvoiceDate(p.invoiceDate.slice(0, 10));
         if (p.dueDate) setDueDate(p.dueDate.slice(0, 10));
-        setItems(p.items.map(item => {
-            const pts = item.batch?.pts || 0;
-            const discountPct = item.discountPct || 0;
-            // Always derive NR and purchasePrice from PTS so old records with wrong rate are corrected
-            const nr = parseFloat((pts * (1 - discountPct / 100)).toFixed(2));
-            return {
-                id: Math.random().toString(36).substr(2, 9),
-                productId: item.product?.id || "",
-                name: item.product?.name || "",
-                composition: item.product?.composition || "",
-                hsnCode: (item.product as any)?.hsnCode || "",
-                packing: item.product?.packing || "",
-                batchNumber: item.batch?.batchNumber || "",
-                expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
-                quantity: item.quantity,
-                freeQty: item.freeQty || 0,
-                discountPct,
-                purchasePrice: nr || item.purchasePrice,
-                salePrice: item.batch?.salePrice || 0,
-                ptr: item.batch?.ptr || 0,
-                pts,
-                nr: nr || item.batch?.nr || 0,
-            };
-        }));
+        setItems(p.items.map(item => ({
+            id: Math.random().toString(36).substr(2, 9),
+            productId: item.product?.id || "",
+            name: item.product?.name || "",
+            composition: item.product?.composition || "",
+            hsnCode: (item.product as any)?.hsnCode || "",
+            packing: item.product?.packing || "",
+            batchNumber: item.batch?.batchNumber || "",
+            expiryDate: item.batch?.expiryDate ? item.batch.expiryDate.slice(0, 10) : "",
+            quantity: item.quantity,
+            freeQty: item.freeQty || 0,
+            discountPct: item.discountPct || 0,
+            // Keep the amount actually billed on this purchase — never re-derive it from PTS/PTR.
+            purchasePrice: item.purchasePrice,
+            salePrice: item.batch?.salePrice || 0,
+            ptr: item.batch?.ptr || 0,
+            pts: item.batch?.pts || 0,
+            nr: item.batch?.nr || 0,
+        })));
         setActiveTab("entry");
         setError(null);
         setSuccess(null);
@@ -594,8 +585,11 @@ export default function PurchasesPage() {
                     item.name!.toLowerCase().includes(p.name.toLowerCase())
                 );
 
-                // Purchase price = PTS (what stockist pays). Fallback to PTR if PTS not present.
-                const purchasePrice = item.pts || item.ptr || (item.nr ? parseFloat((item.nr * (1 - (item.discount || 0) / 100)).toFixed(2)) : 0);
+                // Purchase price = NR × (1 - Disc%), the actual cost billed by the supplier.
+                // Fall back to PTS/PTR only when the invoice didn't carry an NR value.
+                const purchasePrice = item.nr
+                    ? parseFloat((item.nr * (1 - (item.discount || 0) / 100)).toFixed(2))
+                    : (item.pts || item.ptr || 0);
                 return {
                     id: Math.random().toString(36).substr(2, 9),
                     productId: product?.id || "",
